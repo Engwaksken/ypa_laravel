@@ -1,0 +1,16 @@
+<div class="top-nav">
+    <button class="menu-toggle" id="menuToggle" type="button" aria-label="Toggle menu">
+        <span></span><span></span><span></span>
+    </button>
+
+    <div class="user-section">
+        <span class="user-name">Hello, {{ auth()->user()->name ?? 'User' }}</span>
+        <a href="#" class="logout-link"><i class="fa fa-user"></i> Profile</a>
+        <form method="POST" action="{{ route('logout') }}" class="inline-form" style="display:inline">
+            @csrf
+            <button type="submit" class="logout-link" style="background:none;border:0;cursor:pointer;font:inherit">
+                <i class="fa fa-right-from-bracket"></i> Logout
+            </button>
+        </form>
+    </div>
+</div>
