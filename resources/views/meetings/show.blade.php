@@ -265,7 +265,7 @@
         let html = '<div class="mb-3">';
         html += '<label class="form-label">Search members</label>';
         html += '<input type="text" id="inviteMemberSearch" class="form-control" placeholder="Type to search members...">';
-        html += '<div id="inviteSearchResults" class="list-group mt-2" style="max-height: 200px; overflow-y: auto;"></div>';
+        html += '<div id="inviteSearchResults" class="list-group member-search-results mt-2"></div>';
         html += '</div>';
         html += '<div class="table-responsive"><table class="table table-sm table-hover align-middle mb-0">';
         html += '<thead><tr><th>Membership ID</th><th>Name</th><th>Invited</th></tr></thead><tbody id="inviteTableBody">';
@@ -369,7 +369,7 @@
         let html = '<div class="mb-3">';
         html += '<label class="form-label">Search members</label>';
         html += '<input type="text" id="attendanceMemberSearch" class="form-control" placeholder="Type to search members...">';
-        html += '<div id="attendanceSearchResults" class="list-group mt-2" style="max-height: 200px; overflow-y: auto;"></div>';
+        html += '<div id="attendanceSearchResults" class="list-group member-search-results mt-2"></div>';
         html += '</div>';
         html += '<div class="table-responsive"><table class="table table-sm table-hover align-middle mb-0">';
         html += '<thead><tr><th>Membership ID</th><th>Name</th><th>Attended</th></tr></thead><tbody id="attendanceTableBody">';

@@ -12,6 +12,7 @@
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="{{ asset('css/app.css') }}">
     @stack('styles')
 </head>
@@ -45,7 +46,7 @@
         });
     }
 
-    document.querySelectorAll('.dropdown-toggle').forEach(function (toggle) {
+    document.querySelectorAll('.nav-menu .dropdown-toggle').forEach(function (toggle) {
         const dropdown = toggle.closest('.dropdown');
         if (!dropdown) return;
 
@@ -59,6 +60,7 @@
     });
 })();
 </script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 @stack('scripts')
 </body>
 </html>

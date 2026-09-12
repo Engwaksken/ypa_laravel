@@ -35,7 +35,7 @@
     <div class="card mb-3">
         <div class="card-header"><strong>Template Body</strong></div>
         <div class="card-body">
-            <pre class="mb-0" style="white-space: pre-wrap;">{{ $template->template_body }}</pre>
+            <pre class="preformatted-content mb-0">{{ $template->template_body }}</pre>
         </div>
     </div>
 

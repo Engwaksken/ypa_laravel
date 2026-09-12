@@ -9,10 +9,6 @@
     $money = fn ($amount) => 'UGX ' . number_format((float) $amount, 0);
 @endphp
 
-<style>
-    .inline-form { display: inline; }
-</style>
-
 <div class="dash-wrap">
 
     <div class="dash-head">

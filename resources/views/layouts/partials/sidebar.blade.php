@@ -1,9 +1,13 @@
 @php
+    use Illuminate\Support\Facades\Route;
+
     $permission = app(\App\Services\PermissionService::class);
     $user = auth()->user();
     $role = $permission->normalizeRole($user->role ?? '');
     $homeRoute = $permission->homeUrl($role);
-    $homeUrl = \Illuminate\Support\Facades\Route::has($homeRoute) ? route($homeRoute) : '#';
+    $homeUrl = Route::has($homeRoute)
+        ? route($homeRoute)
+        : (Route::has('dashboard') ? route('dashboard') : url('/'));
 
     $nonMembershipItems = [
         ['route' => 'orders.index', 'label' => 'Orders', 'icon' => 'fas fa-shopping-cart', 'permission' => 'manage_orders'],
@@ -23,6 +27,7 @@
 
     $membershipItems = [
         ['route' => 'contracts.index', 'label' => 'Contracts', 'icon' => 'fas fa-file-contract', 'permission' => 'contracts'],
+        ['route' => 'contract-templates.index', 'label' => 'Contract Templates', 'icon' => 'fas fa-file-lines', 'permission' => 'contracts_view'],
         ['route' => 'projects.index', 'label' => 'Projects', 'icon' => 'fas fa-diagram-project', 'permission' => 'projects'],
         ['route' => 'harvest-due.index', 'label' => 'Harvest Due', 'icon' => 'fas fa-calendar-check', 'permission' => 'harvest_due'],
         ['route' => 'harvests.index', 'label' => 'Harvests', 'icon' => 'fas fa-warehouse', 'permission' => 'harvests'],
@@ -37,8 +42,22 @@
         ['route' => 'financial-reports.index', 'label' => 'Reports', 'icon' => 'fas fa-file-lines', 'permission' => 'financial_reports'],
     ];
 
-    $showNonMembership = collect($nonMembershipItems)->contains(fn ($item) => $permission->can($item['permission']));
-    $showMembership = collect($membershipItems)->contains(fn ($item) => $permission->can($item['permission']));
+    $visibleNonMembershipItems = collect($nonMembershipItems)
+        ->filter(fn (array $item) => Route::has($item['route']) && $permission->can($item['permission']))
+        ->values();
+
+    $visibleMembershipItems = collect($membershipItems)
+        ->filter(fn (array $item) => Route::has($item['route']) && $permission->can($item['permission']))
+        ->values();
+
+    $showNonMembership = $visibleNonMembershipItems->isNotEmpty();
+    $showMembership = $visibleMembershipItems->isNotEmpty();
+
+    $isItemActive = fn (array $item) => request()->routeIs($item['route'])
+        || request()->routeIs(str_replace('.index', '.*', $item['route']));
+
+    $nonMembershipActive = $visibleNonMembershipItems->contains($isItemActive);
+    $membershipActive = $visibleMembershipItems->contains($isItemActive);
 @endphp
 
 <nav class="sidebar" id="sidebar">
@@ -53,7 +72,7 @@
 
     <ul class="nav-menu">
 
-        @if($permission->can('view_dashboard'))
+        @if(Route::has('dashboard') && $permission->can('view_dashboard'))
             <li>
                 <a href="{{ route('dashboard') }}" class="{{ request()->routeIs('dashboard') ? 'active' : '' }}">
                     <i class="fas fa-gauge-high"></i><span>Dashboard</span>
@@ -62,61 +81,57 @@
         @endif
 
         @if($showNonMembership)
-            <li class="dropdown">
-                <button class="dropdown-toggle" type="button" aria-expanded="false">
+            <li class="dropdown {{ $nonMembershipActive ? 'open' : '' }}">
+                <button class="dropdown-toggle {{ $nonMembershipActive ? 'active' : '' }}" type="button" aria-expanded="{{ $nonMembershipActive ? 'true' : 'false' }}">
                     <span class="dropdown-label"><i class="fas fa-user-slash"></i><span>Non-membership</span></span>
                     <i class="fas fa-caret-down dropdown-icon"></i>
                 </button>
 
                 <ul class="dropdown-menu">
-                    @foreach($nonMembershipItems as $item)
-                        @if($permission->can($item['permission']))
-                            <li>
-                                <a href="{{ \Illuminate\Support\Facades\Route::has($item['route']) ? route($item['route']) : '#' }}" class="{{ request()->routeIs($item['route']) ? 'active' : '' }}">
-                                    <i class="{{ $item['icon'] }}"></i> {{ $item['label'] }}
-                                </a>
-                            </li>
-                        @endif
+                    @foreach($visibleNonMembershipItems as $item)
+                        <li>
+                            <a href="{{ route($item['route']) }}" class="{{ $isItemActive($item) ? 'active' : '' }}">
+                                <i class="{{ $item['icon'] }}"></i> {{ $item['label'] }}
+                            </a>
+                        </li>
                     @endforeach
                 </ul>
             </li>
         @endif
 
         @if($showMembership)
-            <li class="dropdown">
-                <button class="dropdown-toggle" type="button" aria-expanded="false">
+            <li class="dropdown {{ $membershipActive ? 'open' : '' }}">
+                <button class="dropdown-toggle {{ $membershipActive ? 'active' : '' }}" type="button" aria-expanded="{{ $membershipActive ? 'true' : 'false' }}">
                     <span class="dropdown-label"><i class="fas fa-users"></i><span>Membership</span></span>
                     <i class="fas fa-caret-down dropdown-icon"></i>
                 </button>
 
                 <ul class="dropdown-menu">
-                    @foreach($membershipItems as $item)
-                        @if($permission->can($item['permission']))
-                            <li>
-                                <a href="{{ \Illuminate\Support\Facades\Route::has($item['route']) ? route($item['route']) : '#' }}" class="{{ request()->routeIs($item['route']) ? 'active' : '' }}">
-                                    <i class="{{ $item['icon'] }}"></i> {{ $item['label'] }}
-                                </a>
-                            </li>
-                        @endif
+                    @foreach($visibleMembershipItems as $item)
+                        <li>
+                            <a href="{{ route($item['route']) }}" class="{{ $isItemActive($item) ? 'active' : '' }}">
+                                <i class="{{ $item['icon'] }}"></i> {{ $item['label'] }}
+                            </a>
+                        </li>
                     @endforeach
                 </ul>
             </li>
         @endif
 
-        @if($permission->can('notifications'))
-            <li><a href="{{ \Illuminate\Support\Facades\Route::has('notifications.index') ? route('notifications.index') : '#' }}" class="{{ request()->routeIs('notifications.index') ? 'active' : '' }}"><i class="fas fa-bell"></i> Notifications</a></li>
+        @if(Route::has('notifications.index') && $permission->can('notifications'))
+            <li><a href="{{ route('notifications.index') }}" class="{{ request()->routeIs('notifications.*') ? 'active' : '' }}"><i class="fas fa-bell"></i> Notifications</a></li>
         @endif
 
-        @if($permission->can('manage_users'))
-            <li><a href="{{ \Illuminate\Support\Facades\Route::has('users.index') ? route('users.index') : '#' }}" class="{{ request()->routeIs('users.index') ? 'active' : '' }}"><i class="fas fa-user-cog"></i> Users</a></li>
+        @if(Route::has('users.index') && $permission->can('manage_users'))
+            <li><a href="{{ route('users.index') }}" class="{{ request()->routeIs('users.*') ? 'active' : '' }}"><i class="fas fa-user-cog"></i> Users</a></li>
         @endif
 
-        @if($permission->can('manage_permissions'))
-            <li><a href="{{ \Illuminate\Support\Facades\Route::has('permissions.index') ? route('permissions.index') : '#' }}" class="{{ request()->routeIs('permissions.index') ? 'active' : '' }}"><i class="fas fa-shield-halved"></i> Permissions</a></li>
+        @if(Route::has('permissions.index') && $permission->can('manage_permissions'))
+            <li><a href="{{ route('permissions.index') }}" class="{{ request()->routeIs('permissions.*') ? 'active' : '' }}"><i class="fas fa-shield-halved"></i> Permissions</a></li>
         @endif
 
-        @if($permission->can('manage_settings'))
-            <li><a href="{{ \Illuminate\Support\Facades\Route::has('settings.index') ? route('settings.index') : '#' }}" class="{{ request()->routeIs('settings.index') ? 'active' : '' }}"><i class="fas fa-gear"></i> Settings</a></li>
+        @if(Route::has('settings.index') && $permission->can('manage_settings'))
+            <li><a href="{{ route('settings.index') }}" class="{{ request()->routeIs('settings.*') ? 'active' : '' }}"><i class="fas fa-gear"></i> Settings</a></li>
         @endif
 
     </ul>

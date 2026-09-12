@@ -1,14 +1,6 @@
 @extends('layouts.app')
 
 @section('content')
-<style>
-@media print {
-    .sidebar, .topbar, .btn, form { display: none !important; }
-    .main-content { margin: 0 !important; padding: 0 !important; }
-    .receipt-card { box-shadow: none !important; border: 1px solid #222 !important; }
-}
-</style>
-
 @php
     $contract = $payment->contract;
     $party = strtolower((string) optional($contract)->contract_for) === 'group'

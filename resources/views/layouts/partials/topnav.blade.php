@@ -6,9 +6,9 @@
     <div class="user-section">
         <span class="user-name">Hello, {{ auth()->user()->name ?? 'User' }}</span>
         <a href="#" class="logout-link"><i class="fa fa-user"></i> Profile</a>
-        <form method="POST" action="{{ route('logout') }}" class="inline-form" style="display:inline">
+        <form method="POST" action="{{ route('logout') }}" class="inline-form">
             @csrf
-            <button type="submit" class="logout-link" style="background:none;border:0;cursor:pointer;font:inherit">
+            <button type="submit" class="logout-link">
                 <i class="fa fa-right-from-bracket"></i> Logout
             </button>
         </form>
