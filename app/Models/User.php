@@ -34,9 +34,6 @@ class User extends Authenticatable
         'status',
         'branch_id',
         'profile_pic',
-        'verification_code',
-        'code_expires',
-        'remember_token',
     ];
 
     protected $hidden = [

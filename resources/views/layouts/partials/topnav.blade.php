@@ -5,7 +5,9 @@
 
     <div class="user-section">
         <span class="user-name">Hello, {{ auth()->user()->name ?? 'User' }}</span>
-        <a href="#" class="logout-link"><i class="fa fa-user"></i> Profile</a>
+        @if(Route::has('member.profile'))
+            <a href="{{ route('member.profile') }}" class="logout-link"><i class="fa fa-user"></i> Profile</a>
+        @endif
         <form method="POST" action="{{ route('logout') }}" class="inline-form">
             @csrf
             <button type="submit" class="logout-link">

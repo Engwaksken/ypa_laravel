@@ -150,7 +150,7 @@ class MemberService
 
         $last = Member::query()
             ->where('membership_id', 'like', $prefix . '%')
-            ->orderByRaw('CAST(SUBSTRING_INDEX(membership_id, "-", -1) AS UNSIGNED) DESC')
+            ->orderByDesc('membership_id')
             ->first();
 
         if ($last && preg_match('/(\d+)$/', (string) $last->membership_id, $m)) {

@@ -12,6 +12,8 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        $middleware->redirectUsersTo(fn () => route('home'));
+
         $middleware->alias([
             'user.status' => \App\Http\Middleware\CheckUserStatus::class,
             'permission' => \App\Http\Middleware\CheckPermission::class,

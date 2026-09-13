@@ -11,9 +11,14 @@ class Activity extends Model
     protected $table = 'activities';
 
     protected $fillable = [
+        'activity_code',
         'activity_type_id',
         'activity_name',
         'description',
+        'start_date',
+        'end_date',
+        'location',
+        'budget',
         'is_promotion',
         'promo_category',
         'promo_item_name',

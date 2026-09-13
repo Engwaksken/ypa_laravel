@@ -146,4 +146,33 @@ class AuthFlowTest extends TestCase
             ->get(route('login'))
             ->assertOk();
     }
+
+    public function test_admin_cannot_edit_a_higher_privileged_user(): void
+    {
+        $admin = User::create([
+            'name' => 'Admin',
+            'email' => 'admin-boundary@test.local',
+            'password' => Hash::make('secret123'),
+            'role' => 'admin',
+            'status' => 'active',
+        ]);
+        $director = User::create([
+            'name' => 'Director',
+            'email' => 'director-boundary@test.local',
+            'password' => Hash::make('secret123'),
+            'role' => 'director',
+            'status' => 'active',
+        ]);
+
+        $this->actingAs($admin)->put(route('users.update', $director), [
+            'name' => 'Changed Director',
+            'email' => $director->email,
+            'role' => 'director',
+            'status' => 'inactive',
+        ])->assertForbidden();
+
+        $freshDirector = $director->fresh();
+        $this->assertSame('Director', $freshDirector->name);
+        $this->assertSame('active', $freshDirector->status);
+    }
 }

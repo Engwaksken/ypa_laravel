@@ -36,7 +36,10 @@ class ActivityRegistrationController extends Controller
     public function show(Request $request): View
     {
         $activityId = (int) $request->query('activity_id', 0);
-        $activity = Activity::query()->with(['type'])->find($activityId);
+        $activity = Activity::query()
+            ->with(['type'])
+            ->whereIn('status', ['Planned', 'Ongoing'])
+            ->find($activityId);
 
         if (!$activity) {
             abort(404, 'Activity not found.');
@@ -54,7 +57,9 @@ class ActivityRegistrationController extends Controller
     public function register(Request $request): RedirectResponse
     {
         $activityId = (int) $request->input('activity_id', 0);
-        $activity = Activity::query()->find($activityId);
+        $activity = Activity::query()
+            ->whereIn('status', ['Planned', 'Ongoing'])
+            ->find($activityId);
 
         if (!$activity) {
             return redirect()

@@ -10,6 +10,12 @@ class Setting extends Model
 
     protected $fillable = ['setting_key', 'setting_value'];
 
+    /**
+     * The legacy settings table is a plain key/value store without
+     * timestamp columns.
+     */
+    public $timestamps = false;
+
     protected static array $cache = [];
 
     /**

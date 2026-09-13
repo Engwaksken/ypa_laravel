@@ -26,6 +26,7 @@ class ActivityParticipant extends Model
         'village',
         'organization',
         'role_title',
+        'attended',
         'attendance_status',
         'notes',
     ];
@@ -33,6 +34,7 @@ class ActivityParticipant extends Model
     protected $casts = [
         'activity_id' => 'integer',
         'member_id' => 'integer',
+        'attended' => 'boolean',
     ];
 
     public function activity(): BelongsTo

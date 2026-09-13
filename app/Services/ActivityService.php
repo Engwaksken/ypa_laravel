@@ -126,14 +126,18 @@ class ActivityService
 
         if ($term !== '') {
             $like = '%' . $term . '%';
-            $query->where(function ($q) use ($like, $term) {
+            $fullNameSql = $query->getConnection()->getDriverName() === 'sqlite'
+                ? "TRIM(COALESCE(first_name, '') || ' ' || COALESCE(last_name, '') || ' ' || COALESCE(other_name, '')) LIKE ?"
+                : "TRIM(CONCAT_WS(' ', COALESCE(first_name,''), COALESCE(last_name,''), COALESCE(other_name,''))) LIKE ?";
+
+            $query->where(function ($q) use ($like, $fullNameSql) {
                 $q->where('membership_id', 'like', $like)
                     ->orWhere('first_name', 'like', $like)
                     ->orWhere('last_name', 'like', $like)
                     ->orWhere('other_name', 'like', $like)
                     ->orWhere('telephone1', 'like', $like)
                     ->orWhere('email', 'like', $like)
-                    ->orWhereRaw("TRIM(CONCAT_WS(' ', COALESCE(first_name,''), COALESCE(last_name,''), COALESCE(other_name,''))) LIKE ?", [$like]);
+                    ->orWhereRaw($fullNameSql, [$like]);
             });
         }
 

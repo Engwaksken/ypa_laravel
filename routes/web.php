@@ -4,11 +4,14 @@ use App\Http\Controllers\ActivityController;
 use App\Http\Controllers\ActivityParticipantController;
 use App\Http\Controllers\ActivityRegistrationController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\BranchController;
+use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ContractController;
 use App\Http\Controllers\ContractPdfController;
 use App\Http\Controllers\ContractTemplateController;
 use App\Http\Controllers\ContractWorkflowController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\GroupController;
 use App\Http\Controllers\HarvestController;
 use App\Http\Controllers\HarvestDueController;
@@ -18,9 +21,16 @@ use App\Http\Controllers\MemberController;
 use App\Http\Controllers\MemberProfileController;
 use App\Http\Controllers\MembershipController;
 use App\Http\Controllers\MobilizerController;
+use App\Http\Controllers\NotificationsController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\ProductController;
+use App\Http\Controllers\PermissionsController;
 use App\Http\Controllers\ReceivableController;
+use App\Http\Controllers\SettingsController;
+use App\Http\Controllers\StockController;
+use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\TerminationController;
+use App\Http\Controllers\UsersController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -213,6 +223,36 @@ Route::middleware(['auth', 'user.status'])->group(function () {
         ->parameters(['contract-templates' => 'contractTemplate']);
 
     Route::resource('contracts', ContractController::class);
+});
+
+/* ============================================================
+   Administration: settings, users, permissions, notifications
+   ============================================================ */
+
+Route::middleware(['auth', 'user.status'])->group(function () {
+    // Settings (site identity + branding).
+    Route::get('/settings', [SettingsController::class, 'index'])->name('settings.index');
+    Route::put('/settings', [SettingsController::class, 'update'])->name('settings.update');
+
+    // Users (admin CRUD).
+    Route::resource('users', UsersController::class);
+
+    Route::resource('branches', BranchController::class)->only(['index', 'store', 'update', 'destroy']);
+    Route::resource('products', ProductController::class)->only(['index', 'store', 'update', 'destroy']);
+    Route::resource('categories', CategoryController::class)->only(['store', 'update', 'destroy']);
+    Route::resource('stock', StockController::class)->only(['index', 'store', 'update', 'destroy']);
+    Route::resource('customers', CustomerController::class)->only(['index', 'store', 'update', 'destroy']);
+    Route::resource('suppliers', SupplierController::class)->only(['index', 'store', 'update', 'destroy']);
+
+    // Permissions (role matrix).
+    Route::get('/permissions', [PermissionsController::class, 'index'])->name('permissions.index');
+    Route::put('/permissions', [PermissionsController::class, 'update'])->name('permissions.update');
+
+    // Notifications.
+    Route::get('/notifications', [NotificationsController::class, 'index'])->name('notifications.index');
+    Route::post('/notifications/read-all', [NotificationsController::class, 'markAllRead'])->name('notifications.read-all');
+    Route::patch('/notifications/{notification}/read', [NotificationsController::class, 'markRead'])->name('notifications.read');
+    Route::delete('/notifications/{notification}', [NotificationsController::class, 'destroy'])->name('notifications.destroy');
 });
 
 /* ============================================================

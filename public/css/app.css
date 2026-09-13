@@ -1000,6 +1000,95 @@ button.logout-link {
 }
 
 /* ------------------------------------------------------------
+   Flash popups (global toast stack)
+   ------------------------------------------------------------ */
+
+.ypa-flash-stack {
+    position: sticky;
+    top: 72px;
+    z-index: 1050;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.ypa-flash {
+    display: flex;
+    align-items: flex-start;
+    gap: 4px;
+    border-radius: 12px;
+    box-shadow: 0 12px 28px rgba(15, 23, 42, .16);
+    font-weight: 600;
+}
+
+.ypa-flash ul {
+    margin-bottom: 0;
+}
+
+/* ------------------------------------------------------------
+   Tabs (Bootstrap tabs with YPA theme + legacy-style tab bars)
+   ------------------------------------------------------------ */
+
+.ypa-tabs {
+    border-bottom: 2px solid var(--ds-border);
+    gap: 4px;
+}
+
+.ypa-tabs .nav-link {
+    color: var(--ds-text-muted);
+    font-weight: 700;
+    border: 0;
+    border-bottom: 3px solid transparent;
+    border-radius: 0;
+    padding: 10px 16px;
+    margin-bottom: -2px;
+}
+
+.ypa-tabs .nav-link:hover {
+    color: var(--ds-brand);
+    border-bottom-color: #bae6fd;
+}
+
+.ypa-tabs .nav-link.active {
+    color: var(--ds-brand-dark);
+    border-bottom-color: var(--ds-brand);
+    background: transparent;
+}
+
+.ypa-tab-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.ypa-tab-bar .btn.active,
+.ypa-tab-bar .btn[aria-selected="true"] {
+    background: var(--ds-brand-dark);
+    border-color: var(--ds-brand-dark);
+    color: #fff;
+}
+
+/* ------------------------------------------------------------
+   Modal polish (Bootstrap modals with YPA theme)
+   ------------------------------------------------------------ */
+
+.ypa-modal-form .form-group {
+    margin-bottom: 14px;
+}
+
+.modal-title .fa-trash-can {
+    color: #dc2626;
+}
+
+@media (max-width: 767.98px) {
+    .ypa-flash-stack {
+        top: 66px;
+    }
+}
+
+/* ------------------------------------------------------------
    Responsive
    ------------------------------------------------------------ */
 

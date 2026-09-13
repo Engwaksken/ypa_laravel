@@ -25,8 +25,11 @@
 @include('layouts.partials.sidebar')
 
 <main class="main-content">
+    @include('layouts.partials.flash')
     @yield('content')
 </main>
+
+@include('layouts.partials.confirm-delete')
 
 <script>
 (function () {

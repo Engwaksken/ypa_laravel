@@ -85,7 +85,7 @@ class PermissionService
 
     public function superRoles(): array
     {
-        return ['director', 'supper_admin', 'admin'];
+        return ['supper_admin'];
     }
 
     /* ============================================================
@@ -704,7 +704,9 @@ class PermissionService
                 $this->group('harvest_manage'),
                 $this->group('harvest_due_full'),
                 $this->group('harvest_requests_view'),
+                $this->group('harvest_requests_review'),
                 $this->group('harvest_requests_approve'),
+                $this->group('harvest_requests_pay'),
                 $this->group('harvest_requests_reject'),
                 $this->group('payments_view'),
                 $this->group('payments_maintain'),
@@ -1140,16 +1142,19 @@ class PermissionService
             return false;
         }
 
-        if (in_array($role, $this->superRoles(), true)) {
-            return true;
-        }
-
         $requested = [];
 
         foreach ((array) $permissions as $permission) {
             $permission = $this->normalizePermission($permission);
             if ($permission !== '') {
                 $requested[] = $permission;
+
+                // Middleware may use a permission-group name (for example,
+                // harvest_manage) while role defaults store the individual
+                // permissions in that group.
+                if (array_key_exists($permission, $this->permissionGroups())) {
+                    $requested = array_merge($requested, $this->group($permission));
+                }
             }
         }
 
@@ -1157,16 +1162,6 @@ class PermissionService
             return false;
         }
 
-        // Sidebar navigation role map (legacy nav_can()).
-        $map = $this->navPermissionRoleMap();
-
-        foreach ($requested as $permission) {
-            if (isset($map[$permission]) && $this->roleAllowed($map[$permission], $user)) {
-                return true;
-            }
-        }
-
-        // Effective permissions (legacy can()).
         $effective = $this->effectivePermissionsForRole($role);
 
         if (in_array('*', $effective, true)) {
@@ -1180,6 +1175,17 @@ class PermissionService
         }
 
         return false;
+    }
+
+    public function clearEffectiveCache(?string $role = null): void
+    {
+        if ($role === null) {
+            static::$effectiveCache = [];
+
+            return;
+        }
+
+        unset(static::$effectiveCache[$this->normalizeRole($role)]);
     }
 
     public function canAny(string|array $permissions, ?User $user = null): bool
@@ -1228,6 +1234,47 @@ class PermissionService
             'customer' => 'Customer',
             default => ucwords(str_replace('_', ' ', $role)),
         };
+    }
+
+    public function roleHierarchy(): array
+    {
+        return [
+            'supper_admin' => 100,
+            'director' => 90,
+            'admin' => 80,
+            'manager' => 70,
+            'finance_lead' => 60,
+            'accountant' => 55,
+            'head_records' => 50,
+            'records_officer' => 45,
+            'head_procurement' => 40,
+            'assistant_procurement' => 35,
+            'payment_harvest' => 30,
+            'member' => 10,
+            'customer' => 5,
+        ];
+    }
+
+    public function roleLevel(string $role): int
+    {
+        $role = $this->normalizeRole($role);
+        return $this->roleHierarchy()[$role] ?? 0;
+    }
+
+    public function canManageRole(string $targetRole, ?User $user = null): bool
+    {
+        $user = $user ?? auth()->user();
+        if (!$user) {
+            return false;
+        }
+        $currentLevel = $this->roleLevel($user->role);
+        $targetLevel = $this->roleLevel($targetRole);
+        return $currentLevel > $targetLevel;
+    }
+
+    public function isHighestPrivileged(string $role): bool
+    {
+        return $this->normalizeRole($role) === 'supper_admin';
     }
 
     /**

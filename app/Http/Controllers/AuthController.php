@@ -102,6 +102,10 @@ class AuthController extends Controller
             return redirect()->route('login');
         }
 
+        if (!$user->isActive()) {
+            return redirect()->route('login')->withErrors(['email' => 'This account is inactive.']);
+        }
+
         if ($user->code_expires && $user->code_expires->lt(now())) {
             return back()->withErrors(['code' => 'Verification code has expired. Please request a new one.']);
         }
@@ -138,6 +142,10 @@ class AuthController extends Controller
 
         if (!$user) {
             return redirect()->route('login');
+        }
+
+        if (!$user->isActive()) {
+            return redirect()->route('login')->withErrors(['email' => 'This account is inactive.']);
         }
 
         $code = sprintf('%06d', random_int(0, 999999));

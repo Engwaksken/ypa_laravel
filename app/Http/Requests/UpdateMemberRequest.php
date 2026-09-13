@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Member;
 use App\Services\MemberService;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -58,7 +59,8 @@ class UpdateMemberRequest extends FormRequest
         $validator->after(function ($validator) {
             $service = app(MemberService::class);
             $data = $this->all();
-            $memberId = (int) $this->route('member');
+            $member = $this->route('member');
+            $memberId = $member instanceof Member ? (int) $member->getKey() : (int) $member;
 
             foreach (['telephone1' => 'Phone 1', 'telephone2' => 'Phone 2', 'mother_phone' => 'Mother phone', 'father_phone' => 'Father phone'] as $field => $label) {
                 $value = (string) ($data[$field] ?? '');

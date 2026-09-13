@@ -90,7 +90,7 @@ class MemberProfileController extends Controller
             'mother_phone' => ['nullable', 'string'],
             'father_name' => ['nullable', 'string'],
             'father_phone' => ['nullable', 'string'],
-            'account_type' => ['required', Rule::in(MemberService::ACCOUNT_TYPES)],
+            'account_type' => ['nullable', Rule::in(MemberService::ACCOUNT_TYPES)],
         ]);
 
         // Phone validation.
@@ -117,37 +117,39 @@ class MemberProfileController extends Controller
         // Uganda rule.
         $isUganda = strtolower(trim((string) ($data['nationality'] ?? ''))) === 'uganda';
         if ($isUganda) {
-            if (trim((string) ($data['address'] ?? '')) === '') {
+            if (trim((string) ($data['address'] ?? $member->address)) === '') {
                 return back()->withErrors(['address' => 'Address/Residence is required for Ugandan nationals.'])->withInput();
             }
-            if (trim((string) ($data['region'] ?? '')) === '') {
+            if (trim((string) ($data['region'] ?? $member->region)) === '') {
                 return back()->withErrors(['region' => 'Region is required for Ugandan nationals.'])->withInput();
             }
-            if (trim((string) ($data['district_residence'] ?? '')) === '') {
+            if (trim((string) ($data['district_residence'] ?? $member->district_residence)) === '') {
                 return back()->withErrors(['district_residence' => 'District of Residence is required for Ugandan nationals.'])->withInput();
             }
         }
 
+        $value = fn (string $field) => array_key_exists($field, $data) ? $data[$field] : $member->{$field};
+
         $member->update([
-            'email' => $this->memberService->nullIfEmpty((string) ($data['email'] ?? '')),
-            'telephone1' => $this->memberService->normalizePhone((string) ($data['telephone1'] ?? '')),
-            'telephone2' => $this->memberService->normalizePhone((string) ($data['telephone2'] ?? '')),
-            'address' => $this->memberService->nullIfEmpty((string) ($data['address'] ?? '')),
-            'nationality' => $this->memberService->nullIfEmpty((string) ($data['nationality'] ?? '')),
-            'region' => $this->memberService->nullIfEmpty((string) ($data['region'] ?? '')),
-            'district_residence' => $this->memberService->nullIfEmpty((string) ($data['district_residence'] ?? '')),
-            'district' => $this->memberService->nullIfEmpty((string) ($data['district'] ?? '')),
+            'email' => $this->memberService->nullIfEmpty((string) $value('email')),
+            'telephone1' => $this->memberService->normalizePhone((string) $value('telephone1')),
+            'telephone2' => $this->memberService->normalizePhone((string) $value('telephone2')),
+            'address' => $this->memberService->nullIfEmpty((string) $value('address')),
+            'nationality' => $this->memberService->nullIfEmpty((string) $value('nationality')),
+            'region' => $this->memberService->nullIfEmpty((string) $value('region')),
+            'district_residence' => $this->memberService->nullIfEmpty((string) $value('district_residence')),
+            'district' => $this->memberService->nullIfEmpty((string) $value('district')),
             'employment_status' => $this->memberService->employmentValue((string) ($data['employment_status'] ?? ''), (string) ($data['employment_other'] ?? '')),
             'employment_other' => $this->memberService->nullIfEmpty((string) ($data['employment_other'] ?? '')),
-            'marital_status' => $this->memberService->nullIfEmpty((string) ($data['marital_status'] ?? '')),
-            'children_count' => max(0, (int) ($data['children_count'] ?? 0)),
+            'marital_status' => $this->memberService->nullIfEmpty((string) $value('marital_status')),
+            'children_count' => max(0, (int) $value('children_count')),
             'source' => $this->memberService->sourceValue((string) ($data['source'] ?? ''), (string) ($data['source_other'] ?? '')),
             'source_other' => $this->memberService->nullIfEmpty((string) ($data['source_other'] ?? '')),
-            'mother_name' => $this->memberService->nullIfEmpty((string) ($data['mother_name'] ?? '')),
-            'mother_phone' => $this->memberService->normalizePhone((string) ($data['mother_phone'] ?? '')),
-            'father_name' => $this->memberService->nullIfEmpty((string) ($data['father_name'] ?? '')),
-            'father_phone' => $this->memberService->normalizePhone((string) ($data['father_phone'] ?? '')),
-            'account_type' => $this->memberService->nullIfEmpty((string) ($data['account_type'] ?? '')),
+            'mother_name' => $this->memberService->nullIfEmpty((string) $value('mother_name')),
+            'mother_phone' => $this->memberService->normalizePhone((string) $value('mother_phone')),
+            'father_name' => $this->memberService->nullIfEmpty((string) $value('father_name')),
+            'father_phone' => $this->memberService->normalizePhone((string) $value('father_phone')),
+            'account_type' => $this->memberService->nullIfEmpty((string) $value('account_type')),
         ]);
 
         return redirect()->route('member.profile')->with('success', 'Profile updated successfully.');

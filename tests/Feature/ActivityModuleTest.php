@@ -60,6 +60,20 @@ class ActivityModuleTest extends TestCase
             });
         }
 
+        if (!Schema::hasTable('members')) {
+            Schema::create('members', function (Blueprint $table) {
+                $table->bigIncrements('id');
+                $table->string('membership_id')->unique();
+                $table->string('first_name')->nullable();
+                $table->string('last_name')->nullable();
+                $table->string('other_name')->nullable();
+                $table->string('telephone1')->nullable();
+                $table->string('email')->nullable();
+                $table->unsignedBigInteger('branch_id')->nullable()->index();
+                $table->timestamps();
+            });
+        }
+
         // Reproduce the Activities module tables.
         if (!Schema::hasTable('activity_types')) {
             Schema::create('activity_types', function (Blueprint $table) {
@@ -438,6 +452,27 @@ class ActivityModuleTest extends TestCase
         $this->post(route('activity-registration.register'), [
             'activity_id' => $activity->id,
         ])->assertSessionHas('external_error');
+    }
+
+    public function test_public_registration_rejects_cancelled_activity(): void
+    {
+        $activity = $this->createActivity(['status' => 'Cancelled']);
+
+        $this->get(route('activity-registration', ['activity_id' => $activity->id]))
+            ->assertNotFound();
+
+        $this->post(route('activity-registration.register'), [
+            'activity_id' => $activity->id,
+            'first_name' => 'External',
+            'last_name' => 'Person',
+            'gender' => 'Female',
+            'phone' => '+256780000002',
+        ])->assertRedirect();
+
+        $this->assertDatabaseMissing('activity_participants', [
+            'activity_id' => $activity->id,
+            'participant_type' => 'External',
+        ]);
     }
 
     /* ---------------------------------------------------------------

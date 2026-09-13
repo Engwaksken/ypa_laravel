@@ -25,12 +25,13 @@ class ContractServiceTest extends TestCase
     {
         $service = new ContractService();
 
-        $html = '<div onclick="alert(1)"><script>alert(2)</script><style>body{}</style><a href="javascript:alert(3)">link</a></div>';
+        $html = '<div onclick="alert(1)"><script>alert(2)</script><style>body{}</style><a href="javascript:alert(3)">link</a><form><img src="x" onerror="alert(4)"></form></div>';
         $sanitized = $service->sanitizeHtml($html);
 
         $this->assertStringNotContainsString('<script', $sanitized);
         $this->assertStringNotContainsString('<style', $sanitized);
         $this->assertStringNotContainsString('onclick=', $sanitized);
+        $this->assertStringNotContainsString('onerror=', $sanitized);
         $this->assertStringNotContainsString('javascript:', $sanitized);
     }
 }

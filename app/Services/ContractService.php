@@ -150,12 +150,18 @@ class ContractService
             'table', 'tbody', 'td', 'tfoot', 'th', 'thead', 'tr', 'u', 'ul',
         ];
 
-        for ($child = $node->lastChild; $child !== null; $child = $child->previousSibling) {
+        $child = $node->lastChild;
+
+        while ($child !== null) {
+            $previousSibling = $child->previousSibling;
+
             if ($child instanceof \DOMElement) {
                 $tag = strtolower($child->tagName);
 
                 if (!in_array($tag, $allowedTags, true)) {
+                    $this->sanitizeDomNode($child);
                     $this->unwrapNode($child);
+                    $child = $previousSibling;
                     continue;
                 }
 
@@ -164,6 +170,8 @@ class ContractService
             } elseif ($child->hasChildNodes()) {
                 $this->sanitizeDomNode($child);
             }
+
+            $child = $previousSibling;
         }
     }
 
