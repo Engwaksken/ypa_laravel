@@ -206,6 +206,20 @@ button.logout-link {
     padding: 12px 16px;
     min-height: 46px;
     transition: background-color .18s ease, color .18s ease;
+    min-width: 0;
+    line-height: 1.25;
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+
+.nav-menu li {
+    width: 100%;
+}
+
+.nav-menu li a > span,
+.nav-menu .dropdown-label > span {
+    min-width: 0;
+    flex: 1 1 auto;
 }
 
 .nav-menu li a:hover,
@@ -224,6 +238,10 @@ button.logout-link {
     width: 1.25rem;
     flex: 0 0 1.25rem;
     text-align: center;
+}
+
+.nav-menu li a > i:first-child {
+    flex-shrink: 0;
 }
 
 .nav-menu li a.active {
@@ -253,6 +271,10 @@ button.logout-link {
     display: inline-flex;
     align-items: center;
     gap: .65rem;
+    min-width: 0;
+    flex: 1 1 auto;
+    white-space: normal;
+    overflow-wrap: anywhere;
 }
 
 .nav-menu .dropdown-icon {
@@ -302,6 +324,11 @@ button.logout-link {
     border-radius: 12px;
     background: transparent !important;
     color: #fff;
+    min-width: 0;
+}
+
+.nav-menu .dropdown-menu li a > i:first-child {
+    margin-top: .1rem;
 }
 
 .nav-menu .dropdown-menu li a:hover {
@@ -338,6 +365,7 @@ button.logout-link {
     padding-top: 60px;
     min-height: 100vh;
     min-width: 0;
+    overflow-x: hidden;
 }
 
 @media (min-width: 992px) {
@@ -842,6 +870,7 @@ button.logout-link {
     width: 100%;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
 }
 
 .table {
@@ -870,6 +899,30 @@ button.logout-link {
 .table td .d-flex,
 .table td form.d-inline {
     white-space: nowrap;
+}
+
+.table td {
+    max-width: 320px;
+    overflow-wrap: anywhere;
+}
+
+.table td.text-end {
+    min-width: 132px;
+    white-space: nowrap;
+}
+
+.table td .btn {
+    min-width: 34px;
+}
+
+.table td .btn + .btn,
+.table td form + .btn,
+.table td .btn + form {
+    margin-left: .2rem;
+}
+
+.table tbody tr:last-child td {
+    border-bottom: 0;
 }
 
 .badge {
@@ -904,6 +957,15 @@ button.logout-link {
     border: 0;
     border-radius: 16px;
     box-shadow: 0 24px 60px rgba(15, 23, 42, .24);
+}
+
+.modal-header {
+    background: #f8fafc;
+}
+
+.modal-body {
+    max-height: min(68vh, 720px);
+    overflow-y: auto;
 }
 
 .modal-header,
@@ -956,6 +1018,17 @@ button.logout-link {
 
     .user-section {
         gap: 10px;
+    }
+
+    .table {
+        min-width: 680px;
+    }
+
+    .table td.text-end {
+        position: sticky;
+        right: 0;
+        background: var(--ds-surface);
+        box-shadow: -8px 0 12px rgba(15, 23, 42, .06);
     }
 }
 

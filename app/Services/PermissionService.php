@@ -160,6 +160,10 @@ class PermissionService
                 'manage_settings',
             ],
 
+            'orders' => [
+                'manage_orders',
+            ],
+
             'notifications' => [
                 'notifications',
                 'notification',
@@ -559,6 +563,28 @@ class PermissionService
                 'view_projects',
             ],
 
+            'projects_manage' => [
+                'projects_create',
+                'create_projects',
+                'projects_edit',
+                'edit_projects',
+                'projects_delete',
+                'delete_projects',
+                'projects_export',
+                'export_projects',
+            ],
+
+            'project_categories' => [
+                'project_categories',
+                'manage_project_categories',
+                'projects_categories',
+                'project_categories_manage',
+                'project_categories_create',
+                'project_categories_edit',
+                'project_categories_delete',
+                'project_categories_export',
+            ],
+
             'activities' => [
                 'activities',
                 'activities_view',
@@ -621,6 +647,7 @@ class PermissionService
         return match ($role) {
             'director' => $this->mergePermissions(
                 $this->group('dashboard'),
+                $this->group('orders'),
                 $this->group('notifications'),
                 $this->group('membership_view'),
                 $this->group('membership_manage'),
@@ -650,13 +677,16 @@ class PermissionService
                 $this->group('all_branches'),
                 $this->group('reports'),
                 $this->group('projects'),
+                $this->group('projects_manage'),
+                $this->group('project_categories'),
                 $this->group('activities'),
                 $this->group('products_view'),
-                $this->group('products_manage')
-            ),
+             $this->group('products_manage')
+             ),
 
             'manager' => $this->mergePermissions(
                 $this->group('dashboard'),
+                $this->group('orders'),
                 $this->group('notifications'),
                 $this->group('membership_view'),
                 $this->group('membership_manage'),
@@ -683,6 +713,8 @@ class PermissionService
                 $this->group('all_branches'),
                 $this->group('reports'),
                 $this->group('projects'),
+                $this->group('projects_manage'),
+                $this->group('project_categories'),
                 $this->group('activities'),
                 $this->group('products_view'),
                 $this->group('products_manage')
@@ -690,6 +722,7 @@ class PermissionService
 
             'admin' => $this->mergePermissions(
                 $this->group('dashboard'),
+                $this->group('orders'),
                 $this->group('administration'),
                 $this->group('notifications'),
                 $this->group('membership_view'),
@@ -723,6 +756,8 @@ class PermissionService
                 $this->group('all_branches'),
                 $this->group('reports'),
                 $this->group('projects'),
+                $this->group('projects_manage'),
+                $this->group('project_categories'),
                 $this->group('activities'),
                 $this->group('products_view'),
                 $this->group('products_manage')
@@ -785,7 +820,10 @@ class PermissionService
                 $this->group('all_branches'),
                 $this->group('reports'),
                 $this->group('products_view'),
-                $this->group('products_manage')
+                $this->group('products_manage'),
+                $this->group('projects'),
+                $this->group('projects_manage'),
+                $this->group('project_categories')
             ),
 
             'accountant' => $this->mergePermissions(

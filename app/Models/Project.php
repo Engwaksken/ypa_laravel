@@ -12,6 +12,8 @@ class Project extends Model
 
     protected $fillable = [
         'project_category_id',
+        'project_type_id',
+        'branch_id',
         'project_name',
         'project_code',
         'description',
@@ -20,20 +22,34 @@ class Project extends Model
         'registration_fee',
         'administrative_fee',
         'status',
+        'created_by',
     ];
 
     protected $casts = [
         'branch_id' => 'integer',
         'project_category_id' => 'integer',
         'project_type_id' => 'integer',
+        'created_by' => 'integer',
         'registration_fee' => 'decimal:2',
         'administrative_fee' => 'decimal:2',
+        'start_date' => 'date',
+        'end_date' => 'date',
         'status' => 'string',
     ];
 
     public function branch(): BelongsTo
     {
         return $this->belongsTo(Branch::class, 'branch_id');
+    }
+
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(ProjectCategory::class, 'project_category_id');
+    }
+
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
     }
 
     public function contracts(): HasMany

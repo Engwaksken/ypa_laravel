@@ -22,8 +22,12 @@ use App\Http\Controllers\MemberProfileController;
 use App\Http\Controllers\MembershipController;
 use App\Http\Controllers\MobilizerController;
 use App\Http\Controllers\NotificationsController;
+use App\Http\Controllers\GuestOrderController;
+use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\ProjectCategoryController;
 use App\Http\Controllers\PermissionsController;
 use App\Http\Controllers\ReceivableController;
 use App\Http\Controllers\SettingsController;
@@ -48,6 +52,9 @@ Route::get('/', function () {
 Route::get('/home', function () {
     return redirect()->route('dashboard');
 })->name('home');
+
+Route::get('/place-order', [GuestOrderController::class, 'create'])->name('place-order');
+Route::post('/place-order', [GuestOrderController::class, 'store'])->name('place-order.store');
 
 /* ============================================================
    Authentication (OTP flow)
@@ -243,6 +250,21 @@ Route::middleware(['auth', 'user.status'])->group(function () {
     Route::resource('stock', StockController::class)->only(['index', 'store', 'update', 'destroy']);
     Route::resource('customers', CustomerController::class)->only(['index', 'store', 'update', 'destroy']);
     Route::resource('suppliers', SupplierController::class)->only(['index', 'store', 'update', 'destroy']);
+    Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
+    Route::get('/orders/{order}', [OrderController::class, 'show'])->name('orders.show');
+    Route::patch('/orders/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.status');
+
+    // Projects module (Operations).
+    Route::get('/projects/export', [ProjectController::class, 'export'])->name('projects.export')->middleware('throttle:10,1');
+    Route::get('/projects/ajax/details', [ProjectController::class, 'getProjectDetails'])
+        ->name('projects.ajax.details')
+        ->middleware('permission:projects');
+    Route::resource('projects', ProjectController::class)->except(['create', 'edit', 'show']);
+
+    // Project categories (admin/manager/director reference data).
+    Route::get('/project-categories/export', [ProjectCategoryController::class, 'export'])->name('project-categories.export')->middleware('throttle:10,1');
+    Route::get('/project-categories/{projectCategory}/edit-data', [ProjectCategoryController::class, 'getCategoryDetails'])->name('project-categories.edit-data');
+    Route::resource('project-categories', ProjectCategoryController::class)->only(['index', 'store', 'update', 'destroy']);
 
     // Permissions (role matrix).
     Route::get('/permissions', [PermissionsController::class, 'index'])->name('permissions.index');

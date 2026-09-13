@@ -22,5 +22,8 @@ class ContractRoutesTest extends TestCase
         $this->assertTrue(Route::has('stock.index'));
         $this->assertTrue(Route::has('customers.index'));
         $this->assertTrue(Route::has('suppliers.index'));
+        $this->assertTrue(Route::has('orders.index'));
+        $this->assertTrue(Route::has('orders.status'));
+        $this->assertTrue(Route::has('place-order.store'));
     }
 }
