@@ -12,6 +12,7 @@ use App\Http\Controllers\ContractTemplateController;
 use App\Http\Controllers\ContractWorkflowController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\GroupController;
 use App\Http\Controllers\HarvestController;
 use App\Http\Controllers\HarvestDueController;
@@ -265,6 +266,12 @@ Route::middleware(['auth', 'user.status'])->group(function () {
     Route::get('/project-categories/export', [ProjectCategoryController::class, 'export'])->name('project-categories.export')->middleware('throttle:10,1');
     Route::get('/project-categories/{projectCategory}/edit-data', [ProjectCategoryController::class, 'getCategoryDetails'])->name('project-categories.edit-data');
     Route::resource('project-categories', ProjectCategoryController::class)->only(['index', 'store', 'update', 'destroy']);
+
+    // Expenses module (Finance: manual expenses + harvest payout liabilities).
+    Route::get('/expenses/export', [ExpenseController::class, 'export'])->name('expenses.export')->middleware('throttle:10,1');
+    Route::get('/expenses/template', [ExpenseController::class, 'template'])->name('expenses.template');
+    Route::post('/expenses/import', [ExpenseController::class, 'import'])->name('expenses.import')->middleware('throttle:5,1');
+    Route::resource('expenses', ExpenseController::class)->only(['index', 'store', 'update', 'destroy']);
 
     // Permissions (role matrix).
     Route::get('/permissions', [PermissionsController::class, 'index'])->name('permissions.index');
