@@ -6,9 +6,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Dashboard') - {{ $siteName }}</title>
 
-    <link rel="icon" href="{{ asset($siteFavicon) }}">
-    <link rel="shortcut icon" href="{{ asset($siteFavicon) }}">
-    <link rel="apple-touch-icon" href="{{ asset($siteFavicon) }}">
+    @include('layouts.partials.branding-favicons', ['siteFavicon' => $siteFavicon])
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">

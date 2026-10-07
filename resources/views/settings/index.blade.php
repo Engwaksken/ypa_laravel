@@ -48,18 +48,18 @@
                     <div class="tab-pane fade" id="settings-branding" role="tabpanel">
                         <div class="row g-3">
                             <div class="col-md-6">
-                                <label class="form-label">Site Logo</label>
+                                <label class="form-label" for="site-logo-upload">Site Logo</label>
                                 <div class="mb-2">
-                                    <img src="{{ asset($siteLogo !== '' ? $siteLogo : 'images/logo.png') }}" alt="Site logo" style="max-width:150px;max-height:70px;object-fit:contain;background:#f1f5f9;border-radius:8px;padding:6px;">
+                                    <img id="site-logo-preview" src="{{ asset($siteLogo ?: 'images/logo.png') }}" data-original-src="{{ asset($siteLogo ?: 'images/logo.png') }}" data-fallback="{{ asset('images/logo.png') }}" onerror="this.onerror = null; this.src = this.dataset.fallback;" alt="Site logo" style="max-width:150px;max-height:70px;object-fit:contain;background:#f1f5f9;border-radius:8px;padding:6px;">
                                 </div>
-                                <input type="file" name="site_logo" class="form-control" accept="image/*">
+                                <input type="file" id="site-logo-upload" name="site_logo" class="form-control" accept="image/*" data-branding-preview="site-logo-preview">
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label">Favicon</label>
+                                <label class="form-label" for="site-favicon-upload">Favicon</label>
                                 <div class="mb-2">
-                                    <img src="{{ asset($siteFavicon !== '' ? $siteFavicon : 'images/favicon.png') }}" alt="Favicon" style="max-width:48px;max-height:48px;object-fit:contain;background:#f1f5f9;border-radius:8px;padding:6px;">
+                                    <img id="site-favicon-preview" src="{{ asset($siteFavicon ?: 'images/favicon.png') }}" data-original-src="{{ asset($siteFavicon ?: 'images/favicon.png') }}" data-fallback="{{ asset('images/favicon.png') }}" onerror="this.onerror = null; this.src = this.dataset.fallback;" alt="Favicon" style="max-width:48px;max-height:48px;object-fit:contain;background:#f1f5f9;border-radius:8px;padding:6px;">
                                 </div>
-                                <input type="file" name="site_favicon" class="form-control" accept="image/*">
+                                <input type="file" id="site-favicon-upload" name="site_favicon" class="form-control" accept="image/*" data-branding-preview="site-favicon-preview">
                             </div>
                         </div>
                     </div>
@@ -74,3 +74,47 @@
 
 </div>
 @endsection
+
+@push('scripts')
+<script>
+(function () {
+    const branding = document.getElementById('settings-branding');
+    if (!branding) return;
+
+    branding.querySelectorAll('input[data-branding-preview]').forEach(function (input) {
+        const preview = document.getElementById(input.dataset.brandingPreview);
+        if (!preview) return;
+        let objectUrl = null;
+
+        function releaseObjectUrl() {
+            if (objectUrl) {
+                URL.revokeObjectURL(objectUrl);
+                objectUrl = null;
+            }
+        }
+
+        function updatePreview() {
+            releaseObjectUrl();
+            const file = input.files && input.files[0];
+            preview.onerror = function () {
+                preview.onerror = null;
+                releaseObjectUrl();
+                preview.src = preview.dataset.fallback;
+            };
+            objectUrl = file ? URL.createObjectURL(file) : null;
+            preview.src = objectUrl || preview.dataset.originalSrc;
+        }
+
+        input.addEventListener('change', updatePreview);
+        input.form.addEventListener('reset', function () {
+            // Wait for the browser to clear the file input after the reset event.
+            setTimeout(updatePreview, 0);
+        });
+        window.addEventListener('pagehide', releaseObjectUrl);
+        window.addEventListener('pageshow', function (event) {
+            if (event.persisted) updatePreview();
+        });
+    });
+})();
+</script>
+@endpush

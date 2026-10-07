@@ -63,9 +63,7 @@
 <nav class="sidebar" id="sidebar">
     <div class="brand">
         <a href="{{ $homeUrl }}" class="brand-link">
-            @if($siteLogo)
-                <img src="{{ asset($siteLogo) }}" alt="{{ $siteName }}" class="brand-logo">
-            @endif
+            <img src="{{ asset($siteLogo ?: 'images/logo.png') }}" alt="{{ $siteName }}" class="brand-logo" data-fallback="{{ asset('images/logo.png') }}" onerror="this.onerror = null; this.src = this.dataset.fallback;">
             <span class="brand-name">{{ $siteName }}</span>
         </a>
     </div>

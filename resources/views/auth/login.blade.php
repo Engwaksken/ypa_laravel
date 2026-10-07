@@ -1,23 +1,12 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - {{ $siteName }}</title>
+@extends('layouts.auth')
 
-    <link rel="icon" type="image/png" href="{{ asset($siteFavicon) }}">
-    <link rel="apple-touch-icon" href="{{ asset($siteFavicon) }}">
+@section('title', 'Login')
 
-    <link rel="stylesheet" href="{{ asset('css/app.css') }}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-</head>
-<body>
+@section('content')
 <div class="auth-wrap">
     <div class="auth-card">
         <div class="auth-logo">
-            @if($siteLogo)
-                <img src="{{ asset($siteLogo) }}" alt="{{ $siteName }}">
-            @endif
+            <img src="{{ asset($siteLogo ?: 'images/logo.png') }}" alt="{{ $siteName }}" data-fallback="{{ asset('images/logo.png') }}" onerror="this.onerror = null; this.src = this.dataset.fallback;">
         </div>
 
         <p class="auth-subtitle">Please sign in to your account</p>
@@ -51,5 +40,4 @@
         </p>
     </div>
 </div>
-</body>
-</html>
+@endsection

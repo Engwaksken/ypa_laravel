@@ -483,26 +483,37 @@ button.logout-link {
 .dash-grid {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 14px;
+    gap: 10px;
 }
+
+.dash-grid.d-grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.dash-grid.d-grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.dash-grid.d-grid-5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+
+.dash-grid > .dash-card:nth-child(5n + 2) { --ds-card-accent: #15803d; }
+.dash-grid > .dash-card:nth-child(5n + 3) { --ds-card-accent: #b45309; }
+.dash-grid > .dash-card:nth-child(5n + 4) { --ds-card-accent: #7c3aed; }
+.dash-grid > .dash-card:nth-child(5n + 5) { --ds-card-accent: #be123c; }
 
 .dash-card {
     background: var(--ds-surface);
     border: 1px solid var(--ds-border);
+    border-left: 4px solid var(--ds-card-accent, var(--ds-brand));
     border-radius: var(--ds-radius);
-    padding: 18px;
+    padding: 12px 14px;
     text-decoration: none;
     color: inherit;
     box-shadow: var(--ds-shadow);
     transition: .18s;
-    min-height: 132px;
+    min-height: 96px;
+    min-width: 0;
     display: block;
 }
 
 .dash-card:hover {
     transform: translateY(-2px);
     box-shadow: var(--ds-shadow-hover);
-    border-color: #0094d2;
+    border-left-color: var(--ds-card-accent, var(--ds-brand));
 }
 
 .dash-card-top {
@@ -521,29 +532,31 @@ button.logout-link {
 }
 
 .dash-card-icon {
-    width: 42px;
-    height: 42px;
-    border-radius: 13px;
+    width: 30px;
+    height: 30px;
+    flex-shrink: 0;
+    border-radius: 9px;
     background: var(--ds-cyan-bg);
-    color: var(--ds-brand-dark);
+    color: var(--ds-card-accent, var(--ds-brand-dark));
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1rem;
+    font-size: .85rem;
 }
 
 .dash-card-value {
-    font-size: 1.45rem;
+    font-size: 1.25rem;
     font-weight: 950;
     color: var(--ds-text);
-    margin-top: 14px;
+    margin-top: 8px;
     line-height: 1.1;
 }
 
-.dash-card-desc {
-    font-size: .82rem;
+.dash-card-desc,
+.dash-card-sub {
+    font-size: .76rem;
     color: var(--ds-text-muted);
-    margin-top: 7px;
+    margin-top: 4px;
 }
 
 .dash-panel {
@@ -871,18 +884,22 @@ button.logout-link {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: thin;
+    border: 1px solid var(--ds-border);
+    border-radius: 8px;
 }
 
 .table {
-    --bs-table-bg: transparent;
+    --bs-table-bg: var(--ds-surface);
+    --bs-table-color: var(--ds-text);
     --bs-table-striped-bg: #f8fafc;
     --bs-table-hover-bg: #f1f5f9;
     margin-bottom: 0;
     vertical-align: middle;
+    font-size: .875rem;
 }
 
 .table > :not(caption) > * > * {
-    padding: .75rem .85rem;
+    padding: .6rem .75rem;
     border-bottom-color: var(--ds-border);
 }
 
@@ -903,16 +920,20 @@ button.logout-link {
 
 .table td {
     max-width: 320px;
-    overflow-wrap: anywhere;
+    overflow-wrap: break-word;
 }
 
-.table td.text-end {
+.table td.text-end:has(.btn) {
     min-width: 132px;
     white-space: nowrap;
 }
 
 .table td .btn {
     min-width: 34px;
+}
+
+.table.table-sm > :not(caption) > * > * {
+    padding: .4rem .55rem;
 }
 
 .table td .btn + .btn,
@@ -1020,15 +1041,16 @@ button.logout-link {
         gap: 10px;
     }
 
-    .table {
-        min-width: 680px;
+    .table-responsive > .table {
+        min-width: 560px;
     }
 
-    .table td.text-end {
+    .table td.text-end:has(.btn) {
         position: sticky;
         right: 0;
         background: var(--ds-surface);
         box-shadow: -8px 0 12px rgba(15, 23, 42, .06);
+        z-index: 1;
     }
 }
 
@@ -1166,7 +1188,10 @@ button.logout-link {
    ------------------------------------------------------------ */
 
 @media (max-width: 1100px) {
-    .dash-grid {
+    .dash-grid,
+    .dash-grid.d-grid-2,
+    .dash-grid.d-grid-4,
+    .dash-grid.d-grid-5 {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
@@ -1176,7 +1201,10 @@ button.logout-link {
         padding: 18px 12px 60px;
     }
 
-    .dash-grid {
+    .dash-grid,
+    .dash-grid.d-grid-2,
+    .dash-grid.d-grid-4,
+    .dash-grid.d-grid-5 {
         grid-template-columns: 1fr;
     }
 
