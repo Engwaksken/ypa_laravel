@@ -12,7 +12,7 @@
         </div>
         <div class="d-flex gap-2 flex-wrap">
             @if(app(\App\Services\PermissionService::class)->can('harvest_view'))
-                <a href="{{ route('harvests.export', request()->query()) }}" class="btn btn-outline-success"><i class="fas fa-file-csv"></i> Export CSV</a>
+                <a href="{{ route('harvests.export', request()->query()) }}" class="btn btn-outline-success"><i class="fas fa-file-export" aria-hidden="true"></i> Export CSV</a>
             @endif
             @if($canManage)
                 <button type="button" class="btn btn-primary" onclick="openHarvestModal()"><i class="fas fa-plus"></i> Record Harvest</button>
@@ -136,7 +136,7 @@
                                 <td><span class="badge bg-{{ $statusClass }}">{{ $harvest->status }}</span></td>
                                 <td><span class="badge bg-light text-dark border">{{ $harvest->approval_stage }}</span></td>
                                 <td>{{ optional($harvest->harvest_date)->format('Y-m-d') ?? '-' }}</td>
-                                <td class="text-end"><a href="{{ route('harvests.show', $harvest) }}" class="btn btn-sm btn-outline-primary" title="View"><i class="fas fa-eye"></i></a></td>
+                                <td class="text-end"><a href="{{ route('harvests.show', $harvest) }}" class="btn btn-sm btn-outline-primary" title="View" aria-label="View harvest for contract {{ optional($contract)->contract_number ?: 'unknown' }}"><i class="fas fa-eye" aria-hidden="true"></i></a></td>
                             </tr>
                         @empty
                             <tr class="empty-row"><td colspan="11"><i class="fas fa-inbox"></i>No harvests found.</td></tr>
@@ -151,7 +151,7 @@
 </div>
 
 @if($canManage)
-<div class="modal fade" id="harvestModal" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="harvestModal" tabindex="-1" aria-labelledby="harvestModalTitle" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <form id="harvestForm" method="POST" action="{{ route('harvests.store') }}">

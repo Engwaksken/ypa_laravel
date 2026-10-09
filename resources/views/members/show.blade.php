@@ -103,7 +103,7 @@
                     data-url="{{ route('members.update', $m) }}"
                     data-record='@json($memberRecord)'
                     onclick="openMemberEdit(this)">
-                    <i class="fas fa-edit"></i> Edit Member
+                    <i class="fas fa-pen" aria-hidden="true"></i> Edit Member
                 </button>
             @endif
             @if($canDelete)
@@ -155,16 +155,18 @@
                         <span><i class="fas {{ $section['icon'] }}"></i> {{ $section['title'] }}</span>
                     </div>
                     <div class="dash-panel-body p-0">
-                        <table class="table table-sm align-middle mb-0">
-                            <tbody>
-                                @foreach($section['rows'] as $label => $value)
-                                    <tr>
-                                        <th class="text-muted fw-semibold ps-3" style="width: 40%;">{{ $label }}</th>
-                                        <td class="pe-3">{{ filled($value) ? $value : '-' }}</td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle mb-0">
+                                <tbody>
+                                    @foreach($section['rows'] as $label => $value)
+                                        <tr>
+                                            <th class="text-muted fw-semibold ps-3" style="width: 40%;">{{ $label }}</th>
+                                            <td class="pe-3">{{ filled($value) ? $value : '-' }}</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>

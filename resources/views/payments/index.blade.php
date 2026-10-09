@@ -13,7 +13,7 @@
         </div>
         <div class="d-flex gap-2 flex-wrap">
             @if($perm->can('payments_export'))
-                <a href="{{ route('payments.export', request()->query()) }}" class="btn btn-outline-success"><i class="fas fa-file-csv"></i> Export CSV</a>
+                <a href="{{ route('payments.export', request()->query()) }}" class="btn btn-outline-success"><i class="fas fa-file-export" aria-hidden="true"></i> Export CSV</a>
             @endif
             @if($canRecord)
                 <button type="button" class="btn btn-primary" onclick="openPaymentModal()"><i class="fas fa-plus"></i> Record Payment</button>
@@ -127,9 +127,9 @@
                                 <td><span class="badge bg-{{ $statusClass }}">{{ $payment->status }}</span></td>
                                 <td>{{ optional($payment->transaction_date)->format('Y-m-d H:i') ?? '-' }}</td>
                                 <td class="text-end text-nowrap">
-                                    <a href="{{ route('payments.show', $payment) }}" class="btn btn-sm btn-outline-primary" title="View"><i class="fas fa-eye"></i></a>
+                                    <a href="{{ route('payments.show', $payment) }}" class="btn btn-sm btn-outline-primary" title="View" aria-label="View payment {{ $payment->transaction_number ?: 'record' }}"><i class="fas fa-eye" aria-hidden="true"></i></a>
                                     @if($payment->receipt_number)
-                                        <a href="{{ route('payments.receipt', $payment) }}" class="btn btn-sm btn-outline-secondary" title="Receipt"><i class="fas fa-print"></i></a>
+                                        <a href="{{ route('payments.receipt', $payment) }}" class="btn btn-sm btn-outline-secondary" title="Receipt" aria-label="Receipt for payment {{ $payment->transaction_number ?: 'record' }}"><i class="fas fa-print" aria-hidden="true"></i></a>
                                     @endif
                                 </td>
                             </tr>
@@ -146,7 +146,7 @@
 </div>
 
 @if($canRecord)
-<div class="modal fade" id="paymentModal" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="paymentModal" tabindex="-1" aria-labelledby="paymentModalTitle" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <form id="paymentForm" method="POST" action="{{ route('payments.store') }}">

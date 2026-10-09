@@ -25,7 +25,7 @@
             @endif
             @if($canExport)
                 <a href="{{ route('projects.export', request()->query()) }}" class="btn btn-outline-secondary">
-                    <i class="fas fa-file-csv"></i> Export CSV
+                    <i class="fas fa-file-export" aria-hidden="true"></i> Export CSV
                 </a>
             @endif
             @if($canCreate)
@@ -122,12 +122,12 @@
                                 <td class="text-center"><span class="badge text-bg-primary">{{ number_format($project->member_count) }}</span></td>
                                 <td><span class="badge text-bg-{{ ['Active'=>'success','Planning'=>'warning','Completed'=>'info','On Hold'=>'secondary','Cancelled'=>'danger'][$project->status] ?? 'secondary' }}">{{ $project->status }}</span></td>
                                 <td class="text-end">
-                                    <button class="btn btn-sm btn-outline-primary" title="View" onclick='viewProject({{ $project->id }})'><i class="fas fa-eye"></i></button>
+                                    <button type="button" class="btn btn-sm btn-outline-primary" title="View" aria-label="View project {{ $project->project_name }}" onclick='viewProject({{ $project->id }})'><i class="fas fa-eye" aria-hidden="true"></i></button>
                                     @if($canEdit)
-                                        <button class="btn btn-sm btn-outline-secondary" title="Edit" onclick='editProject({{ $project->id }})'><i class="fas fa-edit"></i></button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" title="Edit" aria-label="Edit project {{ $project->project_name }}" onclick='editProject({{ $project->id }})'><i class="fas fa-pen" aria-hidden="true"></i></button>
                                     @endif
                                     @if($canDelete)
-                                        <button class="btn btn-sm btn-outline-danger" title="Delete" onclick="deleteProject({{ $project->id }}, '{{ addslashes($project->project_name) }}')"><i class="fas fa-trash"></i></button>
+                                        <button type="button" class="btn btn-sm btn-outline-danger" title="Delete" aria-label="Delete project {{ $project->project_name }}" data-id="{{ $project->id }}" data-name="{{ $project->project_name }}" onclick="deleteProject(this.dataset.id, this.dataset.name, this)"><i class="fas fa-trash" aria-hidden="true"></i></button>
                                     @endif
                                 </td>
                             </tr>
@@ -144,28 +144,28 @@
 </div>
 
 @if($canCreate || $canEdit)
-<div class="modal fade" id="projectModal" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="projectModal" tabindex="-1" aria-labelledby="projectModalTitle" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <form id="projectForm" novalidate>
                 <div class="modal-header">
-                    <h5 class="modal-title" id="projectModalTitle"><i class="fas fa-diagram-project"></i> New Project</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <h5 class="modal-title" id="projectModalTitle"><i class="fas fa-diagram-project" aria-hidden="true"></i> New Project</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <div id="formAlert"></div>
                     <input type="hidden" id="project_id" name="project_id">
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label class="form-label">Project Name <span class="text-danger">*</span></label>
+                            <label class="form-label" for="project_name">Project Name <span class="text-danger">*</span></label>
                             <input type="text" name="project_name" id="project_name" class="form-control" required>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Project Code <span class="text-danger">*</span></label>
+                            <label class="form-label" for="project_code">Project Code <span class="text-danger">*</span></label>
                             <input type="text" name="project_code" id="project_code" class="form-control" required>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Category <span class="text-danger">*</span></label>
+                            <label class="form-label" for="project_category_id">Category <span class="text-danger">*</span></label>
                             <select name="project_category_id" id="project_category_id" class="form-select" required>
                                 <option value="">Select category...</option>
                                 @foreach($categories as $cat)
@@ -174,7 +174,7 @@
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Status <span class="text-danger">*</span></label>
+                            <label class="form-label" for="status">Status <span class="text-danger">*</span></label>
                             <select name="status" id="status" class="form-select" required>
                                 @foreach($statuses as $st)
                                     <option value="{{ $st }}" @selected($st === 'Planning')>{{ $st }}</option>
@@ -182,23 +182,23 @@
                             </select>
                         </div>
                         <div class="col-12">
-                            <label class="form-label">Description <span class="text-danger">*</span></label>
+                            <label class="form-label" for="description">Description <span class="text-danger">*</span></label>
                             <textarea name="description" id="description" class="form-control" rows="3" required></textarea>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Start Date <span class="text-danger">*</span></label>
+                            <label class="form-label" for="start_date">Start Date <span class="text-danger">*</span></label>
                             <input type="date" name="start_date" id="start_date" class="form-control" required>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">End Date <span class="text-muted fw-normal">(optional)</span></label>
+                            <label class="form-label" for="end_date">End Date <span class="text-muted fw-normal">(optional)</span></label>
                             <input type="date" name="end_date" id="end_date" class="form-control">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Registration Fee UGX <span class="text-danger">*</span></label>
+                            <label class="form-label" for="registration_fee">Registration Fee UGX <span class="text-danger">*</span></label>
                             <input type="number" name="registration_fee" id="registration_fee" class="form-control" step="0.01" min="0" required>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Administrative Fee UGX</label>
+                            <label class="form-label" for="administrative_fee">Administrative Fee UGX</label>
                             <input type="number" name="administrative_fee" id="administrative_fee" class="form-control" step="0.01" min="0">
                         </div>
                     </div>
@@ -213,40 +213,18 @@
 </div>
 @endif
 
-<div class="modal fade" id="viewModal" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="viewModal" tabindex="-1" aria-labelledby="projectDetailsTitle" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title"><i class="fas fa-eye"></i> Project Details</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <h5 class="modal-title" id="projectDetailsTitle"><i class="fas fa-eye" aria-hidden="true"></i> Project Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body" id="viewModalBody">Loading...</div>
             <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button></div>
         </div>
     </div>
 </div>
-
-@if($canDelete)
-<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title text-danger"><i class="fas fa-trash"></i> Delete Project</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div id="deleteAlert"></div>
-                <p>You are about to delete <strong id="delete_project_name"></strong>. This action cannot be undone.</p>
-                <input type="hidden" id="delete_project_id">
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-danger" id="confirmDeleteBtn" onclick="confirmDelete()"><i class="fas fa-trash"></i> Delete</button>
-            </div>
-        </div>
-    </div>
-</div>
-@endif
 
 @push('styles')
 <style>
@@ -318,7 +296,7 @@ function submitProjectForm() {
 
     btn.disabled = true;
     const orig = btn.innerHTML;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin" aria-hidden="true"></i> Saving...';
 
     const fd = new FormData(form);
     // Disabled controls are omitted by FormData, but updates require the code.
@@ -345,7 +323,7 @@ let projectEditRequest = 0;
 function viewProject(id) {
     const request = ++projectViewRequest;
     const body = document.getElementById('viewModalBody');
-    body.innerHTML = '<div class="text-center py-4 text-muted"><i class="fas fa-spinner fa-spin"></i> Loading...</div>';
+    body.innerHTML = '<div class="text-center py-4 text-muted" role="status"><i class="fas fa-spinner fa-spin" aria-hidden="true"></i> Loading...</div>';
     const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('viewModal'));
     modal.show();
 
@@ -385,8 +363,8 @@ function viewProject(id) {
 function openCreateModal() {
     ++projectEditRequest;
     document.getElementById('saveBtn').disabled = false;
-    document.getElementById('projectModalTitle').innerHTML = '<i class="fas fa-diagram-project"></i> New Project';
-    document.getElementById('saveBtn').innerHTML = '<i class="fas fa-save"></i> Create Project';
+    document.getElementById('projectModalTitle').innerHTML = '<i class="fas fa-diagram-project" aria-hidden="true"></i> New Project';
+    document.getElementById('saveBtn').innerHTML = '<i class="fas fa-floppy-disk" aria-hidden="true"></i> Create Project';
     document.getElementById('projectForm').reset();
     document.getElementById('project_id').value = '';
     document.getElementById('project_code').disabled = false;
@@ -396,11 +374,12 @@ function openCreateModal() {
 function editProject(id) {
     const request = ++projectEditRequest;
     document.getElementById('saveBtn').disabled = true;
-    document.getElementById('projectModalTitle').innerHTML = '<i class="fas fa-edit"></i> Edit Project';
-    document.getElementById('saveBtn').innerHTML = '<i class="fas fa-save"></i> Update Project';
+    document.getElementById('projectModalTitle').innerHTML = '<i class="fas fa-pen" aria-hidden="true"></i> Edit Project';
+    document.getElementById('saveBtn').innerHTML = '<i class="fas fa-floppy-disk" aria-hidden="true"></i> Update Project';
     document.getElementById('projectForm').reset();
     document.getElementById('project_id').value = id;
     document.getElementById('formAlert').innerHTML = '';
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('projectModal')).show();
 
     fetch('{{ route('projects.ajax.details') }}' + '?id=' + id, { headers: { 'Accept': 'application/json' } })
         .then(r => r.json())
@@ -426,36 +405,28 @@ function editProject(id) {
         });
 }
 
-function deleteProject(id, name) {
-    document.getElementById('delete_project_id').value = id;
-    document.getElementById('delete_project_name').textContent = name;
-    document.getElementById('deleteAlert').innerHTML = '';
-    new bootstrap.Modal(document.getElementById('deleteModal')).show();
+function deleteProject(id, name, trigger) {
+    window.YpaConfirmDelete.open({title: 'Delete Project', trigger, key: 'project:' + id,
+        message: 'You are about to delete ' + name + '. This action cannot be undone.',
+        onConfirm: attempt => confirmDelete(id, attempt)});
 }
 
-function confirmDelete() {
-    const id = document.getElementById('delete_project_id').value;
-    const btn = document.getElementById('confirmDeleteBtn');
-    if (btn.disabled) return;
-    btn.disabled = true;
-    const orig = btn.innerHTML;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting...';
-
+function confirmDelete(id, attempt) {
     const fd = new FormData();
     fd.set('_token', document.querySelector('meta[name="csrf-token"]').content);
     fd.set('_method', 'DELETE');
 
-    fetch('{{ route('projects.destroy', ':id') }}'.replace(':id', id), { method: 'POST', body: fd, headers: { 'Accept': 'application/json' } })
+    return fetch('{{ route('projects.destroy', ':id') }}'.replace(':id', encodeURIComponent(id)), { method: 'POST', body: fd, headers: { 'Accept': 'application/json' } })
         .then(r => r.json().then(data => ({ ok: r.ok, data })))
         .then(({ ok, data }) => {
-            if (!ok || !data.success) throw new Error(data.message || 'Delete failed.');
-            document.getElementById('deleteAlert').innerHTML = '<div class="pj-alert pj-alert--success">&#10003; ' + esc(data.message) + '</div>';
-            setTimeout(() => window.location.reload(), 700);
-        })
-        .catch(err => {
-            document.getElementById('deleteAlert').innerHTML = '<div class="pj-alert pj-alert--danger">' + esc(err.message) + '</div>';
-            btn.disabled = false;
-            btn.innerHTML = orig;
+            if (!attempt.isActive()) return;
+            if (!ok || !data.success) {
+                const error = new Error(data.message || 'Delete failed.');
+                error.definite = data.success === false;
+                throw error;
+            }
+            setTimeout(() => { if (attempt.isActive()) window.location.reload(); }, 700);
+            return data.message || 'Deleted successfully.';
         });
 }
 </script>

@@ -22,7 +22,7 @@
 
 @include('layouts.partials.sidebar')
 
-<main class="main-content">
+<main class="main-content" data-stat-density="compact">
     @include('layouts.partials.flash')
     @yield('content')
 </main>
@@ -62,6 +62,7 @@
 })();
 </script>
 <script src="{{ asset('vendor/bootstrap/bootstrap.bundle.min.js') }}"></script>
+@include('layouts.partials.modal-focus')
 @stack('scripts')
 @include('layouts.partials.modal-validation')
 </body>

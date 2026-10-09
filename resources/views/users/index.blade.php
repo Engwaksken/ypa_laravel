@@ -108,8 +108,8 @@
                                 <td>{{ optional($user->branch)->name ?? '-' }}</td>
                                 <td><span class="badge bg-{{ ($user->status ?? '') === 'active' ? 'success' : 'secondary' }}">{{ ucfirst($user->status ?? '-') }}</span></td>
                                 <td class="text-end">
-                                    <a href="{{ route('users.show', $user) }}" class="btn btn-sm btn-outline-primary" title="View"><i class="fas fa-eye"></i></a>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary" title="Edit"
+                                    <a href="{{ route('users.show', $user) }}" class="btn btn-sm btn-outline-primary" title="View" aria-label="View user {{ $user->name }}"><i class="fas fa-eye" aria-hidden="true"></i></a>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" title="Edit" aria-label="Edit user {{ $user->name }}"
                                         data-url="{{ route('users.update', $user) }}"
                                         data-name="{{ $user->name }}"
                                         data-email="{{ $user->email }}"
@@ -118,12 +118,12 @@
                                         data-status="{{ $user->status ?? 'active' }}"
                                         data-branch="{{ $user->branch_id ?? '' }}"
                                         onclick="openUserEdit(this)">
-                                        <i class="fas fa-edit"></i>
+                                        <i class="fas fa-pen" aria-hidden="true"></i>
                                     </button>
                                     <form action="{{ route('users.destroy', $user) }}" method="POST" class="d-inline ypa-confirm-delete" data-confirm-title="Delete user?" data-confirm-message="Delete {{ $user->name }}? This cannot be undone.">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete"><i class="fas fa-trash"></i></button>
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete" aria-label="Delete user {{ $user->name }}"><i class="fas fa-trash" aria-hidden="true"></i></button>
                                     </form>
                                 </td>
                             </tr>

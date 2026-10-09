@@ -2,7 +2,7 @@
 @php($contract = $contract ?? null)
 <div class="row g-3">
     <div class="col-md-6">
-        <label class="form-label">Contract <span class="text-danger">*</span></label>
+        <label class="form-label" for="paymentContract">Contract <span class="text-danger">*</span></label>
         <select name="contract_id" id="paymentContract" class="form-select" required>
             <option value="">Select contract</option>
             @foreach($contracts as $item)
@@ -16,7 +16,7 @@
         </select>
     </div>
     <div class="col-md-6">
-        <label class="form-label">Payment Method <span class="text-danger">*</span></label>
+        <label class="form-label" for="paymentMethod">Payment Method <span class="text-danger">*</span></label>
         <select name="payment_method_id" id="paymentMethod" class="form-select" required>
             <option value="">Select payment method</option>
             @foreach($paymentMethods as $method)
@@ -25,19 +25,19 @@
         </select>
     </div>
     <div class="col-md-4">
-        <label class="form-label">Amount <span class="text-danger">*</span></label>
+        <label class="form-label" for="paymentAmount">Amount <span class="text-danger">*</span></label>
         <input type="number" step="0.01" min="0.01" name="amount" id="paymentAmount" value="{{ old('amount', optional($contract)->contract_outstanding ?? '') }}" class="form-control" required>
     </div>
     <div class="col-md-4">
-        <label class="form-label">Payment Date</label>
+        <label class="form-label" for="paymentDate">Payment Date</label>
         <input type="date" name="payment_date" id="paymentDate" value="{{ old('payment_date', now()->format('Y-m-d')) }}" class="form-control">
     </div>
     <div class="col-md-4">
-        <label class="form-label">Reference</label>
+        <label class="form-label" for="paymentReference">Reference</label>
         <input type="text" name="reference" id="paymentReference" value="{{ old('reference') }}" class="form-control" placeholder="Optional reference">
     </div>
     <div class="col-12">
-        <label class="form-label">Notes</label>
+        <label class="form-label" for="paymentNotes">Notes</label>
         <textarea name="notes" id="paymentNotes" rows="3" class="form-control">{{ old('notes') }}</textarea>
     </div>
 </div>

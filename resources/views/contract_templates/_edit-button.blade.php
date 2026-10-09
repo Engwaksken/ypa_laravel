@@ -1,5 +1,5 @@
 {{-- Edit button that opens the contract template modal pre-filled. Needs $template, $buttonClass, $label. --}}
-<button type="button" class="{{ $buttonClass }}" title="Edit"
+<button type="button" class="{{ $buttonClass }}" title="Edit" aria-label="Edit template {{ $template->template_name }}"
     data-url="{{ route('contract-templates.update', $template) }}"
     data-name="{{ $template->template_name }}"
     data-key="{{ $template->template_key ?? '' }}"
@@ -13,5 +13,5 @@
     data-signature="{{ $template->contract_signature ?? '' }}"
     data-sections="{{ is_array($template->template_sections) ? json_encode($template->template_sections, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) : '' }}"
     onclick="openContractTemplateEdit(this)">
-    <i class="fas fa-edit{{ $label !== '' ? ' me-1' : '' }}"></i>{{ $label }}
+    <i class="fas fa-pen{{ $label !== '' ? ' me-1' : '' }}" aria-hidden="true"></i>{{ $label }}
 </button>

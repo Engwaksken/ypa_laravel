@@ -84,7 +84,7 @@
                                 <td>{{ $branch->branch_email ?? '-' }}</td>
                                 <td><span class="badge bg-{{ $branch->status ? 'success' : 'secondary' }}">{{ $branch->status ? 'Active' : 'Inactive' }}</span></td>
                                 <td class="text-end">
-                                    <button type="button" class="btn btn-sm btn-outline-secondary" title="Edit"
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" title="Edit" aria-label="Edit branch {{ $branch->name }}"
                                         data-url="{{ route('branches.update', $branch) }}"
                                         data-name="{{ $branch->name }}"
                                         data-location="{{ $branch->location ?? '' }}"
@@ -92,12 +92,12 @@
                                         data-email="{{ $branch->branch_email ?? '' }}"
                                         data-active="{{ $branch->status ? '1' : '0' }}"
                                         onclick="openBranchEdit(this)">
-                                        <i class="fas fa-edit"></i>
+                                        <i class="fas fa-pen" aria-hidden="true"></i>
                                     </button>
                                     <form action="{{ route('branches.destroy', $branch) }}" method="POST" class="d-inline ypa-confirm-delete" data-confirm-title="Delete branch?" data-confirm-message="Delete {{ $branch->name }}? This cannot be undone.">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete"><i class="fas fa-trash"></i></button>
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete" aria-label="Delete branch {{ $branch->name }}"><i class="fas fa-trash" aria-hidden="true"></i></button>
                                     </form>
                                 </td>
                             </tr>
@@ -116,7 +116,7 @@
 
 </div>
 
-<div class="modal fade" id="branchModal" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="branchModal" tabindex="-1" aria-labelledby="branchModalTitle" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <form id="branchForm" method="POST" action="{{ route('branches.store') }}">
@@ -128,19 +128,19 @@
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label class="form-label">Name</label>
+                        <label class="form-label" for="branchName">Name</label>
                         <input type="text" name="name" id="branchName" class="form-control" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Location</label>
+                        <label class="form-label" for="branchLocation">Location</label>
                         <input type="text" name="location" id="branchLocation" class="form-control">
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Contact</label>
+                        <label class="form-label" for="branchContact">Contact</label>
                         <input type="text" name="contact" id="branchContact" class="form-control">
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Email</label>
+                        <label class="form-label" for="branchEmail">Email</label>
                         <input type="email" name="branch_email" id="branchEmail" class="form-control">
                     </div>
                     <div class="form-check">

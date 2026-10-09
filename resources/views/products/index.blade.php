@@ -118,7 +118,7 @@
                                         <td><span class="badge bg-{{ $product->is_active ? 'success' : 'secondary' }}">{{ $product->is_active ? 'Active' : 'Inactive' }}</span></td>
                                         <td class="text-end">
                                             @if($canEdit)
-                                                <button type="button" class="btn btn-sm btn-outline-secondary" title="Edit"
+                                                <button type="button" class="btn btn-sm btn-outline-secondary" title="Edit" aria-label="Edit product {{ $product->name }}"
                                                     data-url="{{ route('products.update', $product) }}"
                                                     data-name="{{ $product->name }}"
                                                     data-sku="{{ $product->sku ?? '' }}"
@@ -127,14 +127,14 @@
                                                     data-description="{{ $product->description ?? '' }}"
                                                     data-active="{{ $product->is_active ? '1' : '0' }}"
                                                     onclick="openProductEdit(this)">
-                                                    <i class="fas fa-edit"></i>
+                                                    <i class="fas fa-pen" aria-hidden="true"></i>
                                                 </button>
                                             @endif
                                             @if($canDelete)
                                                 <form action="{{ route('products.destroy', $product) }}" method="POST" class="d-inline ypa-confirm-delete" data-confirm-title="Delete product?" data-confirm-message="Delete {{ $product->name }}? This cannot be undone.">
                                                     @csrf
                                                     @method('DELETE')
-                                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete"><i class="fas fa-trash"></i></button>
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete" aria-label="Delete product {{ $product->name }}"><i class="fas fa-trash" aria-hidden="true"></i></button>
                                                 </form>
                                             @endif
                                         </td>
@@ -178,20 +178,20 @@
                                         <td><span class="badge bg-{{ $category->is_active ? 'success' : 'secondary' }}">{{ $category->is_active ? 'Active' : 'Inactive' }}</span></td>
                                         <td class="text-end">
                                             @if($canEdit)
-                                                <button type="button" class="btn btn-sm btn-outline-secondary" title="Edit"
+                                                <button type="button" class="btn btn-sm btn-outline-secondary" title="Edit" aria-label="Edit category {{ $category->name }}"
                                                     data-url="{{ route('categories.update', $category) }}"
                                                     data-name="{{ $category->name }}"
                                                     data-description="{{ $category->description ?? '' }}"
                                                     data-active="{{ $category->is_active ? '1' : '0' }}"
                                                     onclick="openCategoryEdit(this)">
-                                                    <i class="fas fa-edit"></i>
+                                                    <i class="fas fa-pen" aria-hidden="true"></i>
                                                 </button>
                                             @endif
                                             @if($canDelete)
                                                 <form action="{{ route('categories.destroy', $category) }}" method="POST" class="d-inline ypa-confirm-delete" data-confirm-title="Delete category?" data-confirm-message="Delete {{ $category->name }}? This cannot be undone.">
                                                     @csrf
                                                     @method('DELETE')
-                                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete"><i class="fas fa-trash"></i></button>
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete" aria-label="Delete category {{ $category->name }}"><i class="fas fa-trash" aria-hidden="true"></i></button>
                                                 </form>
                                             @endif
                                         </td>
@@ -211,7 +211,7 @@
 
 </div>
 
-<div class="modal fade" id="productModal" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="productModal" tabindex="-1" aria-labelledby="productModalTitle" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <form id="productForm" method="POST" action="{{ route('products.store') }}">
@@ -224,15 +224,15 @@
                 <div class="modal-body">
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label class="form-label">Name</label>
+                            <label class="form-label" for="productName">Name</label>
                             <input type="text" name="name" id="productName" class="form-control" required>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">SKU</label>
+                            <label class="form-label" for="productSku">SKU</label>
                             <input type="text" name="sku" id="productSku" class="form-control">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Category</label>
+                            <label class="form-label" for="productCategory">Category</label>
                             <select name="category_id" id="productCategory" class="form-select">
                                 <option value="">-- None --</option>
                                 @foreach($categories as $category)
@@ -241,7 +241,7 @@
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Branch</label>
+                            <label class="form-label" for="productBranch">Branch</label>
                             <select name="branch_id" id="productBranch" class="form-select">
                                 <option value="">-- None --</option>
                                 @foreach($branches as $branch)
@@ -250,7 +250,7 @@
                             </select>
                         </div>
                         <div class="col-12">
-                            <label class="form-label">Description</label>
+                            <label class="form-label" for="productDescription">Description</label>
                             <textarea name="description" id="productDescription" rows="2" class="form-control"></textarea>
                         </div>
                         <div class="col-12">
@@ -271,7 +271,7 @@
     </div>
 </div>
 
-<div class="modal fade" id="categoryModal" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="categoryModal" tabindex="-1" aria-labelledby="categoryModalTitle" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <form id="categoryForm" method="POST" action="{{ route('categories.store') }}">
@@ -283,11 +283,11 @@
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label class="form-label">Name</label>
+                        <label class="form-label" for="categoryName">Name</label>
                         <input type="text" name="name" id="categoryName" class="form-control" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Description</label>
+                        <label class="form-label" for="categoryDescription">Description</label>
                         <textarea name="description" id="categoryDescription" rows="2" class="form-control"></textarea>
                     </div>
                     <div class="form-check">

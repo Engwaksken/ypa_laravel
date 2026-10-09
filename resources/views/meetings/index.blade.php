@@ -124,9 +124,9 @@
                                 <td>{{ $meeting->location ?? '-' }}</td>
                                 <td><span class="badge bg-{{ $meeting->status_badge }}">{{ $meeting->status ?? '-' }}</span></td>
                                 <td class="text-end text-nowrap">
-                                    <a href="{{ route('meetings.show', $meeting) }}" class="btn btn-sm btn-outline-primary" title="View"><i class="fas fa-eye"></i></a>
+                                    <a href="{{ route('meetings.show', $meeting) }}" class="btn btn-sm btn-outline-primary" title="View" aria-label="View meeting {{ $meeting->meeting_title }}"><i class="fas fa-eye" aria-hidden="true"></i></a>
                                     @if($canEdit)
-                                        <button type="button" class="btn btn-sm btn-outline-secondary" title="Edit"
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" title="Edit" aria-label="Edit meeting {{ $meeting->meeting_title }}"
                                             data-url="{{ route('meetings.update', $meeting) }}"
                                             data-type="{{ $meeting->meeting_type }}"
                                             data-title="{{ $meeting->meeting_title }}"
@@ -138,14 +138,14 @@
                                             data-notes="{{ $meeting->notes ?? '' }}"
                                             data-status="{{ $meeting->status }}"
                                             onclick="openMeetingEdit(this)">
-                                            <i class="fas fa-edit"></i>
+                                            <i class="fas fa-pen" aria-hidden="true"></i>
                                         </button>
                                     @endif
                                     @if($canDelete)
                                         <form action="{{ route('meetings.destroy', $meeting) }}" method="POST" class="d-inline ypa-confirm-delete" data-confirm-title="Delete meeting?" data-confirm-message="Delete {{ $meeting->meeting_title }}? This cannot be undone.">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete"><i class="fas fa-trash"></i></button>
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete" aria-label="Delete meeting {{ $meeting->meeting_title }}"><i class="fas fa-trash" aria-hidden="true"></i></button>
                                         </form>
                                     @endif
                                 </td>
@@ -165,7 +165,7 @@
 </div>
 
 @if($canCreate || $canEdit)
-<div class="modal fade" id="meetingModal" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="meetingModal" tabindex="-1" aria-labelledby="meetingModalTitle" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <form id="meetingForm" method="POST" action="{{ route('meetings.store') }}">
@@ -179,11 +179,11 @@
                     <div class="modal-section-title">Meeting Details</div>
                     <div class="row g-3">
                         <div class="col-md-8">
-                            <label class="form-label">Meeting Title <span class="text-danger">*</span></label>
+                            <label class="form-label" for="meetingTitle">Meeting Title <span class="text-danger">*</span></label>
                             <input type="text" name="meeting_title" id="meetingTitle" class="form-control" maxlength="255" required>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label">Meeting Type <span class="text-danger">*</span></label>
+                            <label class="form-label" for="meetingType">Meeting Type <span class="text-danger">*</span></label>
                             <select name="meeting_type" id="meetingType" class="form-select" required>
                                 @foreach(\App\Services\MeetingService::MEETING_TYPES as $mt)
                                     <option value="{{ $mt }}">{{ $mt }}</option>
@@ -191,15 +191,15 @@
                             </select>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label">Date <span class="text-danger">*</span></label>
+                            <label class="form-label" for="meetingDate">Date <span class="text-danger">*</span></label>
                             <input type="date" name="meeting_date" id="meetingDate" class="form-control" required>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label">Time</label>
+                            <label class="form-label" for="meetingTime">Time</label>
                             <input type="time" name="meeting_time" id="meetingTime" class="form-control">
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label">Status <span class="text-danger">*</span></label>
+                            <label class="form-label" for="meetingStatus">Status <span class="text-danger">*</span></label>
                             <select name="status" id="meetingStatus" class="form-select" required>
                                 @foreach(\App\Services\MeetingService::STATUSES as $st)
                                     <option value="{{ $st }}" @selected($st === 'Scheduled')>{{ $st }}</option>
@@ -207,22 +207,22 @@
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Location</label>
+                            <label class="form-label" for="meetingLocation">Location</label>
                             <input type="text" name="location" id="meetingLocation" class="form-control" maxlength="255" placeholder="Venue / town">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Chaired By</label>
+                            <label class="form-label" for="meetingChair">Chaired By</label>
                             <input type="text" name="chaired_by" id="meetingChair" class="form-control" maxlength="150" placeholder="Chairperson name">
                         </div>
                     </div>
                     <div class="modal-section-title mt-4">Agenda &amp; Notes</div>
                     <div class="row g-3">
                         <div class="col-12">
-                            <label class="form-label">Agenda</label>
+                            <label class="form-label" for="meetingAgenda">Agenda</label>
                             <textarea name="agenda" id="meetingAgenda" rows="3" class="form-control"></textarea>
                         </div>
                         <div class="col-12">
-                            <label class="form-label">Notes</label>
+                            <label class="form-label" for="meetingNotes">Notes</label>
                             <textarea name="notes" id="meetingNotes" rows="2" class="form-control"></textarea>
                         </div>
                     </div>

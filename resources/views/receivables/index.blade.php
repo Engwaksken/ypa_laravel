@@ -14,7 +14,7 @@
         <div class="d-flex gap-2">
             @if($permissionService->can('receivables_export'))
                 <a href="{{ route('receivables.export', request()->query()) }}" class="btn btn-outline-secondary">
-                    <i class="fas fa-file-csv"></i> Export CSV
+                    <i class="fas fa-file-export" aria-hidden="true"></i> Export CSV
                 </a>
             @endif
             @if($permissionService->can('receivables_create'))
@@ -136,7 +136,7 @@
                                 <td class="num">{{ number_format((float) $receivable->outstanding_balance, 2) }}</td>
                                 <td><span class="badge bg-{{ $statusClass }}">{{ $receivable->status ?? '-' }}</span></td>
                                 <td class="text-end text-nowrap">
-                                    <a href="{{ route('receivables.show', $receivable) }}" class="btn btn-sm btn-outline-primary" title="View"><i class="fas fa-eye"></i></a>
+                                    <a href="{{ route('receivables.show', $receivable) }}" class="btn btn-sm btn-outline-primary" title="View" aria-label="View receivable {{ $receivable->reference_no }}"><i class="fas fa-eye" aria-hidden="true"></i></a>
                                     @if($permissionService->can('receivables_edit'))
                                         @include('receivables._edit-button', ['receivable' => $receivable, 'buttonClass' => 'btn btn-sm btn-outline-secondary', 'label' => ''])
                                     @endif
@@ -144,7 +144,7 @@
                                         <form action="{{ route('receivables.destroy', $receivable) }}" method="POST" class="d-inline ypa-confirm-delete" data-confirm-title="Delete receivable?" data-confirm-message="Delete {{ $receivable->reference_no }} and its payment records? This cannot be undone.">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete"><i class="fas fa-trash"></i></button>
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete" aria-label="Delete receivable {{ $receivable->reference_no }}"><i class="fas fa-trash" aria-hidden="true"></i></button>
                                         </form>
                                     @endif
                                 </td>

@@ -101,7 +101,7 @@
                                 <td>{{ optional($supplier->branch)->name ?? '-' }}</td>
                                 <td>{{ $supplier->phone ?? '-' }}</td>
                                 <td class="text-end">
-                                    <button type="button" class="btn btn-sm btn-outline-secondary" title="Edit"
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" title="Edit" aria-label="Edit supplier {{ $supplier->name }}"
                                         data-url="{{ route('suppliers.update', $supplier) }}"
                                         data-type="{{ $supplier->supplier_type }}"
                                         data-branch="{{ $supplier->branch_id ?? '' }}"
@@ -111,12 +111,12 @@
                                         data-email="{{ $supplier->email ?? '' }}"
                                         data-address="{{ $supplier->address ?? '' }}"
                                         onclick="openSupplierEdit(this)">
-                                        <i class="fas fa-edit"></i>
+                                        <i class="fas fa-pen" aria-hidden="true"></i>
                                     </button>
                                     <form action="{{ route('suppliers.destroy', $supplier) }}" method="POST" class="d-inline ypa-confirm-delete" data-confirm-title="Delete supplier?" data-confirm-message="Delete {{ $supplier->name }}? This cannot be undone.">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete"><i class="fas fa-trash"></i></button>
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete" aria-label="Delete supplier {{ $supplier->name }}"><i class="fas fa-trash" aria-hidden="true"></i></button>
                                     </form>
                                 </td>
                             </tr>
@@ -135,7 +135,7 @@
 
 </div>
 
-<div class="modal fade" id="supplierModal" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="supplierModal" tabindex="-1" aria-labelledby="supplierModalTitle" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <form id="supplierForm" method="POST" action="{{ route('suppliers.store') }}">
@@ -148,22 +148,22 @@
                 <div class="modal-body">
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label class="form-label">Name</label>
+                            <label class="form-label" for="supplierName">Name</label>
                             <input type="text" name="name" id="supplierName" class="form-control" required>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Contact Person</label>
+                            <label class="form-label" for="supplierContact">Contact Person</label>
                             <input type="text" name="contact_name" id="supplierContact" class="form-control">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Type</label>
+                            <label class="form-label" for="supplierType">Type</label>
                             <select name="supplier_type" id="supplierType" class="form-select" required>
                                 <option value="non_member">Non-member</option>
                                 <option value="member">Member</option>
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Branch</label>
+                            <label class="form-label" for="supplierBranch">Branch</label>
                             <select name="branch_id" id="supplierBranch" class="form-select">
                                 <option value="">-- None --</option>
                                 @foreach($branches as $branch)
@@ -172,15 +172,15 @@
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Phone</label>
+                            <label class="form-label" for="supplierPhone">Phone</label>
                             <input type="text" name="phone" id="supplierPhone" class="form-control">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Email</label>
+                            <label class="form-label" for="supplierEmail">Email</label>
                             <input type="email" name="email" id="supplierEmail" class="form-control">
                         </div>
                         <div class="col-12">
-                            <label class="form-label">Address</label>
+                            <label class="form-label" for="supplierAddress">Address</label>
                             <textarea name="address" id="supplierAddress" rows="2" class="form-control"></textarea>
                         </div>
                     </div>

@@ -28,7 +28,7 @@
                     data-url="{{ route('groups.update', $group) }}"
                     data-record='@json($groupRecord)'
                     onclick="openGroupEdit(this)">
-                    <i class="fas fa-edit"></i> Edit Group
+                    <i class="fas fa-pen" aria-hidden="true"></i> Edit Group
                 </button>
             @endif
             @if($canDelete)
@@ -79,6 +79,7 @@
                     <span><i class="fas fa-circle-info"></i> Group Information</span>
                 </div>
                 <div class="dash-panel-body p-0">
+                    <div class="table-responsive">
                     <table class="table table-sm align-middle mb-0">
                         <tbody>
                             <tr>
@@ -119,6 +120,7 @@
                             </tr>
                         </tbody>
                     </table>
+                    </div>
                 </div>
             </div>
 
@@ -127,6 +129,7 @@
                     <span><i class="fas fa-building-columns"></i> Bank Details</span>
                 </div>
                 <div class="dash-panel-body p-0">
+                    <div class="table-responsive">
                     <table class="table table-sm align-middle mb-0">
                         <tbody>
                             <tr>
@@ -143,6 +146,7 @@
                             </tr>
                         </tbody>
                     </table>
+                    </div>
                 </div>
             </div>
         </div>

@@ -153,9 +153,9 @@
                                 <td>{{ $mobilizer->branch_region ?? '-' }}</td>
                                 <td><span class="badge bg-{{ $badge }}">{{ $mobilizer->status ?? '-' }}</span></td>
                                 <td class="text-end text-nowrap">
-                                    <a href="{{ route('mobilizers.show', $mobilizer) }}" class="btn btn-sm btn-outline-primary" title="View"><i class="fas fa-eye"></i></a>
+                                    <a href="{{ route('mobilizers.show', $mobilizer) }}" class="btn btn-sm btn-outline-primary" title="View" aria-label="View mobilizer {{ $mobilizer->full_name }}"><i class="fas fa-eye" aria-hidden="true"></i></a>
                                     @if($canEdit)
-                                        <button type="button" class="btn btn-sm btn-outline-secondary" title="Edit"
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" title="Edit" aria-label="Edit mobilizer {{ $mobilizer->full_name }}"
                                             data-url="{{ route('mobilizers.update', $mobilizer) }}"
                                             data-first-name="{{ $mobilizer->first_name }}"
                                             data-last-name="{{ $mobilizer->last_name }}"
@@ -168,14 +168,14 @@
                                             data-status="{{ $mobilizer->status ?? 'Active' }}"
                                             data-remarks="{{ $mobilizer->remarks ?? '' }}"
                                             onclick="openMobilizerEdit(this)">
-                                            <i class="fas fa-edit"></i>
+                                            <i class="fas fa-pen" aria-hidden="true"></i>
                                         </button>
                                     @endif
                                     @if($canDelete)
                                         <form action="{{ route('mobilizers.destroy', $mobilizer) }}" method="POST" class="d-inline ypa-confirm-delete" data-confirm-title="Delete mobilizer?" data-confirm-message="Delete {{ $mobilizer->full_name }}? This cannot be undone.">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete"><i class="fas fa-trash"></i></button>
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete" aria-label="Delete mobilizer {{ $mobilizer->full_name }}"><i class="fas fa-trash" aria-hidden="true"></i></button>
                                         </form>
                                     @endif
                                 </td>
@@ -195,7 +195,7 @@
 </div>
 
 @if($canCreate || $canEdit)
-<div class="modal fade" id="mobilizerModal" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="mobilizerModal" tabindex="-1" aria-labelledby="mobilizerModalTitle" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <form id="mobilizerForm" method="POST" action="{{ route('mobilizers.store') }}">
@@ -209,26 +209,26 @@
                     <div class="modal-section-title">Personal Details</div>
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label class="form-label">First Name <span class="text-danger">*</span></label>
+                            <label class="form-label" for="mobilizerFirstName">First Name <span class="text-danger">*</span></label>
                             <input type="text" name="first_name" id="mobilizerFirstName" class="form-control" maxlength="255" required>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Last Name <span class="text-danger">*</span></label>
+                            <label class="form-label" for="mobilizerLastName">Last Name <span class="text-danger">*</span></label>
                             <input type="text" name="last_name" id="mobilizerLastName" class="form-control" maxlength="255" required>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Contact Number <span class="text-danger">*</span></label>
+                            <label class="form-label" for="mobilizerContact">Contact Number <span class="text-danger">*</span></label>
                             <input type="text" name="contact_number" id="mobilizerContact" class="form-control" placeholder="+256..." required>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Email</label>
+                            <label class="form-label" for="mobilizerEmail">Email</label>
                             <input type="email" name="email" id="mobilizerEmail" class="form-control" maxlength="255">
                         </div>
                     </div>
                     <div class="modal-section-title mt-4">Assignment</div>
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label class="form-label">Department <span class="text-danger">*</span></label>
+                            <label class="form-label" for="mobilizerDepartment">Department <span class="text-danger">*</span></label>
                             <input type="text" name="department" id="mobilizerDepartment" class="form-control" list="mobilizerDepartmentList" maxlength="255" required>
                             <datalist id="mobilizerDepartmentList">
                                 @foreach($departmentArr as $dept)
@@ -237,7 +237,7 @@
                             </datalist>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Position <span class="text-danger">*</span></label>
+                            <label class="form-label" for="mobilizerPosition">Position <span class="text-danger">*</span></label>
                             <input type="text" name="position" id="mobilizerPosition" class="form-control" list="mobilizerPositionList" maxlength="255" required>
                             <datalist id="mobilizerPositionList">
                                 @foreach($positionArr as $pos)
@@ -246,7 +246,7 @@
                             </datalist>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label">Branch / Region</label>
+                            <label class="form-label" for="mobilizerBranch">Branch / Region</label>
                             <select name="branch_region" id="mobilizerBranch" class="form-select">
                                 <option value="">Select Branch</option>
                                 @foreach($branches as $branch)
@@ -255,11 +255,11 @@
                             </select>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label">Supervisor</label>
+                            <label class="form-label" for="mobilizerSupervisor">Supervisor</label>
                             <input type="text" name="supervisor" id="mobilizerSupervisor" class="form-control" maxlength="255">
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label">Status <span class="text-danger">*</span></label>
+                            <label class="form-label" for="mobilizerStatus">Status <span class="text-danger">*</span></label>
                             <select name="status" id="mobilizerStatus" class="form-select" required>
                                 @foreach($mobilizerStatuses as $st)
                                     <option value="{{ $st }}" @selected($st === 'Active')>{{ $st }}</option>
@@ -267,7 +267,7 @@
                             </select>
                         </div>
                         <div class="col-12">
-                            <label class="form-label">Remarks</label>
+                            <label class="form-label" for="mobilizerRemarks">Remarks</label>
                             <textarea name="remarks" id="mobilizerRemarks" rows="2" class="form-control"></textarea>
                         </div>
                     </div>

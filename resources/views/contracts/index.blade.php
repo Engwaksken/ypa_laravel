@@ -12,7 +12,7 @@
             <div class="dash-date">Contract lifecycle and workflow records &middot; {{ number_format($contracts->total()) }} contract(s)</div>
         </div>
         <div class="d-flex gap-2 flex-wrap">
-            <a href="{{ route('contracts.export', request()->query()) }}" class="btn btn-outline-success"><i class="fas fa-file-csv"></i> Export</a>
+            <a href="{{ route('contracts.export', request()->query()) }}" class="btn btn-outline-success"><i class="fas fa-file-export" aria-hidden="true"></i> Export</a>
             @if($perm->can('contracts_edit'))
                 <a href="{{ route('contract-templates.index') }}" class="btn btn-outline-secondary"><i class="fas fa-file-alt"></i> Templates</a>
             @endif
@@ -110,10 +110,10 @@
                                 <td class="num">{{ number_format((float) ($contract->contract_amount ?? 0), 2) }}</td>
                                 <td class="num">{{ number_format((float) ($contract->contract_outstanding ?? 0), 2) }}</td>
                                 <td class="text-end text-nowrap">
-                                    <a href="{{ route('contracts.show', $contract) }}" class="btn btn-sm btn-outline-primary" title="View"><i class="fas fa-eye"></i></a>
-                                    <a href="{{ route('contracts.pdf', $contract) }}" class="btn btn-sm btn-outline-secondary" title="PDF"><i class="fas fa-file-pdf"></i></a>
+                                    <a href="{{ route('contracts.show', $contract) }}" class="btn btn-sm btn-outline-primary" title="View" aria-label="View contract {{ $contract->contract_number }}"><i class="fas fa-eye" aria-hidden="true"></i></a>
+                                    <a href="{{ route('contracts.pdf', $contract) }}" class="btn btn-sm btn-outline-secondary" title="PDF" aria-label="PDF for contract {{ $contract->contract_number }}"><i class="fas fa-file-pdf" aria-hidden="true"></i></a>
                                     @if($perm->can('contracts_edit'))
-                                        <a href="{{ route('contracts.edit', $contract) }}" class="btn btn-sm btn-outline-secondary" title="Edit"><i class="fas fa-edit"></i></a>
+                                        <a href="{{ route('contracts.edit', $contract) }}" class="btn btn-sm btn-outline-secondary" title="Edit" aria-label="Edit contract {{ $contract->contract_number }}"><i class="fas fa-pen" aria-hidden="true"></i></a>
                                     @endif
                                 </td>
                             </tr>

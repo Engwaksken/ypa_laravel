@@ -76,14 +76,14 @@
                                 <td><span class="badge bg-{{ $template->is_active ? 'success' : 'secondary' }}">{{ $template->is_active ? 'Active' : 'Inactive' }}</span></td>
                                 <td>{{ optional($template->updated_at)->format('Y-m-d') ?? '-' }}</td>
                                 <td class="text-end text-nowrap">
-                                    <a href="{{ route('contract-templates.preview', $template) }}" class="btn btn-sm btn-outline-info" title="Preview"><i class="fas fa-magnifying-glass"></i></a>
-                                    <a href="{{ route('contract-templates.show', $template) }}" class="btn btn-sm btn-outline-primary" title="View"><i class="fas fa-eye"></i></a>
+                                    <a href="{{ route('contract-templates.preview', $template) }}" class="btn btn-sm btn-outline-info" title="Preview" aria-label="Preview template {{ $template->template_name }}"><i class="fas fa-magnifying-glass" aria-hidden="true"></i></a>
+                                    <a href="{{ route('contract-templates.show', $template) }}" class="btn btn-sm btn-outline-primary" title="View" aria-label="View template {{ $template->template_name }}"><i class="fas fa-eye" aria-hidden="true"></i></a>
                                     @if($canEditTemplates)
                                         @include('contract_templates._edit-button', ['template' => $template, 'buttonClass' => 'btn btn-sm btn-outline-secondary', 'label' => ''])
                                         <form action="{{ route('contract-templates.destroy', $template) }}" method="POST" class="d-inline ypa-confirm-delete" data-confirm-title="Delete template?" data-confirm-message="Delete {{ $template->template_name }}? This cannot be undone.">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete"><i class="fas fa-trash"></i></button>
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete" aria-label="Delete template {{ $template->template_name }}"><i class="fas fa-trash" aria-hidden="true"></i></button>
                                         </form>
                                     @endif
                                 </td>

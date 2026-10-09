@@ -16,7 +16,7 @@
         <div class="d-flex gap-2">
             @if($canExport)
                 <a href="{{ route('project-categories.export', request()->query()) }}" class="btn btn-outline-secondary">
-                    <i class="fas fa-file-csv"></i> Export CSV
+                    <i class="fas fa-file-export" aria-hidden="true"></i> Export CSV
                 </a>
             @endif
             <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#categoryModal" onclick="openCategoryModal()">
@@ -98,8 +98,9 @@
                                 <td class="text-muted small">{{ $category->created_at?->format('M d, Y') ?? '—' }}</td>
                                 <td class="text-muted small">{{ $category->updated_at?->format('M d, Y') ?? '—' }}</td>
                                 <td class="text-end">
-                                    <button class="btn btn-sm btn-outline-secondary" title="Edit" onclick='editCategory({{ $category->id }})'><i class="fas fa-edit"></i></button>
-                                    <button class="btn btn-sm btn-outline-danger" title="Delete" onclick="deleteCategory({{ $category->id }}, '{{ addslashes($category->category_name) }}')"><i class="fas fa-trash"></i></button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" title="Edit" aria-label="Edit category {{ $category->category_name }}" onclick='editCategory({{ $category->id }})'><i class="fas fa-pen" aria-hidden="true"></i></button>
+                                    <button type="button" class="btn btn-sm btn-outline-danger" title="Delete" aria-label="Delete category {{ $category->category_name }}" data-id="{{ $category->id }}" data-name="{{ $category->category_name }}" onclick="deleteCategory(this.dataset.id, this.dataset.name, this)"><i class="fas fa-trash" aria-hidden="true"></i></button>
+
                                 </td>
                             </tr>
                         @empty
@@ -114,30 +115,30 @@
 
 </div>
 
-<div class="modal fade" id="categoryModal" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="categoryModal" tabindex="-1" aria-labelledby="categoryModalTitle" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <form id="categoryForm" novalidate>
                 <div class="modal-header">
-                    <h5 class="modal-title" id="categoryModalTitle"><i class="fas fa-layer-group"></i> Add Category</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <h5 class="modal-title" id="categoryModalTitle"><i class="fas fa-layer-group" aria-hidden="true"></i> Add Category</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <div id="categoryAlert"></div>
                     <input type="hidden" id="category_id" name="category_id">
                     <div class="mb-3">
-                        <label class="form-label">Category Name <span class="text-danger">*</span></label>
+                        <label class="form-label" for="category_name">Category Name <span class="text-danger">*</span></label>
                         <input type="text" name="category_name" id="category_name" class="form-control" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Status</label>
+                        <label class="form-label" for="category_status">Status</label>
                         <select name="status" id="category_status" class="form-select">
                             <option value="1">Active</option>
                             <option value="0">Inactive</option>
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Description</label>
+                        <label class="form-label" for="category_description">Description</label>
                         <textarea name="description" id="category_description" class="form-control" rows="4"></textarea>
                     </div>
                 </div>
@@ -146,26 +147,6 @@
                     <button type="button" class="btn btn-primary" id="categorySaveBtn" onclick="saveCategory()"><i class="fas fa-save"></i> Save</button>
                 </div>
             </form>
-        </div>
-    </div>
-</div>
-
-<div class="modal fade" id="categoryDeleteModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title text-danger"><i class="fas fa-trash"></i> Delete Category</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div id="categoryDeleteAlert"></div>
-                <p>Delete <strong id="categoryDeleteName"></strong>? You cannot delete a category if projects are linked to it.</p>
-                <input type="hidden" id="categoryDeleteId">
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-danger" id="categoryDeleteBtn" onclick="confirmDeleteCategory()"><i class="fas fa-trash"></i> Delete</button>
-            </div>
         </div>
     </div>
 </div>
@@ -195,8 +176,8 @@ let categoryEditRequest = 0;
 function openCategoryModal() {
     ++categoryEditRequest;
     document.getElementById('categorySaveBtn').disabled = false;
-    document.getElementById('categoryModalTitle').innerHTML = '<i class="fas fa-layer-group"></i> Add Category';
-    document.getElementById('categorySaveBtn').innerHTML = '<i class="fas fa-save"></i> Save';
+    document.getElementById('categoryModalTitle').innerHTML = '<i class="fas fa-layer-group" aria-hidden="true"></i> Add Category';
+    document.getElementById('categorySaveBtn').innerHTML = '<i class="fas fa-floppy-disk" aria-hidden="true"></i> Save';
     document.getElementById('categoryForm').reset();
     document.getElementById('category_id').value = '';
     document.getElementById('category_status').value = '1';
@@ -214,10 +195,9 @@ function saveCategory() {
         ? '{{ route('project-categories.update', ':id') }}'.replace(':id', document.getElementById('category_id').value)
         : '{{ route('project-categories.store') }}';
 
-
     btn.disabled = true;
     const orig = btn.innerHTML;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin" aria-hidden="true"></i> Saving...';
 
     const fd = new FormData(form);
     fd.set('_token', document.querySelector('meta[name="csrf-token"]').content);
@@ -240,8 +220,8 @@ function saveCategory() {
 function editCategory(id) {
     const request = ++categoryEditRequest;
     document.getElementById('categorySaveBtn').disabled = true;
-    document.getElementById('categoryModalTitle').innerHTML = '<i class="fas fa-edit"></i> Edit Category';
-    document.getElementById('categorySaveBtn').innerHTML = '<i class="fas fa-save"></i> Update';
+    document.getElementById('categoryModalTitle').innerHTML = '<i class="fas fa-pen" aria-hidden="true"></i> Edit Category';
+    document.getElementById('categorySaveBtn').innerHTML = '<i class="fas fa-floppy-disk" aria-hidden="true"></i> Update';
     document.getElementById('categoryForm').reset();
     document.getElementById('categoryAlert').innerHTML = '';
     document.getElementById('category_id').value = id;
@@ -262,38 +242,30 @@ function editCategory(id) {
         });
 }
 
-function deleteCategory(id, name) {
-    document.getElementById('categoryDeleteId').value = id;
-    document.getElementById('categoryDeleteName').textContent = name;
-    document.getElementById('categoryDeleteAlert').innerHTML = '';
-    new bootstrap.Modal(document.getElementById('categoryDeleteModal')).show();
+function deleteCategory(id, name, trigger) {
+    window.YpaConfirmDelete.open({title: 'Delete Category', trigger, key: 'category:' + id,
+        message: 'Delete ' + name + '? You cannot delete a category if projects are linked to it.',
+        onConfirm: attempt => confirmDeleteCategory(id, attempt)});
 }
 
-function confirmDeleteCategory() {
-    const id = document.getElementById('categoryDeleteId').value;
-    const btn = document.getElementById('categoryDeleteBtn');
-    if (btn.disabled) return;
-    btn.disabled = true;
-    const orig = btn.innerHTML;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting...';
-
+function confirmDeleteCategory(id, attempt) {
     const fd = new FormData();
     fd.set('_token', document.querySelector('meta[name="csrf-token"]').content);
     fd.set('_method', 'DELETE');
 
-    const url = '{{ route('project-categories.destroy', ':id') }}'.replace(':id', id);
+    const url = '{{ route('project-categories.destroy', ':id') }}'.replace(':id', encodeURIComponent(id));
 
-    fetch(url, { method: 'POST', body: fd, headers: { 'Accept': 'application/json' } })
+    return fetch(url, { method: 'POST', body: fd, headers: { 'Accept': 'application/json' } })
         .then(r => r.json().then(data => ({ ok: r.ok, data })))
         .then(({ ok, data }) => {
-            if (!ok || !data.success) throw new Error(data.message || 'Delete failed.');
-            document.getElementById('categoryDeleteAlert').innerHTML = '<div class="pj-alert pj-alert--success">&#10003; ' + esc(data.message) + '</div>';
-            setTimeout(() => window.location.reload(), 700);
-        })
-        .catch(err => {
-            document.getElementById('categoryDeleteAlert').innerHTML = '<div class="pj-alert pj-alert--danger">' + esc(err.message) + '</div>';
-            btn.disabled = false;
-            btn.innerHTML = orig;
+            if (!attempt.isActive()) return;
+            if (!ok || !data.success) {
+                const error = new Error(data.message || 'Delete failed.');
+                error.definite = data.success === false;
+                throw error;
+            }
+            setTimeout(() => { if (attempt.isActive()) window.location.reload(); }, 700);
+            return data.message || 'Deleted successfully.';
         });
 }
 </script>

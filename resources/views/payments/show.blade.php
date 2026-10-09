@@ -69,7 +69,7 @@
                     </form>
                 @endif
                 @if($status === 'APPROVED' && strtoupper((string) $payment->reconciliation_status) !== 'RECONCILED')
-                    <form method="POST" action="{{ route('payments.reconcile', $payment) }}" onsubmit="return confirm('Mark this payment as reconciled?')">
+                    <form method="POST" action="{{ route('payments.reconcile', $payment) }}" class="ypa-confirm-delete" data-confirm-title="Mark as reconciled?" data-confirm-message="Mark this payment as reconciled?">
                         @csrf
                         <button class="btn btn-sm btn-outline-dark" type="submit"><i class="fas fa-balance-scale"></i> Reconcile</button>
                     </form>

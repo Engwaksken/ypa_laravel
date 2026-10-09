@@ -21,7 +21,7 @@
         <div class="d-flex gap-2">
             @if($canExport)
                 <a href="{{ route('activities.export', request()->query()) }}" class="btn btn-outline-secondary">
-                    <i class="fas fa-file-csv"></i> Export CSV
+                    <i class="fas fa-file-export" aria-hidden="true"></i> Export CSV
                 </a>
             @endif
             @if($canCreate)
@@ -156,10 +156,10 @@
                                 <td class="num">{{ $activity->budget !== null ? number_format((float) $activity->budget) : '-' }}</td>
                                 <td><span class="badge bg-{{ $activity->status_badge }}">{{ $activity->status ?? '-' }}</span></td>
                                 <td class="text-end text-nowrap">
-                                    <a href="{{ route('activities.show', $activity) }}" class="btn btn-sm btn-outline-primary" title="View"><i class="fas fa-eye"></i></a>
-                                    <a href="{{ route('activities.participants', $activity) }}" class="btn btn-sm btn-outline-info" title="Participants"><i class="fas fa-users"></i></a>
+                                    <a href="{{ route('activities.show', $activity) }}" class="btn btn-sm btn-outline-primary" title="View" aria-label="View activity {{ $activity->activity_name }}"><i class="fas fa-eye" aria-hidden="true"></i></a>
+                                    <a href="{{ route('activities.participants', $activity) }}" class="btn btn-sm btn-outline-info" title="Participants" aria-label="Participants for {{ $activity->activity_name }}"><i class="fas fa-users" aria-hidden="true"></i></a>
                                     @if($canEdit)
-                                        <button type="button" class="btn btn-sm btn-outline-secondary" title="Edit"
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" title="Edit" aria-label="Edit activity {{ $activity->activity_name }}"
                                             data-url="{{ route('activities.update', $activity) }}"
                                             data-name="{{ $activity->activity_name }}"
                                             data-type="{{ $activity->activity_type_id }}"
@@ -171,14 +171,14 @@
                                             data-promotion="{{ $activity->is_promotion ?? 'No' }}"
                                             data-status="{{ $activity->status ?? '' }}"
                                             onclick="openActivityEdit(this)">
-                                            <i class="fas fa-edit"></i>
+                                            <i class="fas fa-pen" aria-hidden="true"></i>
                                         </button>
                                     @endif
                                     @if($canDelete)
                                         <form action="{{ route('activities.destroy', $activity) }}" method="POST" class="d-inline ypa-confirm-delete" data-confirm-title="Delete activity?" data-confirm-message="Delete {{ $activity->activity_name }}? This cannot be undone.">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete"><i class="fas fa-trash"></i></button>
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete" aria-label="Delete activity {{ $activity->activity_name }}"><i class="fas fa-trash" aria-hidden="true"></i></button>
                                         </form>
                                     @endif
                                 </td>
@@ -198,7 +198,7 @@
 </div>
 
 @if($canCreate || $canEdit)
-<div class="modal fade" id="activityModal" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="activityModal" tabindex="-1" aria-labelledby="activityModalTitle" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <form id="activityForm" method="POST" action="{{ route('activities.store') }}">
@@ -212,11 +212,11 @@
                     <div class="modal-section-title">Activity Details</div>
                     <div class="row g-3">
                         <div class="col-md-7">
-                            <label class="form-label">Activity Name <span class="text-danger">*</span></label>
+                            <label class="form-label" for="activityName">Activity Name <span class="text-danger">*</span></label>
                             <input type="text" name="activity_name" id="activityName" class="form-control" maxlength="255" required>
                         </div>
                         <div class="col-md-5">
-                            <label class="form-label">Activity Type <span class="text-danger">*</span></label>
+                            <label class="form-label" for="activityType">Activity Type <span class="text-danger">*</span></label>
                             <select name="activity_type_id" id="activityType" class="form-select" required>
                                 <option value="">Select Type</option>
                                 @foreach($types as $type)
@@ -225,30 +225,30 @@
                             </select>
                         </div>
                         <div class="col-12">
-                            <label class="form-label">Description</label>
+                            <label class="form-label" for="activityDescription">Description</label>
                             <textarea name="description" id="activityDescription" rows="3" class="form-control"></textarea>
                         </div>
                     </div>
                     <div class="modal-section-title mt-4">Schedule &amp; Budget</div>
                     <div class="row g-3">
                         <div class="col-md-4">
-                            <label class="form-label">Start Date <span class="text-danger">*</span></label>
+                            <label class="form-label" for="activityStart">Start Date <span class="text-danger">*</span></label>
                             <input type="date" name="start_date" id="activityStart" class="form-control" required>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label">End Date</label>
+                            <label class="form-label" for="activityEnd">End Date</label>
                             <input type="date" name="end_date" id="activityEnd" class="form-control">
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label">Budget (UGX)</label>
+                            <label class="form-label" for="activityBudget">Budget (UGX)</label>
                             <input type="number" name="budget" id="activityBudget" class="form-control" min="0" step="any" placeholder="e.g. 1500000">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Location</label>
+                            <label class="form-label" for="activityLocation">Location</label>
                             <input type="text" name="location" id="activityLocation" class="form-control" maxlength="255" placeholder="Venue / town">
                         </div>
                         <div class="col-md-3">
-                            <label class="form-label">Promotion</label>
+                            <label class="form-label" for="activityPromotion">Promotion</label>
                             <select name="is_promotion" id="activityPromotion" class="form-select">
                                 @foreach(\App\Services\ActivityService::IS_PROMOTION as $opt)
                                     <option value="{{ $opt }}" @selected($opt === 'No')>{{ $opt }}</option>
@@ -256,7 +256,7 @@
                             </select>
                         </div>
                         <div class="col-md-3">
-                            <label class="form-label">Status</label>
+                            <label class="form-label" for="activityStatus">Status</label>
                             <select name="status" id="activityStatus" class="form-select">
                                 @foreach(\App\Services\ActivityService::STATUSES as $st)
                                     <option value="{{ $st }}" @selected($st === 'Planned')>{{ $st }}</option>

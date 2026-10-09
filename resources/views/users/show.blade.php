@@ -22,7 +22,7 @@
                 data-status="{{ $user->status ?? 'active' }}"
                 data-branch="{{ $user->branch_id ?? '' }}"
                 onclick="openUserEdit(this)">
-                <i class="fas fa-edit me-1"></i> Edit
+                <i class="fas fa-pen me-1" aria-hidden="true"></i> Edit
             </button>
         </div>
     </div>

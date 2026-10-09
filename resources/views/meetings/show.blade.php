@@ -29,14 +29,14 @@
                     <i class="fas fa-clipboard-check"></i> Attendance
                 </button>
                 @if($meeting->status !== 'Completed')
-                    <button type="button" class="btn btn-outline-secondary" onclick="markComplete({{ $meeting->id }})">
-                        <i class="fas fa-check-double"></i> Mark Complete
+                    <button type="button" class="btn btn-outline-secondary" onclick="markComplete({{ $meeting->id }}, this)">
+                        <i class="fas fa-check-double" aria-hidden="true"></i> Mark Complete
                     </button>
                 @endif
             @endif
             @if($canEdit)
                 <a href="{{ route('meetings.edit', $meeting) }}" class="btn btn-outline-secondary">
-                    <i class="fas fa-edit"></i> Edit
+                    <i class="fas fa-pen" aria-hidden="true"></i> Edit
                 </a>
             @endif
             <a href="{{ route('meetings.index') }}" class="btn btn-outline-secondary">
@@ -52,30 +52,32 @@
                     <span><i class="fas fa-circle-info"></i> Meeting Information</span>
                 </div>
                 <div class="dash-panel-body">
-                    <table class="table table-sm mb-0">
-                        <tbody>
-                            <tr>
-                                <th class="text-muted">Meeting Type</th>
-                                <td>{{ $meeting->meeting_type }}</td>
-                            </tr>
-                            <tr>
-                                <th class="text-muted">Date</th>
-                                <td>{{ $meeting->meeting_date ? $meeting->meeting_date->format('M d, Y') : '-' }}</td>
-                            </tr>
-                            <tr>
-                                <th class="text-muted">Time</th>
-                                <td>{{ $meeting->meeting_time ?? '-' }}</td>
-                            </tr>
-                            <tr>
-                                <th class="text-muted">Location</th>
-                                <td>{{ $meeting->location ?? '-' }}</td>
-                            </tr>
-                            <tr>
-                                <th class="text-muted">Status</th>
-                                <td><span class="badge bg-{{ $meeting->status_badge }}">{{ $meeting->status }}</span></td>
-                            </tr>
-                        </tbody>
-                    </table>
+                    <div class="table-responsive">
+                        <table class="table table-sm mb-0">
+                            <tbody>
+                                <tr>
+                                    <th class="text-muted">Meeting Type</th>
+                                    <td>{{ $meeting->meeting_type }}</td>
+                                </tr>
+                                <tr>
+                                    <th class="text-muted">Date</th>
+                                    <td>{{ $meeting->meeting_date ? $meeting->meeting_date->format('M d, Y') : '-' }}</td>
+                                </tr>
+                                <tr>
+                                    <th class="text-muted">Time</th>
+                                    <td>{{ $meeting->meeting_time ?? '-' }}</td>
+                                </tr>
+                                <tr>
+                                    <th class="text-muted">Location</th>
+                                    <td>{{ $meeting->location ?? '-' }}</td>
+                                </tr>
+                                <tr>
+                                    <th class="text-muted">Status</th>
+                                    <td><span class="badge bg-{{ $meeting->status_badge }}">{{ $meeting->status }}</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                     @if($meeting->agenda)
                         <hr>
                         <p class="mb-0">{{ $meeting->agenda }}</p>
@@ -167,11 +169,11 @@
 
 @if($canManage)
     <!-- Invite Modal -->
-    <div class="modal fade" id="inviteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal fade" id="inviteModal" tabindex="-1" aria-labelledby="meetingInviteTitle" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title"><i class="fas fa-envelope"></i> Manage Invites</h5>
+                    <h5 class="modal-title" id="meetingInviteTitle"><i class="fas fa-envelope" aria-hidden="true"></i> Manage Invites</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body" id="inviteModalContent">
@@ -190,11 +192,11 @@
     </div>
 
     <!-- Attendance Modal -->
-    <div class="modal fade" id="attendanceModal" tabindex="-1" aria-hidden="true">
+    <div class="modal fade" id="attendanceModal" tabindex="-1" aria-labelledby="meetingAttendanceTitle" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title"><i class="fas fa-clipboard-check"></i> Record Attendance</h5>
+                    <h5 class="modal-title" id="meetingAttendanceTitle"><i class="fas fa-clipboard-check" aria-hidden="true"></i> Record Attendance</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body" id="attendanceModalContent">
@@ -263,7 +265,7 @@
     function renderInviteList(container, invites) {
         const invitedIds = invites.filter(function (i) { return i.invited; }).map(function (i) { return i.member_id; });
         let html = '<div class="mb-3">';
-        html += '<label class="form-label">Search members</label>';
+        html += '<label class="form-label" for="inviteMemberSearch">Search members</label>';
         html += '<input type="text" id="inviteMemberSearch" class="form-control" placeholder="Type to search members...">';
         html += '<div id="inviteSearchResults" class="list-group member-search-results mt-2"></div>';
         html += '</div>';
@@ -273,7 +275,7 @@
             html += '<tr data-member-id="' + esc(invite.member_id) + '">';
             html += '<td>' + esc(invite.membership_id || '-') + '</td>';
             html += '<td>' + esc(invite.name || '-') + '</td>';
-            html += '<td><input type="checkbox" class="form-check-input invite-check" value="' + esc(invite.member_id) + '"' + (invite.invited ? ' checked' : '') + '></td>';
+            html += '<td><input type="checkbox" class="form-check-input invite-check" aria-label="Invite ' + esc(invite.name || invite.membership_id || 'member') + '" value="' + esc(invite.member_id) + '"' + (invite.invited ? ' checked' : '') + '></td>';
             html += '</tr>';
         });
         html += '</tbody></table></div>';
@@ -307,7 +309,7 @@
                         btn.addEventListener('click', function () {
                             const tr = document.createElement('tr');
                             tr.dataset.memberId = member.id;
-                            tr.innerHTML = '<td>' + esc(member.membership_id) + '</td><td>' + esc(member.name) + '</td><td><input type="checkbox" class="form-check-input invite-check" value="' + esc(member.id) + '" checked></td>';
+                            tr.innerHTML = '<td>' + esc(member.membership_id) + '</td><td>' + esc(member.name) + '</td><td><input type="checkbox" class="form-check-input invite-check" aria-label="Invite ' + esc(member.name || member.membership_id || 'member') + '" value="' + esc(member.id) + '" checked></td>';
                             tableBody.appendChild(tr);
                             resultsBox.innerHTML = '';
                             searchInput.value = '';
@@ -383,7 +385,7 @@
 
     function renderAttendanceList(container, attendance) {
         let html = '<div class="mb-3">';
-        html += '<label class="form-label">Search members</label>';
+        html += '<label class="form-label" for="attendanceMemberSearch">Search members</label>';
         html += '<input type="text" id="attendanceMemberSearch" class="form-control" placeholder="Type to search members...">';
         html += '<div id="attendanceSearchResults" class="list-group member-search-results mt-2"></div>';
         html += '</div>';
@@ -393,7 +395,7 @@
             html += '<tr data-member-id="' + esc(row.member_id) + '">';
             html += '<td>' + esc(row.membership_id || '-') + '</td>';
             html += '<td>' + esc(row.name || '-') + '</td>';
-            html += '<td><input type="checkbox" class="form-check-input attend-check" value="' + esc(row.member_id) + '"' + (row.attended ? ' checked' : '') + '></td>';
+            html += '<td><input type="checkbox" class="form-check-input attend-check" aria-label="Attendance for ' + esc(row.name || row.membership_id || 'member') + '" value="' + esc(row.member_id) + '"' + (row.attended ? ' checked' : '') + '></td>';
             html += '</tr>';
         });
         html += '</tbody></table></div>';
@@ -427,7 +429,7 @@
                         btn.addEventListener('click', function () {
                             const tr = document.createElement('tr');
                             tr.dataset.memberId = member.id;
-                            tr.innerHTML = '<td>' + esc(member.membership_id) + '</td><td>' + esc(member.name) + '</td><td><input type="checkbox" class="form-check-input attend-check" value="' + esc(member.id) + '" checked></td>';
+                            tr.innerHTML = '<td>' + esc(member.membership_id) + '</td><td>' + esc(member.name) + '</td><td><input type="checkbox" class="form-check-input attend-check" aria-label="Attendance for ' + esc(member.name || member.membership_id || 'member') + '" value="' + esc(member.id) + '" checked></td>';
                             tableBody.appendChild(tr);
                             resultsBox.innerHTML = '';
                             searchInput.value = '';
@@ -474,29 +476,44 @@
         });
     };
 
-    window.markComplete = function (meetingId) {
-        if (!confirm('Mark this meeting as completed?')) return;
+    // Shared confirmation dialog (layouts/partials/confirm-delete). The page is
+    // reloaded only after the user closes the dialog following a success.
+    let reloadOnClose = false;
+    const confirmModalEl = document.getElementById('ypaConfirmDeleteModal');
+    if (confirmModalEl) {
+        confirmModalEl.addEventListener('hidden.bs.modal', function () {
+            if (reloadOnClose) location.reload();
+        });
+    }
 
-        const formData = new FormData();
-        formData.append('meeting_id', meetingId);
+    window.markComplete = function (meetingId, trigger) {
+        if (!window.YpaConfirmDelete) return;
+        window.YpaConfirmDelete.open({
+            title: 'Mark meeting as completed?',
+            message: 'This marks the meeting as completed.',
+            trigger: trigger || document.activeElement,
+            onConfirm: function () {
+                const formData = new FormData();
+                formData.append('meeting_id', meetingId);
 
-        fetch('{{ route("meetings.ajax.mark_complete") }}', {
-            method: 'POST',
-            headers: {
-                'Accept': 'application/json',
-                'X-CSRF-TOKEN': token
-            },
-            body: formData
-        })
-        .then(function (res) { return res.json(); })
-        .then(function (data) {
-            if (data.success) {
-                location.reload();
-            } else {
-                alert(data.message || 'Failed to mark meeting as completed.');
+                return fetch('{{ route("meetings.ajax.mark_complete") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': token
+                    },
+                    body: formData
+                })
+                .then(function (res) { return res.json(); })
+                .then(function (data) {
+                    if (!data.success) {
+                        // Server stated a definite refusal, so retry is safe.
+                        throw { definite: true, message: data.message || 'Failed to mark meeting as completed.' };
+                    }
+                    reloadOnClose = true;
+                    return 'Meeting marked as completed.';
+                });
             }
-        }).catch(function () {
-            alert('Unable to complete the meeting. Please check your connection and try again.');
         });
     };
 })();

@@ -1,6 +1,6 @@
 {{-- Add/Edit user modal. Requires $assignableRoles and $branches. --}}
 @php($permissionService = app(\App\Services\PermissionService::class))
-<div class="modal fade" id="userModal" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="userModal" tabindex="-1" aria-labelledby="userModalTitle" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <form id="userForm" method="POST" action="{{ route('users.store') }}">
@@ -14,19 +14,19 @@
                     <div class="modal-section-title">Account</div>
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label class="form-label">Full Name</label>
+                            <label class="form-label" for="userName">Full Name</label>
                             <input type="text" name="name" id="userName" class="form-control" maxlength="150" required>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Email</label>
+                            <label class="form-label" for="userEmail">Email</label>
                             <input type="email" name="email" id="userEmail" class="form-control" maxlength="150" required>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Password <span class="text-muted small" id="userPasswordHint"></span></label>
+                            <label class="form-label" for="userPassword">Password <span class="text-muted small" id="userPasswordHint"></span></label>
                             <input type="password" name="password" id="userPassword" class="form-control" minlength="8" autocomplete="new-password" required>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Confirm Password</label>
+                            <label class="form-label" for="userPasswordConfirm">Confirm Password</label>
                             <input type="password" name="password_confirmation" id="userPasswordConfirm" class="form-control" minlength="8" autocomplete="new-password" required>
                         </div>
                     </div>
@@ -34,7 +34,7 @@
                     <div class="modal-section-title mt-4">Access</div>
                     <div class="row g-3">
                         <div class="col-md-4">
-                            <label class="form-label">Role</label>
+                            <label class="form-label" for="userRole">Role</label>
                             <select name="role" id="userRole" class="form-select" required>
                                 @if(old('role') && !in_array(old('role'), $assignableRoles, true))
                                     <option value="{{ old('role') }}" data-extra="1">{{ $permissionService->roleLabel(old('role')) }}</option>
@@ -45,14 +45,14 @@
                             </select>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label">Status</label>
+                            <label class="form-label" for="userStatus">Status</label>
                             <select name="status" id="userStatus" class="form-select" required>
                                 <option value="active">Active</option>
                                 <option value="inactive">Inactive</option>
                             </select>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label">Branch</label>
+                            <label class="form-label" for="userBranch">Branch</label>
                             <select name="branch_id" id="userBranch" class="form-select">
                                 <option value="">-- None --</option>
                                 @foreach($branches as $branch)

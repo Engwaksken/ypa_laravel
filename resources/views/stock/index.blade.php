@@ -133,7 +133,7 @@
                                 <td>{{ $line->expiry_date ? $line->expiry_date->format('M d, Y') : '-' }}</td>
                                 <td class="text-end">
                                     @if($canEdit)
-                                        <button type="button" class="btn btn-sm btn-outline-secondary" title="Edit"
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" title="Edit" aria-label="Edit stock entry for {{ optional($line->product)->name ?? 'product' }}"
                                             data-url="{{ route('stock.update', $line) }}"
                                             data-supplier="{{ $line->supplier_id ?? '' }}"
                                             data-product="{{ $line->product_id }}"
@@ -144,14 +144,14 @@
                                             data-selling="{{ $line->selling_price ?? '' }}"
                                             data-expiry="{{ $line->expiry_date ? $line->expiry_date->format('Y-m-d') : '' }}"
                                             onclick="openStockEdit(this)">
-                                            <i class="fas fa-edit"></i>
+                                            <i class="fas fa-pen" aria-hidden="true"></i>
                                         </button>
                                     @endif
                                     @if($canDelete)
                                         <form action="{{ route('stock.destroy', $line) }}" method="POST" class="d-inline ypa-confirm-delete" data-confirm-title="Delete stock entry?" data-confirm-message="Delete this stock entry? This cannot be undone.">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete"><i class="fas fa-trash"></i></button>
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete" aria-label="Delete stock entry for {{ optional($line->product)->name ?? 'product' }}"><i class="fas fa-trash" aria-hidden="true"></i></button>
                                         </form>
                                     @endif
                                 </td>
@@ -171,7 +171,7 @@
 
 </div>
 
-<div class="modal fade" id="stockModal" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="stockModal" tabindex="-1" aria-labelledby="stockModalTitle" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <form id="stockForm" method="POST" action="{{ route('stock.store') }}">
@@ -184,7 +184,7 @@
                 <div class="modal-body">
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label class="form-label">Product</label>
+                            <label class="form-label" for="stockProduct">Product</label>
                             <select name="product_id" id="stockProduct" class="form-select" required>
                                 <option value="">-- Select --</option>
                                 @foreach($products as $product)
@@ -193,7 +193,7 @@
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Branch</label>
+                            <label class="form-label" for="stockBranch">Branch</label>
                             <select name="branch_id" id="stockBranch" class="form-select" required>
                                 <option value="">-- Select --</option>
                                 @foreach($branches as $branch)
@@ -202,7 +202,7 @@
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Supplier</label>
+                            <label class="form-label" for="stockSupplier">Supplier</label>
                             <select name="supplier_id" id="stockSupplier" class="form-select">
                                 <option value="">-- None --</option>
                                 @foreach($suppliers as $supplier)
@@ -211,23 +211,23 @@
                             </select>
                         </div>
                         <div class="col-md-3">
-                            <label class="form-label">Quantity</label>
+                            <label class="form-label" for="stockQuantity">Quantity</label>
                             <input type="number" name="quantity" id="stockQuantity" class="form-control" min="0" value="0" required>
                         </div>
                         <div class="col-md-3">
-                            <label class="form-label">Unit</label>
+                            <label class="form-label" for="stockUnit">Unit</label>
                             <input type="text" name="unit_type" id="stockUnit" class="form-control" placeholder="pcs, kg...">
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label">Cost Price</label>
+                            <label class="form-label" for="stockCost">Cost Price</label>
                             <input type="number" name="cost_price" id="stockCost" class="form-control" step="0.01" min="0">
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label">Selling Price</label>
+                            <label class="form-label" for="stockSelling">Selling Price</label>
                             <input type="number" name="selling_price" id="stockSelling" class="form-control" step="0.01" min="0">
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label">Expiry Date</label>
+                            <label class="form-label" for="stockExpiry">Expiry Date</label>
                             <input type="date" name="expiry_date" id="stockExpiry" class="form-control">
                         </div>
                     </div>

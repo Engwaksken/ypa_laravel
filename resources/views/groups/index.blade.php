@@ -21,7 +21,7 @@
         <div class="d-flex gap-2">
             @if($canExport)
                 <a href="{{ route('groups.export', request()->query()) }}" class="btn btn-outline-secondary">
-                    <i class="fas fa-file-csv"></i> Export CSV
+                    <i class="fas fa-file-export" aria-hidden="true"></i> Export CSV
                 </a>
             @endif
             @if($canCreate)
@@ -139,20 +139,20 @@
                                     <span class="badge bg-{{ $group->status_badge }}">{{ $group->status ?? '-' }}</span>
                                 </td>
                                 <td class="text-end">
-                                    <a href="{{ route('groups.show', $group) }}" class="btn btn-sm btn-outline-primary" title="View"><i class="fas fa-eye"></i></a>
+                                    <a href="{{ route('groups.show', $group) }}" class="btn btn-sm btn-outline-primary" title="View" aria-label="View group {{ $group->group_name }}"><i class="fas fa-eye" aria-hidden="true"></i></a>
                                     @if($canEdit)
-                                        <button type="button" class="btn btn-sm btn-outline-secondary" title="Edit"
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" title="Edit" aria-label="Edit group {{ $group->group_name }}"
                                             data-url="{{ route('groups.update', $group) }}"
                                             data-record='@json($groupRecords[$group->id] ?? [])'
                                             onclick="openGroupEdit(this)">
-                                            <i class="fas fa-edit"></i>
+                                            <i class="fas fa-pen" aria-hidden="true"></i>
                                         </button>
                                     @endif
                                     @if($canDelete)
                                         <form action="{{ route('groups.destroy', $group) }}" method="POST" class="d-inline ypa-confirm-delete" data-confirm-title="Delete group?" data-confirm-message="Delete {{ $group->group_name }} ({{ $group->group_code }})? This cannot be undone.">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete"><i class="fas fa-trash"></i></button>
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete" aria-label="Delete group {{ $group->group_name }}"><i class="fas fa-trash" aria-hidden="true"></i></button>
                                         </form>
                                     @endif
                                 </td>

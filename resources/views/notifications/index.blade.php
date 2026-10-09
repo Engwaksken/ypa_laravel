@@ -80,14 +80,14 @@
                                         <form action="{{ route('notifications.read', $notification) }}" method="POST" class="d-inline">
                                             @csrf
                                             @method('PATCH')
-                                            <button type="submit" class="btn btn-sm btn-outline-success" title="Mark as read"><i class="fas fa-check"></i></button>
+                                            <button type="submit" class="btn btn-sm btn-outline-success" title="Mark as read" aria-label="Mark notification '{{ $notification->title ?: 'untitled' }}' as read"><i class="fas fa-check" aria-hidden="true"></i></button>
                                         </form>
                                     @endif
                                     @if($notification->user_id === auth()->id())
                                         <form action="{{ route('notifications.destroy', $notification) }}" method="POST" class="d-inline ypa-confirm-delete" data-confirm-title="Delete notification?" data-confirm-message="Delete this notification? This cannot be undone.">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete"><i class="fas fa-trash"></i></button>
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete" aria-label="Delete notification '{{ $notification->title ?: 'untitled' }}'"><i class="fas fa-trash" aria-hidden="true"></i></button>
                                         </form>
                                     @endif
                                 </td>

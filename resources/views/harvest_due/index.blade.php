@@ -78,13 +78,13 @@
                                 <td>{{ $item->next_due_date ?: '-' }}</td>
                                 <td class="text-end">
                                     @if($canRecord)
-                                        <button type="button" class="btn btn-sm btn-outline-success" title="Record harvest"
+                                        <button type="button" class="btn btn-sm btn-outline-success" title="Record harvest" aria-label="Record harvest for {{ $item->item_name }}"
                                             data-url="{{ route('harvest-due.record', $item) }}"
                                             data-label="{{ optional($contract)->contract_number ?? '-' }} &middot; {{ $item->item_name }}"
                                             data-amount="{{ $amount > 0 ? $amount : '' }}"
                                             data-quantity="{{ $quantity > 0 ? $quantity : '' }}"
                                             onclick="openHarvestDueModal(this)">
-                                            <i class="fas fa-seedling"></i>
+                                            <i class="fas fa-seedling" aria-hidden="true"></i>
                                         </button>
                                     @else
                                         <span class="text-muted small">No access</span>
@@ -104,7 +104,7 @@
 </div>
 
 @if($canRecord)
-<div class="modal fade" id="harvestDueModal" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="harvestDueModal" tabindex="-1" aria-labelledby="harvestDueModalTitle" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <form id="harvestDueForm" method="POST" action="{{ route('harvest-due.index') }}">
@@ -118,7 +118,7 @@
                     <p class="text-muted small mb-3" id="harvestDueLabel"></p>
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label class="form-label">Harvest Type <span class="text-danger">*</span></label>
+                            <label class="form-label" for="harvestDueType">Harvest Type <span class="text-danger">*</span></label>
                             <select name="harvest_type" id="harvestDueType" class="form-select" required>
                                 @foreach(['Cash','Bags','Goats','Monthly Payout','Profit'] as $type)
                                     <option value="{{ $type }}">{{ $type }}</option>
@@ -126,19 +126,19 @@
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Harvest Date <span class="text-danger">*</span></label>
+                            <label class="form-label" for="harvestDueDate">Harvest Date <span class="text-danger">*</span></label>
                             <input type="date" name="harvest_date" id="harvestDueDate" value="{{ now()->format('Y-m-d') }}" class="form-control" required>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label">Amount</label>
+                            <label class="form-label" for="harvestDueAmount">Amount</label>
                             <input type="number" step="0.01" min="0" name="amount_harvested" id="harvestDueAmount" class="form-control">
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label">Quantity</label>
+                            <label class="form-label" for="harvestDueQuantity">Quantity</label>
                             <input type="number" step="0.01" min="0" name="quantity_harvested" id="harvestDueQuantity" class="form-control">
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label">Periods</label>
+                            <label class="form-label" for="harvestDuePeriods">Periods</label>
                             <input type="number" step="1" min="1" name="periods_due" id="harvestDuePeriods" value="1" class="form-control">
                         </div>
                     </div>
@@ -161,6 +161,7 @@
         document.getElementById('harvestDueMethod').value = 'POST';
         document.getElementById('harvestDueModalTitle').textContent = 'Add Harvest';
         document.getElementById('harvestDueLabel').textContent = btn.dataset.label || '';
+        form.dataset.modalContext = JSON.stringify({label: btn.dataset.label || ''});
         document.getElementById('harvestDueDate').value = "{{ now()->format('Y-m-d') }}";
         document.getElementById('harvestDueAmount').value = btn.dataset.amount || '';
         document.getElementById('harvestDueQuantity').value = btn.dataset.quantity || '';
@@ -169,6 +170,14 @@
             bootstrap.Modal.getOrCreateInstance(document.getElementById('harvestDueModal')).show();
         }
     }
+    document.getElementById('harvestDueForm')?.addEventListener('ypa:modal-restoring', function (event) {
+        var trigger = [...document.querySelectorAll('[data-url][onclick="openHarvestDueModal(this)"]')].find(function (button) {
+            try { return new URL(button.dataset.url, location.href).href === event.detail.action; } catch { return false; }
+        });
+        var label = trigger ? trigger.dataset.label : event.detail.context.label;
+        document.getElementById('harvestDueLabel').textContent = typeof label === 'string' ? label : 'Previously submitted harvest item';
+        // Do not call openHarvestDueModal: it would reset amount, quantity and periods.
+    });
 </script>
 @endpush
 @endif

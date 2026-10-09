@@ -17,7 +17,7 @@
         <div class="d-flex gap-2 flex-wrap">
             @if($canExport)
                 <a href="{{ route('expenses.export', request()->except(['page'])) }}" class="btn btn-outline-secondary">
-                    <i class="fas fa-file-csv"></i> Export CSV
+                    <i class="fas fa-file-export" aria-hidden="true"></i> Export CSV
                 </a>
             @endif
             @if($canImport)
@@ -214,10 +214,10 @@
                                     <td class="text-end">
                                         <div class="d-flex gap-1 justify-content-end">
                                             @if($isManual && $canEdit)
-                                                <button class="btn btn-sm btn-outline-secondary" title="Edit" onclick='openExpenseModalEdit(@json($row))'><i class="fas fa-edit"></i></button>
+                                                <button type="button" class="btn btn-sm btn-outline-secondary" title="Edit" aria-label="Edit expense {{ $row['title'] }}" onclick='openExpenseModalEdit(@json($row))'><i class="fas fa-pen" aria-hidden="true"></i></button>
                                             @endif
                                             @if($isManual && $canDelete)
-                                                <button class="btn btn-sm btn-outline-danger" title="Delete" onclick="deleteExpense({{ $row['source_id'] }}, '{{ addslashes($row['title']) }}')"><i class="fas fa-trash"></i></button>
+                                                <button type="button" class="btn btn-sm btn-outline-danger" title="Delete" aria-label="Delete expense {{ $row['title'] }}" data-id="{{ $row['source_id'] }}" data-name="{{ $row['title'] }}" onclick="deleteExpense(this.dataset.id, this.dataset.name, this)"><i class="fas fa-trash" aria-hidden="true"></i></button>
                                             @endif
                                         </div>
                                     </td>
@@ -238,13 +238,13 @@
 </div>
 
 @if($canCreate || $canEdit)
-<div class="modal fade" id="expenseModal" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="expenseModal" tabindex="-1" aria-labelledby="expenseModalTitle" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <form id="expenseForm" novalidate>
                 <div class="modal-header">
-                    <h5 class="modal-title" id="expenseModalTitle"><i class="fas fa-receipt"></i> Add New Expense</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <h5 class="modal-title" id="expenseModalTitle"><i class="fas fa-receipt" aria-hidden="true"></i> Add New Expense</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <div id="expenseAlert"></div>
@@ -252,21 +252,21 @@
                     <input type="hidden" name="debit_account_code" value="5000">
                     <input type="hidden" name="credit_account_code" value="1000">
                     <div class="mb-3">
-                        <label class="form-label">Expense Title <span class="text-danger">*</span></label>
+                        <label class="form-label" for="expenseTitle">Expense Title <span class="text-danger">*</span></label>
                         <input type="text" name="title" id="expenseTitle" class="form-control" required>
                     </div>
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">Amount <span class="text-danger">*</span></label>
+                            <label class="form-label" for="expenseAmount">Amount <span class="text-danger">*</span></label>
                             <input type="number" name="amount" id="expenseAmount" class="form-control" min="0" step="0.01" required>
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">Date <span class="text-danger">*</span></label>
+                            <label class="form-label" for="expenseDate">Date <span class="text-danger">*</span></label>
                             <input type="date" name="expense_date" id="expenseDate" class="form-control" required>
                         </div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Branch <span class="text-danger">*</span></label>
+                        <label class="form-label" for="expenseBranch">Branch <span class="text-danger">*</span></label>
                         <select name="branch_id" id="expenseBranch" class="form-select" {{ !$canAllBranches ? 'disabled' : '' }}>
                             @foreach($branches as $branch)
                                 <option value="{{ $branch->id }}" @selected((int) $branch->id === $formBranchId)>{{ $branch->name }}</option>
@@ -277,17 +277,17 @@
                         @endif
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Category <span class="text-danger">*</span></label>
+                        <label class="form-label" for="expenseCategory">Category <span class="text-danger">*</span></label>
                         <select name="category" id="expenseCategory" class="form-select" onchange="toggleCustomCategory(this.value)" required>
                             <option value="">Select category</option>
                             @foreach(\App\Http\Requests\StoreExpenseRequest::CATEGORIES as $cat)
                                 <option value="{{ $cat }}">{{ $cat }}</option>
                             @endforeach
                         </select>
-                        <input type="text" name="custom_category" id="customCategory" class="form-control mt-2" placeholder="Enter custom category" style="display:none;">
+                        <input type="text" name="custom_category" id="customCategory" class="form-control mt-2" placeholder="Enter custom category" aria-label="Custom category" style="display:none;">
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Payment Method <span class="text-danger">*</span></label>
+                        <label class="form-label" for="expensePaymentMethod">Payment Method <span class="text-danger">*</span></label>
                         <select name="payment_method" id="expensePaymentMethod" class="form-select" required>
                             @foreach(\App\Http\Requests\StoreExpenseRequest::PAYMENT_METHODS as $method)
                                 <option value="{{ $method }}">{{ $method }}</option>
@@ -295,7 +295,7 @@
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Description</label>
+                        <label class="form-label" for="expenseDescription">Description</label>
                         <textarea name="description" id="expenseDescription" class="form-control" rows="3"></textarea>
                     </div>
                 </div>
@@ -309,41 +309,19 @@
 </div>
 @endif
 
-@if($canDelete)
-<div class="modal fade" id="expenseDeleteModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title text-danger"><i class="fas fa-trash"></i> Delete Expense</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div id="expenseDeleteAlert"></div>
-                <p>Delete expense <strong id="expenseDeleteName"></strong>? This cannot be undone.</p>
-                <input type="hidden" id="expenseDeleteId">
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-danger" id="expenseDeleteBtn" onclick="confirmDeleteExpense()"><i class="fas fa-trash"></i> Delete</button>
-            </div>
-        </div>
-    </div>
-</div>
-@endif
-
 @if($canImport)
-<div class="modal fade" id="bulkUploadModal" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="bulkUploadModal" tabindex="-1" aria-labelledby="expenseUploadTitle" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <form id="bulkUploadForm" enctype="multipart/form-data">
                 <div class="modal-header">
-                    <h5 class="modal-title"><i class="fas fa-upload"></i> Bulk Upload Expenses</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <h5 class="modal-title" id="expenseUploadTitle"><i class="fas fa-upload" aria-hidden="true"></i> Bulk Upload Expenses</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <div id="uploadAlert"></div>
                     <div class="mb-3">
-                        <label class="form-label">Branch</label>
+                        <label class="form-label" for="bulkBranch">Branch</label>
                         <select name="branch_id" id="bulkBranch" class="form-select" {{ !$canAllBranches ? 'disabled' : '' }}>
                             @foreach($branches as $branch)
                                 <option value="{{ $branch->id }}" @selected((int) $branch->id === $formBranchId)>{{ $branch->name }}</option>
@@ -354,7 +332,7 @@
                         @endif
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">CSV File <span class="text-danger">*</span></label>
+                        <label class="form-label" for="csvFile">CSV File <span class="text-danger">*</span></label>
                         <input type="file" name="csv_file" id="csvFile" accept=".csv" class="form-control" required>
                         <div class="form-text">Required columns: title, amount, expense_date. Max 5MB.</div>
                     </div>
@@ -391,7 +369,7 @@ function showExpenseAlert(html, type) {
     if (el) el.innerHTML = '<div class="exy-alert exy-alert--' + (type || 'danger') + '">' + html + '</div>';
 }
 
-function toggleCustomCategory(value) {
+function toggleCustomCategory(value, preserveValue) {
     const custom = document.getElementById('customCategory');
     if (!custom) return;
     if (value === 'Other') {
@@ -400,13 +378,17 @@ function toggleCustomCategory(value) {
     } else {
         custom.style.display = 'none';
         custom.required = false;
-        custom.value = '';
+        if (!preserveValue) custom.value = '';
     }
 }
 
+document.getElementById('expenseModal')?.addEventListener('show.bs.modal', function () {
+    toggleCustomCategory(document.getElementById('expenseCategory').value, true);
+});
+
 function openExpenseModal() {
-    document.getElementById('expenseModalTitle').innerHTML = '<i class="fas fa-receipt"></i> Add New Expense';
-    document.getElementById('expenseSaveBtn').innerHTML = '<i class="fas fa-check"></i> Save Expense';
+    document.getElementById('expenseModalTitle').innerHTML = '<i class="fas fa-receipt" aria-hidden="true"></i> Add New Expense';
+    document.getElementById('expenseSaveBtn').innerHTML = '<i class="fas fa-check" aria-hidden="true"></i> Save Expense';
     document.getElementById('expenseForm').reset();
     document.getElementById('expenseId').value = '';
     document.getElementById('expenseAlert').innerHTML = '';
@@ -416,12 +398,12 @@ function openExpenseModal() {
     @endif
     document.getElementById('expensePaymentMethod').value = 'Cash';
     toggleCustomCategory('');
-    new bootstrap.Modal(document.getElementById('expenseModal')).show();
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('expenseModal')).show();
 }
 
 function openExpenseModalEdit(row) {
-    document.getElementById('expenseModalTitle').innerHTML = '<i class="fas fa-edit"></i> Edit Expense';
-    document.getElementById('expenseSaveBtn').innerHTML = '<i class="fas fa-check"></i> Update Expense';
+    document.getElementById('expenseModalTitle').innerHTML = '<i class="fas fa-pen" aria-hidden="true"></i> Edit Expense';
+    document.getElementById('expenseSaveBtn').innerHTML = '<i class="fas fa-check" aria-hidden="true"></i> Update Expense';
     document.getElementById('expenseForm').reset();
     document.getElementById('expenseAlert').innerHTML = '';
     document.getElementById('expenseId').value = row.source_id;
@@ -450,7 +432,7 @@ function openExpenseModalEdit(row) {
         toggleCustomCategory('');
     }
 
-    new bootstrap.Modal(document.getElementById('expenseModal')).show();
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('expenseModal')).show();
 }
 
 function saveExpense() {
@@ -466,11 +448,10 @@ function saveExpense() {
     if (btn.disabled) return;
     const orig = btn.innerHTML;
     btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin" aria-hidden="true"></i> Saving...';
 
     const fd = new FormData(form);
     fd.set('_token', document.querySelector('meta[name="csrf-token"]').content);
-
     fd.set('_method', isEdit ? 'PUT' : 'POST');
     fetch(url, { method: 'POST', body: fd, headers: { 'Accept': 'application/json' } })
         .then(r => r.json().then(data => ({ ok: r.ok, data })))
@@ -486,36 +467,28 @@ function saveExpense() {
         });
 }
 
-function deleteExpense(id, name) {
-    document.getElementById('expenseDeleteId').value = id;
-    document.getElementById('expenseDeleteName').textContent = name;
-    document.getElementById('expenseDeleteAlert').innerHTML = '';
-    new bootstrap.Modal(document.getElementById('expenseDeleteModal')).show();
+function deleteExpense(id, name, trigger) {
+    window.YpaConfirmDelete.open({title: 'Delete Expense', trigger, key: 'expense:' + id,
+        message: 'Delete expense ' + name + '? This cannot be undone.',
+        onConfirm: attempt => confirmDeleteExpense(id, attempt)});
 }
 
-function confirmDeleteExpense() {
-    const id = document.getElementById('expenseDeleteId').value;
-    const btn = document.getElementById('expenseDeleteBtn');
-    if (btn.disabled) return;
-    const orig = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting...';
-
+function confirmDeleteExpense(id, attempt) {
     const fd = new FormData();
     fd.set('_token', document.querySelector('meta[name="csrf-token"]').content);
     fd.set('_method', 'DELETE');
 
-    fetch('{{ route('expenses.destroy', ':id') }}'.replace(':id', id), { method: 'POST', body: fd, headers: { 'Accept': 'application/json' } })
+    return fetch('{{ route('expenses.destroy', ':id') }}'.replace(':id', encodeURIComponent(id)), { method: 'POST', body: fd, headers: { 'Accept': 'application/json' } })
         .then(r => r.json().then(data => ({ ok: r.ok, data })))
         .then(({ ok, data }) => {
-            if (!ok || !data.success) throw new Error(data.message || 'Delete failed.');
-            document.getElementById('expenseDeleteAlert').innerHTML = '<div class="exy-alert exy-alert--success">&#10003; ' + esc(data.message) + '</div>';
-            setTimeout(() => window.location.reload(), 700);
-        })
-        .catch(err => {
-            document.getElementById('expenseDeleteAlert').innerHTML = '<div class="exy-alert exy-alert--danger">' + esc(err.message) + '</div>';
-            btn.disabled = false;
-            btn.innerHTML = orig;
+            if (!attempt.isActive()) return;
+            if (!ok || !data.success) {
+                const error = new Error(data.message || 'Delete failed.');
+                error.definite = data.success === false;
+                throw error;
+            }
+            setTimeout(() => { if (attempt.isActive()) window.location.reload(); }, 700);
+            return data.message || 'Deleted successfully.';
         });
 }
 
@@ -526,7 +499,7 @@ function openBulkUploadModal() {
     @if($canAllBranches)
     document.getElementById('bulkBranch').value = '{{ $formBranchId }}';
     @endif
-    new bootstrap.Modal(document.getElementById('bulkUploadModal')).show();
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('bulkUploadModal')).show();
 }
 
 function showUploadAlert(html, type) {
@@ -547,7 +520,7 @@ function submitBulkUpload() {
     if (btn.disabled) return;
     const orig = btn.innerHTML;
     btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin" aria-hidden="true"></i> Uploading...';
 
     const fd = new FormData(form);
     fd.set('_token', document.querySelector('meta[name="csrf-token"]').content);

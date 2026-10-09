@@ -22,7 +22,7 @@
         <div class="d-flex gap-2">
             @if($canExport)
                 <a href="{{ route('members.export', request()->query()) }}" class="btn btn-outline-secondary">
-                    <i class="fas fa-file-csv"></i> Export CSV
+                    <i class="fas fa-file-export" aria-hidden="true"></i> Export CSV
                 </a>
             @endif
             @if($canRegister)
@@ -186,20 +186,20 @@
                                     <span class="badge bg-{{ $pBadge }}">{{ $ps }}</span>
                                 </td>
                                 <td class="text-end">
-                                    <a href="{{ route('members.show', $member) }}" class="btn btn-sm btn-outline-primary" title="View"><i class="fas fa-eye"></i></a>
+                                    <a href="{{ route('members.show', $member) }}" class="btn btn-sm btn-outline-primary" title="View" aria-label="View member {{ $member->full_name }}"><i class="fas fa-eye" aria-hidden="true"></i></a>
                                     @if($canEdit)
-                                        <button type="button" class="btn btn-sm btn-outline-secondary" title="Edit"
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" title="Edit" aria-label="Edit member {{ $member->full_name }}"
                                             data-url="{{ route('members.update', $member) }}"
                                             data-record='@json($memberRecords[$member->id] ?? [])'
                                             onclick="openMemberEdit(this)">
-                                            <i class="fas fa-edit"></i>
+                                            <i class="fas fa-pen" aria-hidden="true"></i>
                                         </button>
                                     @endif
                                     @if($canDelete)
                                         <form action="{{ route('members.destroy', $member) }}" method="POST" class="d-inline ypa-confirm-delete" data-confirm-title="Delete member?" data-confirm-message="Delete {{ $member->full_name }} ({{ $member->membership_id }})? This cannot be undone.">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete"><i class="fas fa-trash"></i></button>
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete" aria-label="Delete member {{ $member->full_name }}"><i class="fas fa-trash" aria-hidden="true"></i></button>
                                         </form>
                                     @endif
                                 </td>

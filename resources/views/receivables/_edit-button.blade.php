@@ -1,5 +1,5 @@
 {{-- Edit button that opens the receivable modal pre-filled. Needs $receivable, $buttonClass, $label. --}}
-<button type="button" class="{{ $buttonClass }}" title="Edit"
+<button type="button" class="{{ $buttonClass }}" title="Edit" aria-label="Edit receivable {{ $receivable->reference_no }}"
     data-url="{{ route('receivables.update', $receivable) }}"
     data-date="{{ optional($receivable->received_date)->format('Y-m-d') }}"
     data-payer-type="{{ $receivable->payer_type }}"
@@ -18,5 +18,5 @@
     data-description="{{ $receivable->description ?? '' }}"
     data-payment-method="{{ $receivable->payment_method ?? 'Cash' }}"
     onclick="openReceivableEdit(this)">
-    <i class="fas fa-edit{{ $label !== '' ? ' me-1' : '' }}"></i>{{ $label }}
+    <i class="fas fa-pen{{ $label !== '' ? ' me-1' : '' }}" aria-hidden="true"></i>{{ $label }}
 </button>

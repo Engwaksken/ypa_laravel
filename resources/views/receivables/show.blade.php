@@ -65,17 +65,19 @@
                     <span><i class="fas fa-user"></i> Payer</span>
                 </div>
                 <div class="dash-panel-body p-0">
-                    <table class="table align-middle mb-0">
-                        <tbody>
-                            <tr><th style="width: 40%">Name</th><td>{{ $receivable->payer_name }}</td></tr>
-                            <tr><th>Type</th><td>{{ $receivable->payer_type ?? '-' }}</td></tr>
-                            <tr><th>Phone</th><td>{{ $receivable->payer_phone ?: '-' }}</td></tr>
-                            <tr><th>Email</th><td>{{ $receivable->receiver_email ?: '-' }}</td></tr>
-                            <tr><th>Member</th><td>{{ optional($receivable->member)->full_name ?? '-' }}</td></tr>
-                            <tr><th>Group</th><td>{{ optional($receivable->group)->group_name ?? ($receivable->group_name ?: '-') }}</td></tr>
-                            <tr><th>Branch</th><td>{{ optional($receivable->branch)->name ?? '-' }}</td></tr>
-                        </tbody>
-                    </table>
+                    <div class="table-responsive">
+                        <table class="table align-middle mb-0">
+                            <tbody>
+                                <tr><th style="width: 40%">Name</th><td>{{ $receivable->payer_name }}</td></tr>
+                                <tr><th>Type</th><td>{{ $receivable->payer_type ?? '-' }}</td></tr>
+                                <tr><th>Phone</th><td>{{ $receivable->payer_phone ?: '-' }}</td></tr>
+                                <tr><th>Email</th><td>{{ $receivable->receiver_email ?: '-' }}</td></tr>
+                                <tr><th>Member</th><td>{{ optional($receivable->member)->full_name ?? '-' }}</td></tr>
+                                <tr><th>Group</th><td>{{ optional($receivable->group)->group_name ?? ($receivable->group_name ?: '-') }}</td></tr>
+                                <tr><th>Branch</th><td>{{ optional($receivable->branch)->name ?? '-' }}</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
@@ -85,17 +87,19 @@
                     <span><i class="fas fa-file-invoice"></i> Receivable</span>
                 </div>
                 <div class="dash-panel-body p-0">
-                    <table class="table align-middle mb-0">
-                        <tbody>
-                            <tr><th style="width: 40%">Date</th><td>{{ optional($receivable->received_date)->format('Y-m-d') ?? '-' }}</td></tr>
-                            <tr><th>Category</th><td>{{ $receivable->category ?? '-' }}</td></tr>
-                            <tr><th>Type</th><td>{{ $receivable->receivable_type ?? '-' }}{{ $receivable->other_type ? ' (' . $receivable->other_type . ')' : '' }}</td></tr>
-                            <tr><th>Amount Payable</th><td class="num">{{ number_format((float) $receivable->amount_payable, 2) }}</td></tr>
-                            <tr><th>Discount</th><td class="num">{{ number_format((float) $receivable->discount, 2) }}</td></tr>
-                            <tr><th>Payment Method</th><td>{{ $receivable->payment_method ?? '-' }}</td></tr>
-                            <tr><th>Payment Reference</th><td>{{ $receivable->payment_reference ?: '-' }}</td></tr>
-                        </tbody>
-                    </table>
+                    <div class="table-responsive">
+                        <table class="table align-middle mb-0">
+                            <tbody>
+                                <tr><th style="width: 40%">Date</th><td>{{ optional($receivable->received_date)->format('Y-m-d') ?? '-' }}</td></tr>
+                                <tr><th>Category</th><td>{{ $receivable->category ?? '-' }}</td></tr>
+                                <tr><th>Type</th><td>{{ $receivable->receivable_type ?? '-' }}{{ $receivable->other_type ? ' (' . $receivable->other_type . ')' : '' }}</td></tr>
+                                <tr><th>Amount Payable</th><td class="num">{{ number_format((float) $receivable->amount_payable, 2) }}</td></tr>
+                                <tr><th>Discount</th><td class="num">{{ number_format((float) $receivable->discount, 2) }}</td></tr>
+                                <tr><th>Payment Method</th><td>{{ $receivable->payment_method ?? '-' }}</td></tr>
+                                <tr><th>Payment Reference</th><td>{{ $receivable->payment_reference ?: '-' }}</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>

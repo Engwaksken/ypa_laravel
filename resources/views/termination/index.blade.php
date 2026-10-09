@@ -63,7 +63,7 @@
                                 <td class="num">{{ number_format((float) $termination->amount_paid, 2) }}</td>
                                 <td class="num">{{ number_format((float) $termination->deduction_amount, 2) }}</td>
                                 <td class="num">{{ number_format((float) $termination->refund_amount, 2) }}</td>
-                                <td class="text-end"><a href="{{ route('termination.show', $termination) }}" class="btn btn-sm btn-outline-primary" title="View"><i class="fas fa-eye"></i></a></td>
+                                <td class="text-end"><a href="{{ route('termination.show', $termination) }}" class="btn btn-sm btn-outline-primary" title="View" aria-label="View termination for contract {{ $termination->contract->contract_number ?? 'unknown' }}"><i class="fas fa-eye" aria-hidden="true"></i></a></td>
                             </tr>
                         @empty
                             <tr class="empty-row"><td colspan="8"><i class="fas fa-inbox"></i>No termination records found.</td></tr>
@@ -77,7 +77,7 @@
 
 </div>
 
-<div class="modal fade" id="terminationModal" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="terminationModal" tabindex="-1" aria-labelledby="terminationModalTitle" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <form id="terminationForm" method="POST" action="{{ route('termination.store') }}">

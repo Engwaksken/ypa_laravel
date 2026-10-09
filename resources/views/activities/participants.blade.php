@@ -113,14 +113,14 @@
                                         <form action="{{ route('activities.participants.attendance', [$activity, $participant]) }}" method="POST" class="d-inline">
                                             @csrf
                                             <input type="hidden" name="attended" value="{{ $participant->attended ? 0 : 1 }}">
-                                            <button type="submit" class="btn btn-sm btn-outline-{{ $participant->attended ? 'warning' : 'success' }}" title="{{ $participant->attended ? 'Mark not attended' : 'Mark attended' }}">
+                                            <button type="submit" class="btn btn-sm btn-outline-{{ $participant->attended ? 'warning' : 'success' }}" title="{{ $participant->attended ? 'Mark not attended' : 'Mark attended' }}" aria-label="{{ $participant->attended ? 'Mark not attended' : 'Mark attended' }}: {{ ($participant->member->full_name ?? '') ?: 'this participant' }}">
                                                 <i class="fas fa-{{ $participant->attended ? 'user-slash' : 'user-check' }}"></i>
                                             </button>
                                         </form>
                                         <form action="{{ route('activities.participants.destroy', [$activity, $participant]) }}" method="POST" class="d-inline ypa-confirm-delete" data-confirm-title="Remove participant?" data-confirm-message="Remove {{ $participant->member->full_name ?? 'this participant' }} from this activity?">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Remove"><i class="fas fa-trash"></i></button>
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Remove" aria-label="Remove {{ ($participant->member->full_name ?? '') ?: 'this participant' }}"><i class="fas fa-trash" aria-hidden="true"></i></button>
                                         </form>
                                     @endif
                                 </td>
@@ -140,7 +140,7 @@
 </div>
 
 @if($canEdit)
-<div class="modal fade" id="participantModal" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="participantModal" tabindex="-1" aria-labelledby="participantModalTitle" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <form id="participantForm" method="POST" action="{{ route('activities.participants.store', $activity) }}">
@@ -152,7 +152,7 @@
                 <div class="modal-body">
                     <div class="row g-3">
                         <div class="col-md-8">
-                            <label class="form-label">Member <span class="text-danger">*</span></label>
+                            <label class="form-label" for="participantMember">Member <span class="text-danger">*</span></label>
                             <select name="member_id" id="participantMember" class="form-select" required>
                                 <option value="">Select Member</option>
                                 @foreach(\App\Models\Member::query()->orderByDesc('id')->limit(500)->get() as $member)
@@ -161,7 +161,7 @@
                             </select>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label">Participant Type</label>
+                            <label class="form-label" for="participantType">Participant Type</label>
                             <select name="participant_type" id="participantType" class="form-select">
                                 @foreach(\App\Services\ActivityService::PARTICIPANT_TYPES as $pt)
                                     <option value="{{ $pt }}">{{ $pt }}</option>

@@ -101,7 +101,7 @@
                                 <td>{{ $customer->phone ?? '-' }}</td>
                                 <td>{{ $customer->email ?? '-' }}</td>
                                 <td class="text-end">
-                                    <button type="button" class="btn btn-sm btn-outline-secondary" title="Edit"
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" title="Edit" aria-label="Edit customer {{ $customer->name }}"
                                         data-url="{{ route('customers.update', $customer) }}"
                                         data-type="{{ $customer->customer_type }}"
                                         data-branch="{{ $customer->branch_id ?? '' }}"
@@ -110,12 +110,12 @@
                                         data-email="{{ $customer->email ?? '' }}"
                                         data-address="{{ $customer->address ?? '' }}"
                                         onclick="openCustomerEdit(this)">
-                                        <i class="fas fa-edit"></i>
+                                        <i class="fas fa-pen" aria-hidden="true"></i>
                                     </button>
                                     <form action="{{ route('customers.destroy', $customer) }}" method="POST" class="d-inline ypa-confirm-delete" data-confirm-title="Delete customer?" data-confirm-message="Delete {{ $customer->name }}? This cannot be undone.">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete"><i class="fas fa-trash"></i></button>
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete" aria-label="Delete customer {{ $customer->name }}"><i class="fas fa-trash" aria-hidden="true"></i></button>
                                     </form>
                                 </td>
                             </tr>
@@ -134,7 +134,7 @@
 
 </div>
 
-<div class="modal fade" id="customerModal" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="customerModal" tabindex="-1" aria-labelledby="customerModalTitle" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <form id="customerForm" method="POST" action="{{ route('customers.store') }}">
@@ -147,18 +147,18 @@
                 <div class="modal-body">
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label class="form-label">Name</label>
+                            <label class="form-label" for="customerName">Name</label>
                             <input type="text" name="name" id="customerName" class="form-control" required>
                         </div>
                         <div class="col-md-3">
-                            <label class="form-label">Type</label>
+                            <label class="form-label" for="customerType">Type</label>
                             <select name="customer_type" id="customerType" class="form-select" required>
                                 <option value="non_member">Non-member</option>
                                 <option value="member">Member</option>
                             </select>
                         </div>
                         <div class="col-md-3">
-                            <label class="form-label">Branch</label>
+                            <label class="form-label" for="customerBranch">Branch</label>
                             <select name="branch_id" id="customerBranch" class="form-select">
                                 <option value="">-- None --</option>
                                 @foreach($branches as $branch)
@@ -167,15 +167,15 @@
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Phone</label>
+                            <label class="form-label" for="customerPhone">Phone</label>
                             <input type="text" name="phone" id="customerPhone" class="form-control">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Email</label>
+                            <label class="form-label" for="customerEmail">Email</label>
                             <input type="email" name="email" id="customerEmail" class="form-control">
                         </div>
                         <div class="col-12">
-                            <label class="form-label">Address</label>
+                            <label class="form-label" for="customerAddress">Address</label>
                             <textarea name="address" id="customerAddress" rows="2" class="form-control"></textarea>
                         </div>
                     </div>

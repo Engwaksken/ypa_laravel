@@ -1,6 +1,6 @@
 {{-- Add/Edit receivable modal. Requires $branches, $members and $groups. --}}
 @php($receivableCategories = ['Farm and Livestock Related', 'Services', 'Administrative / Other'])
-<div class="modal fade" id="receivableModal" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="receivableModal" tabindex="-1" aria-labelledby="receivableModalTitle" aria-hidden="true">
     <div class="modal-dialog modal-xl">
         <div class="modal-content">
             <form id="receivableForm" method="POST" action="{{ route('receivables.store') }}">
@@ -14,18 +14,18 @@
                     <div class="modal-section-title">Payer</div>
                     <div class="row g-3">
                         <div class="col-md-4">
-                            <label class="form-label">Received Date</label>
+                            <label class="form-label" for="receivableDate">Received Date</label>
                             <input type="date" name="received_date" id="receivableDate" value="{{ now()->format('Y-m-d') }}" class="form-control" required>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label">Payer Type</label>
+                            <label class="form-label" for="receivablePayerType">Payer Type</label>
                             <select name="payer_type" id="receivablePayerType" class="form-select" required>
                                 <option value="Member">Member</option>
                                 <option value="Non-Member">Non-Member</option>
                             </select>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label">Branch</label>
+                            <label class="form-label" for="receivableBranch">Branch</label>
                             <select name="branch_id" id="receivableBranch" class="form-select">
                                 <option value="">Select branch</option>
                                 @foreach($branches as $branch)
@@ -34,7 +34,7 @@
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Member</label>
+                            <label class="form-label" for="receivableMember">Member</label>
                             <select name="member_id" id="receivableMember" class="form-select">
                                 <option value="">No member</option>
                                 @foreach($members as $member)
@@ -43,7 +43,7 @@
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Group</label>
+                            <label class="form-label" for="receivableGroup">Group</label>
                             <select name="group_id" id="receivableGroup" class="form-select">
                                 <option value="">No group</option>
                                 @foreach($groups as $group)
@@ -52,19 +52,19 @@
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Payer Name</label>
+                            <label class="form-label" for="receivablePayerName">Payer Name</label>
                             <input type="text" name="payer_name" id="receivablePayerName" class="form-control" maxlength="150" required>
                         </div>
                         <div class="col-md-3">
-                            <label class="form-label">Payer Phone</label>
+                            <label class="form-label" for="receivablePayerPhone">Payer Phone</label>
                             <input type="text" name="payer_phone" id="receivablePayerPhone" class="form-control" maxlength="30">
                         </div>
                         <div class="col-md-3">
-                            <label class="form-label">Receiver Email</label>
+                            <label class="form-label" for="receivableEmail">Receiver Email</label>
                             <input type="email" name="receiver_email" id="receivableEmail" class="form-control" maxlength="255">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Group Name</label>
+                            <label class="form-label" for="receivableGroupName">Group Name</label>
                             <input type="text" name="group_name" id="receivableGroupName" class="form-control" maxlength="180">
                         </div>
                     </div>
@@ -72,7 +72,7 @@
                     <div class="modal-section-title mt-4">Receivable</div>
                     <div class="row g-3">
                         <div class="col-md-4">
-                            <label class="form-label">Category</label>
+                            <label class="form-label" for="receivableCategory">Category</label>
                             <select name="category" id="receivableCategory" class="form-select" required>
                                 @foreach($receivableCategories as $category)
                                     <option value="{{ $category }}">{{ $category }}</option>
@@ -80,23 +80,23 @@
                             </select>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label">Receivable Type</label>
+                            <label class="form-label" for="receivableType">Receivable Type</label>
                             <input type="text" name="receivable_type" id="receivableType" class="form-control" maxlength="150" required>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label">Other Type</label>
+                            <label class="form-label" for="receivableOtherType">Other Type</label>
                             <input type="text" name="other_type" id="receivableOtherType" class="form-control" maxlength="150">
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label">Amount Payable</label>
+                            <label class="form-label" for="receivableAmountPayable">Amount Payable</label>
                             <input type="number" step="0.01" min="0" name="amount_payable" id="receivableAmountPayable" class="form-control" required>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label">Discount</label>
+                            <label class="form-label" for="receivableDiscount">Discount</label>
                             <input type="number" step="0.01" min="0" name="discount" id="receivableDiscount" value="0" class="form-control">
                         </div>
                         <div class="col-12">
-                            <label class="form-label">Description</label>
+                            <label class="form-label" for="receivableDescription">Description</label>
                             <textarea name="description" id="receivableDescription" rows="3" class="form-control"></textarea>
                         </div>
                     </div>
@@ -106,11 +106,11 @@
                         <div class="modal-section-title mt-4">Initial Payment</div>
                         <div class="row g-3">
                             <div class="col-md-4">
-                                <label class="form-label">Amount Paid</label>
+                                <label class="form-label" for="receivableAmountPaid">Amount Paid</label>
                                 <input type="number" step="0.01" min="0" name="amount_paid" id="receivableAmountPaid" value="0" class="form-control">
                             </div>
                             <div class="col-md-4">
-                                <label class="form-label">Payment Method</label>
+                                <label class="form-label" for="receivablePaymentMethod">Payment Method</label>
                                 <select name="payment_method" id="receivablePaymentMethod" class="form-select" required>
                                     @foreach(['Cash', 'Mobile Money', 'Bank'] as $method)
                                         <option value="{{ $method }}">{{ $method }}</option>
@@ -118,7 +118,7 @@
                                 </select>
                             </div>
                             <div class="col-md-4">
-                                <label class="form-label">Payment Reference</label>
+                                <label class="form-label" for="receivablePaymentReference">Payment Reference</label>
                                 <input type="text" name="payment_reference" id="receivablePaymentReference" class="form-control" maxlength="150">
                             </div>
                         </div>
@@ -149,9 +149,9 @@
         document.getElementById('receivablePaymentReference').disabled = isEdit;
     }
 
-    function receivableModalShow() {
+    function receivableModalShow(trigger) {
         if (window.bootstrap && bootstrap.Modal) {
-            bootstrap.Modal.getOrCreateInstance(document.getElementById('receivableModal')).show();
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('receivableModal')).show(trigger);
         }
     }
 
@@ -184,7 +184,7 @@
             document.getElementById(id).value = map[id] || '';
         });
         receivableModalMode(true);
-        receivableModalShow();
+        receivableModalShow(btn);
     }
 
     // When the validation helper reopens the modal after a failed update,

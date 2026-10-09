@@ -1,5 +1,5 @@
 {{-- Add/Edit contract template modal. Requires $projectCategories. --}}
-<div class="modal fade" id="contractTemplateModal" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="contractTemplateModal" tabindex="-1" aria-labelledby="contractTemplateModalTitle" aria-hidden="true">
     <div class="modal-dialog modal-xl">
         <div class="modal-content">
             <form id="contractTemplateForm" method="POST" action="{{ route('contract-templates.store') }}">
@@ -13,19 +13,19 @@
                     <div class="modal-section-title">Details</div>
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label class="form-label">Template Name</label>
+                            <label class="form-label" for="ctName">Template Name</label>
                             <input type="text" name="template_name" id="ctName" class="form-control" maxlength="255" required>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Template Key</label>
+                            <label class="form-label" for="ctKey">Template Key</label>
                             <input type="text" name="template_key" id="ctKey" class="form-control" maxlength="255">
                         </div>
                         <div class="col-md-3">
-                            <label class="form-label">Project Type ID</label>
+                            <label class="form-label" for="ctProjectType">Project Type ID</label>
                             <input type="number" min="1" name="project_type_id" id="ctProjectType" class="form-control">
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label">Project Category</label>
+                            <label class="form-label" for="ctProjectCategory">Project Category</label>
                             <select name="project_category_id" id="ctProjectCategory" class="form-select">
                                 <option value="">-- None --</option>
                                 @foreach($projectCategories as $category)
@@ -34,7 +34,7 @@
                             </select>
                         </div>
                         <div class="col-md-2">
-                            <label class="form-label">Version</label>
+                            <label class="form-label" for="ctVersion">Version</label>
                             <input type="number" min="1" name="version" id="ctVersion" value="1" class="form-control">
                         </div>
                         <div class="col-md-3 d-flex align-items-end">
@@ -49,23 +49,23 @@
                     <div class="modal-section-title mt-4">Content</div>
                     <div class="row g-3">
                         <div class="col-12">
-                            <label class="form-label">Cover Page</label>
+                            <label class="form-label" for="ctCover">Cover Page</label>
                             <textarea name="cover_page" id="ctCover" class="form-control font-monospace" rows="3"></textarea>
                         </div>
                         <div class="col-12">
-                            <label class="form-label">Template Body</label>
+                            <label class="form-label" for="ctBody">Template Body</label>
                             <textarea name="template_body" id="ctBody" class="form-control font-monospace" rows="10" required></textarea>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Contract Footer</label>
+                            <label class="form-label" for="ctFooter">Contract Footer</label>
                             <textarea name="contract_footer" id="ctFooter" class="form-control font-monospace" rows="3"></textarea>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Contract Signature</label>
+                            <label class="form-label" for="ctSignature">Contract Signature</label>
                             <textarea name="contract_signature" id="ctSignature" class="form-control font-monospace" rows="3"></textarea>
                         </div>
                         <div class="col-12">
-                            <label class="form-label">Template Sections (JSON)</label>
+                            <label class="form-label" for="ctSections">Template Sections (JSON)</label>
                             <textarea name="template_sections" id="ctSections" class="form-control font-monospace" rows="4"></textarea>
                         </div>
                     </div>
@@ -81,9 +81,9 @@
 
 @push('scripts')
 <script>
-    function contractTemplateModalShow() {
+    function contractTemplateModalShow(trigger) {
         if (window.bootstrap && bootstrap.Modal) {
-            bootstrap.Modal.getOrCreateInstance(document.getElementById('contractTemplateModal')).show();
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('contractTemplateModal')).show(trigger);
         }
     }
 
@@ -112,7 +112,7 @@
             document.getElementById(id).value = map[id] || '';
         });
         document.getElementById('ctActive').checked = d.active === '1';
-        contractTemplateModalShow();
+        contractTemplateModalShow(btn);
     }
 </script>
 @endpush
