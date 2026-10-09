@@ -491,6 +491,9 @@
         window.YpaConfirmDelete.open({
             title: 'Mark meeting as completed?',
             message: 'This marks the meeting as completed.',
+            confirmLabel: 'Mark complete',
+            busyLabel: 'Marking complete...',
+            variant: 'btn-primary',
             trigger: trigger || document.activeElement,
             onConfirm: function () {
                 const formData = new FormData();

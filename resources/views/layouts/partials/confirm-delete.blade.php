@@ -1,10 +1,15 @@
 {{-- Global Bootstrap delete-confirmation modal (replaces native confirm()).
      Usage: <form method="POST" action="..." class="ypa-confirm-delete"
                  data-confirm-title="Delete product?"
-                 data-confirm-message="This cannot be undone.">
-     The submit is intercepted, the modal is shown, and the form is
-     submitted only after confirmation.
-     AJAX usage: YpaConfirmDelete.open({title, message, trigger, key, onConfirm}).
+                 data-confirm-message="This cannot be undone."
+                  data-confirm-label="Delete" (optional, default "Delete")
+                  data-confirm-busy-label="Deleting..." (optional, default "Deleting...")
+                  data-confirm-variant="btn-danger" (optional: btn-danger|btn-primary)>
+      The submit is intercepted, the modal is shown, and the form is
+      submitted only after confirmation.
+      AJAX usage: YpaConfirmDelete.open({title, message, trigger, key, onConfirm,
+      confirmLabel, busyLabel, variant}). confirmLabel/busyLabel/variant are optional
+      (defaults above).
      onConfirm(attempt) returns a Promise of a success message. Guard caller-side
      effects with attempt.isActive(). Only errors marked definite permit retry;
      timeout/transport/invalid-response outcomes require a record-state check.
@@ -14,7 +19,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="ypaConfirmDeleteLabel">
-                    <i class="fa-solid fa-trash-can text-danger me-2" aria-hidden="true"></i>
+                    <i class="fa-solid fa-trash-can text-danger me-2" id="ypaConfirmDeleteHeaderIcon" aria-hidden="true"></i>
                     <span id="ypaConfirmDeleteTitle">Delete this record?</span>
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -26,7 +31,7 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-danger" id="ypaConfirmDeleteButton">
-                    <i class="fa-solid fa-trash-can me-1" aria-hidden="true"></i> Delete
+                    <i class="fa-solid fa-trash-can me-1" id="ypaConfirmDeleteButtonIcon" aria-hidden="true"></i><span id="ypaConfirmDeleteButtonLabel">Delete</span>
                 </button>
             </div>
         </div>
@@ -47,18 +52,46 @@
         var messageEl = document.getElementById('ypaConfirmDeleteMessage');
         var confirmBtn = document.getElementById('ypaConfirmDeleteButton');
         var alertEl = document.getElementById('ypaConfirmDeleteAlert');
+        var buttonIconEl = document.getElementById('ypaConfirmDeleteButtonIcon');
+        var headerIconEl = document.getElementById('ypaConfirmDeleteHeaderIcon');
+        var buttonLabelEl = document.getElementById('ypaConfirmDeleteButtonLabel');
+        var DEFAULT_LABEL = 'Delete';
+        var DEFAULT_BUSY_LABEL = 'Deleting...';
+        var DEFAULT_VARIANT = 'btn-danger';
+        var ALLOWED_VARIANTS = {'btn-danger': true, 'btn-primary': true};
+        var VARIANT_HEADER_ICONS = {
+            'btn-danger': 'fa-solid fa-trash-can text-danger me-2',
+            'btn-primary': 'fa-solid fa-circle-check text-primary me-2'
+        };
+        var idleLabel = DEFAULT_LABEL;
+        var idleBusyLabel = DEFAULT_BUSY_LABEL;
+        var idleVariant = DEFAULT_VARIANT;
 
-        if (!modalEl || !confirmBtn) return;
+        if (!modalEl || !confirmBtn || !buttonIconEl || !buttonLabelEl) return;
 
         function hasBootstrap() { return !!(window.bootstrap && bootstrap.Modal); }
+        function normalizeLabel(label) {
+            return (typeof label === 'string' && label.trim() !== '') ? label.trim() : DEFAULT_LABEL;
+        }
+        function normalizeBusyLabel(label) {
+            return (typeof label === 'string' && label.trim() !== '') ? label.trim() : DEFAULT_BUSY_LABEL;
+        }
+        function normalizeVariant(variant) {
+            return (typeof variant === 'string' && Object.prototype.hasOwnProperty.call(ALLOWED_VARIANTS, variant)) ? variant : DEFAULT_VARIANT;
+        }
+        // Label is always written with textContent; the busy state shows the busy label and spinner.
+        function applyButton(locked) {
+            buttonLabelEl.textContent = locked ? idleBusyLabel : idleLabel;
+            confirmBtn.classList.remove('btn-danger', 'btn-primary');
+            confirmBtn.classList.add(idleVariant);
+            buttonIconEl.className = locked ? 'fa-solid fa-spinner fa-spin me-1' : 'fa-solid fa-trash-can me-1';
+        }
         function lock(locked) {
             busy = locked;
             confirmBtn.disabled = locked;
             modalEl.querySelectorAll('[data-bs-dismiss="modal"]').forEach(function (button) { button.disabled = locked; });
             modalEl.setAttribute('aria-busy', locked ? 'true' : 'false');
-            confirmBtn.innerHTML = locked
-                ? '<i class="fa-solid fa-spinner fa-spin me-1" aria-hidden="true"></i> Deleting...'
-                : '<i class="fa-solid fa-trash-can me-1" aria-hidden="true"></i> Delete';
+            applyButton(locked);
         }
         function feedback(message, success) {
             alertEl.className = 'alert mt-3 mb-0 alert-' + (success ? 'success' : 'danger');
@@ -135,6 +168,10 @@
                 key: options.key || null,
                 trigger: options.trigger || document.activeElement
             };
+            idleLabel = normalizeLabel(options.confirmLabel);
+            idleBusyLabel = normalizeBusyLabel(options.busyLabel);
+            idleVariant = normalizeVariant(options.variant);
+            if (headerIconEl) headerIconEl.className = VARIANT_HEADER_ICONS[idleVariant];
             titleEl.textContent = options.title || 'Delete this record?';
             messageEl.textContent = options.message || 'This action cannot be undone.';
             alertEl.hidden = true;
@@ -169,7 +206,9 @@
             if (!form || !form.classList.contains('ypa-confirm-delete') || form.dataset.confirmed === '1') return;
             event.preventDefault();
             open({form: form, trigger: event.submitter || document.activeElement,
-                title: form.dataset.confirmTitle, message: form.dataset.confirmMessage});
+                title: form.dataset.confirmTitle, message: form.dataset.confirmMessage,
+                confirmLabel: form.dataset.confirmLabel, busyLabel: form.dataset.confirmBusyLabel,
+                variant: form.dataset.confirmVariant});
         });
         confirmBtn.addEventListener('click', run);
     })();
