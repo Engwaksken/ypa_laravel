@@ -6,6 +6,7 @@ use App\Http\Requests\StoreContractTemplateRequest;
 use App\Http\Requests\UpdateContractTemplateRequest;
 use App\Models\Contract;
 use App\Models\ContractTemplate;
+use App\Models\ProjectCategory;
 use App\Services\ContractService;
 use App\Services\PermissionService;
 use Illuminate\Http\RedirectResponse;
@@ -40,12 +41,32 @@ class ContractTemplateController extends Controller
     {
         $templates = ContractTemplate::query()->with(['creator', 'updater'])->orderByDesc('updated_at')->orderByDesc('id')->paginate(20);
 
-        return view('contract_templates.index', compact('templates'));
+        $stats = [
+            'total' => ContractTemplate::query()->count(),
+            'active' => ContractTemplate::query()->where('is_active', true)->count(),
+            'inactive' => ContractTemplate::query()->where('is_active', false)->count(),
+            'recent' => ContractTemplate::query()->where('updated_at', '>=', now()->subDays(30))->count(),
+        ];
+
+        return view('contract_templates.index', array_merge(compact('templates', 'stats'), $this->modalData()));
     }
 
-    public function create(): View
+    /**
+     * Dropdown data for the add/edit template modal.
+     */
+    protected function modalData(): array
     {
-        return view('contract_templates.create');
+        return [
+            'projectCategories' => ProjectCategory::query()->orderBy('category_name')->get(['id', 'category_name']),
+        ];
+    }
+
+    /**
+     * Templates are created from the modal on the index page.
+     */
+    public function create(): RedirectResponse
+    {
+        return redirect()->route('contract-templates.index');
     }
 
     public function store(StoreContractTemplateRequest $request): RedirectResponse
@@ -53,26 +74,29 @@ class ContractTemplateController extends Controller
         $data = $request->validated();
         $template = ContractTemplate::create($this->normalizePayload($data));
 
-        return redirect()->route('contract-templates.show', $template)->with('success', 'Contract template created successfully.');
+        return redirect()->route('contract-templates.index')->with('success', 'Contract template "' . $template->template_name . '" created successfully.');
     }
 
     public function show(ContractTemplate $contractTemplate): View
     {
         $contractTemplate->load(['creator', 'updater']);
 
-        return view('contract_templates.show', ['template' => $contractTemplate]);
+        return view('contract_templates.show', array_merge(['template' => $contractTemplate], $this->modalData()));
     }
 
-    public function edit(ContractTemplate $contractTemplate): View
+    /**
+     * Templates are edited from the modal on the index/show pages.
+     */
+    public function edit(ContractTemplate $contractTemplate): RedirectResponse
     {
-        return view('contract_templates.edit', ['template' => $contractTemplate]);
+        return redirect()->route('contract-templates.show', $contractTemplate);
     }
 
     public function update(UpdateContractTemplateRequest $request, ContractTemplate $contractTemplate): RedirectResponse
     {
         $contractTemplate->update($this->normalizePayload($request->validated()));
 
-        return redirect()->route('contract-templates.show', $contractTemplate)->with('success', 'Contract template updated successfully.');
+        return redirect()->route('contract-templates.index')->with('success', 'Contract template updated successfully.');
     }
 
     public function destroy(ContractTemplate $contractTemplate): RedirectResponse

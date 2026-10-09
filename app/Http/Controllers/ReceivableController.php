@@ -52,7 +52,7 @@ class ReceivableController extends Controller
         $totalOutstanding = (clone $query)->sum('outstanding_balance');
         $receivables = $query->paginate($perPage)->withQueryString();
 
-        return view('receivables.index', compact(
+        return view('receivables.index', array_merge(compact(
             'receivables',
             'search',
             'statusFilter',
@@ -61,12 +61,15 @@ class ReceivableController extends Controller
             'totalPayable',
             'totalPaid',
             'totalOutstanding'
-        ));
+        ), $this->formData()));
     }
 
-    public function create(): View
+    /**
+     * Receivables are created from the modal on the index page.
+     */
+    public function create(): RedirectResponse
     {
-        return view('receivables.create', $this->formData());
+        return redirect()->route('receivables.index');
     }
 
     public function store(StoreReceivableRequest $request): RedirectResponse
@@ -112,19 +115,22 @@ class ReceivableController extends Controller
             return $receivable->refresh();
         });
 
-        return redirect()->route('receivables.show', $receivable)->with('success', 'Receivable recorded successfully.');
+        return redirect()->route('receivables.index')->with('success', 'Receivable ' . $receivable->reference_no . ' recorded successfully.');
     }
 
     public function show(Receivable $receivable): View
     {
         $receivable->load(['member', 'group', 'branch', 'creator', 'paymentTransaction', 'payments.creator']);
 
-        return view('receivables.show', compact('receivable'));
+        return view('receivables.show', array_merge(compact('receivable'), $this->formData()));
     }
 
-    public function edit(Receivable $receivable): View
+    /**
+     * Receivables are edited from the modal on the index/show pages.
+     */
+    public function edit(Receivable $receivable): RedirectResponse
     {
-        return view('receivables.edit', array_merge($this->formData(), compact('receivable')));
+        return redirect()->route('receivables.show', $receivable);
     }
 
     public function update(StoreReceivableRequest $request, Receivable $receivable): RedirectResponse
@@ -152,7 +158,7 @@ class ReceivableController extends Controller
 
         $receivable->forceFill($payload)->save();
 
-        return redirect()->route('receivables.show', $receivable)->with('success', 'Receivable updated successfully.');
+        return redirect()->route('receivables.index')->with('success', 'Receivable updated successfully.');
     }
 
     public function destroy(Receivable $receivable): RedirectResponse

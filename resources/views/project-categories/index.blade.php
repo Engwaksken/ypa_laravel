@@ -191,7 +191,10 @@ function showCategoryAlert(html, type) {
     if (el) el.innerHTML = '<div class="pj-alert pj-alert--' + (type || 'danger') + '">' + html + '</div>';
 }
 
+let categoryEditRequest = 0;
 function openCategoryModal() {
+    ++categoryEditRequest;
+    document.getElementById('categorySaveBtn').disabled = false;
     document.getElementById('categoryModalTitle').innerHTML = '<i class="fas fa-layer-group"></i> Add Category';
     document.getElementById('categorySaveBtn').innerHTML = '<i class="fas fa-save"></i> Save';
     document.getElementById('categoryForm').reset();
@@ -205,11 +208,12 @@ function saveCategory() {
     if (!form.checkValidity()) { form.reportValidity(); return; }
 
     const btn = document.getElementById('categorySaveBtn');
+    if (btn.disabled) return;
     const isEdit = !!document.getElementById('category_id').value;
     const url = isEdit
         ? '{{ route('project-categories.update', ':id') }}'.replace(':id', document.getElementById('category_id').value)
         : '{{ route('project-categories.store') }}';
-    const method = isEdit ? 'PUT' : 'POST';
+
 
     btn.disabled = true;
     const orig = btn.innerHTML;
@@ -218,7 +222,8 @@ function saveCategory() {
     const fd = new FormData(form);
     fd.set('_token', document.querySelector('meta[name="csrf-token"]').content);
 
-    fetch(url, { method: method, body: fd, headers: { 'Accept': 'application/json' } })
+    fd.set('_method', isEdit ? 'PUT' : 'POST');
+    fetch(url, { method: 'POST', body: fd, headers: { 'Accept': 'application/json' } })
         .then(r => r.json().then(data => ({ ok: r.ok, data })))
         .then(({ ok, data }) => {
             if (!ok || !data.success) throw new Error(data.message || 'Failed to save category.');
@@ -233,22 +238,28 @@ function saveCategory() {
 }
 
 function editCategory(id) {
+    const request = ++categoryEditRequest;
+    document.getElementById('categorySaveBtn').disabled = true;
     document.getElementById('categoryModalTitle').innerHTML = '<i class="fas fa-edit"></i> Edit Category';
     document.getElementById('categorySaveBtn').innerHTML = '<i class="fas fa-save"></i> Update';
     document.getElementById('categoryForm').reset();
     document.getElementById('categoryAlert').innerHTML = '';
     document.getElementById('category_id').value = id;
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('categoryModal')).show();
     fetch('{{ route('project-categories.edit-data', ':id') }}'.replace(':id', id), { headers: { 'Accept': 'application/json' } })
         .then(r => r.json())
         .then(res => {
+            if (request !== categoryEditRequest) return;
             if (!res.success) throw new Error(res.message || 'Failed to load category.');
             const c = res.category;
             document.getElementById('category_name').value = c.category_name || '';
             document.getElementById('category_status').value = String(c.status ?? 1);
             document.getElementById('category_description').value = c.description || '';
-            new bootstrap.Modal(document.getElementById('categoryModal')).show();
+            document.getElementById('categorySaveBtn').disabled = false;
         })
-        .catch(err => showCategoryAlert(esc(err.message), 'danger'));
+        .catch(err => {
+            if (request === categoryEditRequest) showCategoryAlert(esc(err.message), 'danger');
+        });
 }
 
 function deleteCategory(id, name) {
@@ -261,6 +272,7 @@ function deleteCategory(id, name) {
 function confirmDeleteCategory() {
     const id = document.getElementById('categoryDeleteId').value;
     const btn = document.getElementById('categoryDeleteBtn');
+    if (btn.disabled) return;
     btn.disabled = true;
     const orig = btn.innerHTML;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting...';

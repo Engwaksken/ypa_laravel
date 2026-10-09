@@ -10,32 +10,39 @@
             <h1 class="dash-name">Users</h1>
             <div class="dash-date">{{ number_format($stats['total']) }} user(s)</div>
         </div>
-        <a href="{{ route('users.create') }}" class="btn btn-primary">
+        <button type="button" class="btn btn-primary" onclick="openUserModal()">
             <i class="fas fa-user-plus"></i> Add User
-        </a>
+        </button>
     </div>
 
     <div class="dash-grid mb-4">
-        <div class="dash-card">
+        <div class="dash-card accent-primary">
             <div class="dash-card-top">
                 <span class="dash-card-title">Total</span>
                 <span class="dash-card-icon"><i class="fas fa-users"></i></span>
             </div>
             <div class="dash-card-value">{{ number_format($stats['total']) }}</div>
         </div>
-        <div class="dash-card">
+        <div class="dash-card accent-success">
             <div class="dash-card-top">
                 <span class="dash-card-title">Active</span>
                 <span class="dash-card-icon"><i class="fas fa-user-check"></i></span>
             </div>
             <div class="dash-card-value">{{ number_format($stats['active']) }}</div>
         </div>
-        <div class="dash-card">
+        <div class="dash-card accent-muted">
             <div class="dash-card-top">
                 <span class="dash-card-title">Inactive</span>
                 <span class="dash-card-icon"><i class="fas fa-user-slash"></i></span>
             </div>
             <div class="dash-card-value">{{ number_format($stats['inactive']) }}</div>
+        </div>
+        <div class="dash-card accent-warning">
+            <div class="dash-card-top">
+                <span class="dash-card-title">No Branch</span>
+                <span class="dash-card-icon"><i class="fas fa-code-branch"></i></span>
+            </div>
+            <div class="dash-card-value">{{ number_format($stats['no_branch']) }}</div>
         </div>
     </div>
 
@@ -87,6 +94,7 @@
                             <th>Name</th>
                             <th>Email</th>
                             <th>Role</th>
+                            <th>Branch</th>
                             <th>Status</th>
                             <th class="text-end">Actions</th>
                         </tr>
@@ -97,10 +105,21 @@
                                 <td><strong>{{ $user->name ?? '-' }}</strong></td>
                                 <td>{{ $user->email ?? '-' }}</td>
                                 <td>{{ app(\App\Services\PermissionService::class)->roleLabel($user->role ?? '') }}</td>
+                                <td>{{ optional($user->branch)->name ?? '-' }}</td>
                                 <td><span class="badge bg-{{ ($user->status ?? '') === 'active' ? 'success' : 'secondary' }}">{{ ucfirst($user->status ?? '-') }}</span></td>
                                 <td class="text-end">
                                     <a href="{{ route('users.show', $user) }}" class="btn btn-sm btn-outline-primary" title="View"><i class="fas fa-eye"></i></a>
-                                    <a href="{{ route('users.edit', $user) }}" class="btn btn-sm btn-outline-secondary" title="Edit"><i class="fas fa-edit"></i></a>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" title="Edit"
+                                        data-url="{{ route('users.update', $user) }}"
+                                        data-name="{{ $user->name }}"
+                                        data-email="{{ $user->email }}"
+                                        data-role="{{ $user->role }}"
+                                        data-role-label="{{ app(\App\Services\PermissionService::class)->roleLabel($user->role ?? '') }}"
+                                        data-status="{{ $user->status ?? 'active' }}"
+                                        data-branch="{{ $user->branch_id ?? '' }}"
+                                        onclick="openUserEdit(this)">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
                                     <form action="{{ route('users.destroy', $user) }}" method="POST" class="d-inline ypa-confirm-delete" data-confirm-title="Delete user?" data-confirm-message="Delete {{ $user->name }}? This cannot be undone.">
                                         @csrf
                                         @method('DELETE')
@@ -109,17 +128,18 @@
                                 </td>
                             </tr>
                         @empty
-                            <tr>
-                                <td colspan="5" class="text-center text-muted py-4">No users found.</td>
+                            <tr class="empty-row">
+                                <td colspan="6"><i class="fas fa-inbox"></i>No users found.</td>
                             </tr>
                         @endforelse
                     </tbody>
                 </table>
             </div>
         </div>
+        <div class="dash-panel-foot">{{ $users->links() }}</div>
     </div>
 
-    {{ $users->links() }}
-
 </div>
+
+@include('users._modal')
 @endsection

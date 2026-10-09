@@ -309,20 +309,24 @@ function submitProjectForm() {
     if (!form.checkValidity()) { form.reportValidity(); return; }
 
     const btn = document.getElementById('saveBtn');
+    if (btn.disabled) return;
     const isEdit = !!document.getElementById('project_id').value;
     const url = isEdit
         ? '{{ route('projects.update', ':id') }}'.replace(':id', document.getElementById('project_id').value)
         : '{{ route('projects.store') }}';
-    const method = isEdit ? 'PUT' : 'POST';
+
 
     btn.disabled = true;
     const orig = btn.innerHTML;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
 
     const fd = new FormData(form);
+    // Disabled controls are omitted by FormData, but updates require the code.
+    fd.set('project_code', document.getElementById('project_code').value);
     fd.set('_token', document.querySelector('meta[name="csrf-token"]').content);
 
-    fetch(url, { method: method, body: fd, headers: { 'Accept': 'application/json' } })
+    fd.set('_method', isEdit ? 'PUT' : 'POST');
+    fetch(url, { method: 'POST', body: fd, headers: { 'Accept': 'application/json' } })
         .then(r => r.json().then(data => ({ ok: r.ok, status: r.status, data })))
         .then(({ ok, data }) => {
             if (!ok || !data.success) throw new Error(data.message || 'Failed to save project.');
@@ -336,15 +340,19 @@ function submitProjectForm() {
         });
 }
 
+let projectViewRequest = 0;
+let projectEditRequest = 0;
 function viewProject(id) {
+    const request = ++projectViewRequest;
     const body = document.getElementById('viewModalBody');
     body.innerHTML = '<div class="text-center py-4 text-muted"><i class="fas fa-spinner fa-spin"></i> Loading...</div>';
-    const modal = new bootstrap.Modal(document.getElementById('viewModal'));
+    const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('viewModal'));
     modal.show();
 
     fetch('{{ route('projects.ajax.details') }}' + '?id=' + id, { headers: { 'Accept': 'application/json' } })
         .then(r => r.json())
         .then(res => {
+            if (request !== projectViewRequest) return;
             if (!res.success) throw new Error(res.message || 'Failed to load project.');
             const p = res.project;
             body.innerHTML = '<div class="pj-view-grid">'
@@ -369,11 +377,14 @@ function viewProject(id) {
                 + '</div></div>';
         })
         .catch(err => {
+            if (request !== projectViewRequest) return;
             body.innerHTML = '<div class="pj-alert pj-alert--danger">' + esc(err.message) + '</div>';
         });
 }
 
 function openCreateModal() {
+    ++projectEditRequest;
+    document.getElementById('saveBtn').disabled = false;
     document.getElementById('projectModalTitle').innerHTML = '<i class="fas fa-diagram-project"></i> New Project';
     document.getElementById('saveBtn').innerHTML = '<i class="fas fa-save"></i> Create Project';
     document.getElementById('projectForm').reset();
@@ -383,14 +394,18 @@ function openCreateModal() {
 }
 
 function editProject(id) {
+    const request = ++projectEditRequest;
+    document.getElementById('saveBtn').disabled = true;
     document.getElementById('projectModalTitle').innerHTML = '<i class="fas fa-edit"></i> Edit Project';
     document.getElementById('saveBtn').innerHTML = '<i class="fas fa-save"></i> Update Project';
     document.getElementById('projectForm').reset();
+    document.getElementById('project_id').value = id;
     document.getElementById('formAlert').innerHTML = '';
 
     fetch('{{ route('projects.ajax.details') }}' + '?id=' + id, { headers: { 'Accept': 'application/json' } })
         .then(r => r.json())
         .then(res => {
+            if (request !== projectEditRequest) return;
             if (!res.success) throw new Error(res.message || 'Failed to load project.');
             const p = res.project;
             document.getElementById('project_id').value = p.id;
@@ -404,8 +419,11 @@ function editProject(id) {
             document.getElementById('registration_fee').value = p.registration_fee || 0;
             document.getElementById('administrative_fee').value = p.administrative_fee || 0;
             document.getElementById('status').value = p.status || 'Planning';
+            document.getElementById('saveBtn').disabled = false;
         })
-        .catch(err => showFormAlert(esc(err.message), 'danger'));
+        .catch(err => {
+            if (request === projectEditRequest) showFormAlert(esc(err.message), 'danger');
+        });
 }
 
 function deleteProject(id, name) {
@@ -418,6 +436,7 @@ function deleteProject(id, name) {
 function confirmDelete() {
     const id = document.getElementById('delete_project_id').value;
     const btn = document.getElementById('confirmDeleteBtn');
+    if (btn.disabled) return;
     btn.disabled = true;
     const orig = btn.innerHTML;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting...';

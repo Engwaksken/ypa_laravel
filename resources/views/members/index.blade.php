@@ -26,69 +26,69 @@
                 </a>
             @endif
             @if($canRegister)
-                <a href="{{ route('members.create') }}" class="btn btn-primary">
+                <button type="button" class="btn btn-primary" onclick="openMemberModal()">
                     <i class="fas fa-user-plus"></i> Register Member
-                </a>
+                </button>
             @endif
         </div>
     </div>
 
-    @if(session('success'))
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            {{ session('success') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    @endif
-
-    @if(session('error'))
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            {{ session('error') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    @endif
-
-    <div class="dash-grid mb-4">
-        <div class="dash-card">
+    <div class="dash-grid d-grid-4 mb-4">
+        <div class="dash-card accent-primary">
             <div class="dash-card-top">
                 <span class="dash-card-title">Total Members</span>
                 <span class="dash-card-icon"><i class="fas fa-users"></i></span>
             </div>
             <div class="dash-card-value">{{ number_format($kpi['total']) }}</div>
         </div>
-        <div class="dash-card">
+        <div class="dash-card accent-success">
             <div class="dash-card-top">
                 <span class="dash-card-title">Active</span>
                 <span class="dash-card-icon"><i class="fas fa-user-check"></i></span>
             </div>
             <div class="dash-card-value">{{ number_format($kpi['active']) }}</div>
         </div>
-        <div class="dash-card">
+        <div class="dash-card accent-warning">
             <div class="dash-card-top">
                 <span class="dash-card-title">Pending</span>
                 <span class="dash-card-icon"><i class="fas fa-clock"></i></span>
             </div>
             <div class="dash-card-value">{{ number_format($kpi['pending']) }}</div>
         </div>
-        <div class="dash-card">
+        <div class="dash-card accent-info">
             <div class="dash-card-top">
-                <span class="dash-card-title">Paid</span>
+                <span class="dash-card-title">Total Collected</span>
+                <span class="dash-card-icon"><i class="fas fa-sack-dollar"></i></span>
+            </div>
+            <div class="dash-card-value">{{ $money($kpi['tp']) }}</div>
+        </div>
+        <div class="dash-card accent-success">
+            <div class="dash-card-top">
+                <span class="dash-card-title">Fully Paid</span>
                 <span class="dash-card-icon"><i class="fas fa-circle-check"></i></span>
             </div>
             <div class="dash-card-value">{{ number_format($kpi['paid']) }}</div>
         </div>
-        <div class="dash-card">
+        <div class="dash-card accent-warning">
             <div class="dash-card-top">
-                <span class="dash-card-title">Partial</span>
+                <span class="dash-card-title">Partially Paid</span>
                 <span class="dash-card-icon"><i class="fas fa-circle-half-stroke"></i></span>
             </div>
             <div class="dash-card-value">{{ number_format($kpi['partial']) }}</div>
         </div>
-        <div class="dash-card">
+        <div class="dash-card accent-muted">
             <div class="dash-card-top">
                 <span class="dash-card-title">Unpaid</span>
                 <span class="dash-card-icon"><i class="fas fa-circle-xmark"></i></span>
             </div>
             <div class="dash-card-value">{{ number_format($kpi['unpaid']) }}</div>
+        </div>
+        <div class="dash-card accent-danger">
+            <div class="dash-card-top">
+                <span class="dash-card-title">Outstanding</span>
+                <span class="dash-card-icon"><i class="fas fa-hourglass-half"></i></span>
+            </div>
+            <div class="dash-card-value">{{ $money($kpi['to']) }}</div>
         </div>
     </div>
 
@@ -152,7 +152,7 @@
                         @forelse($members as $member)
                             <tr>
                                 <td><strong>{{ $member->membership_id }}</strong></td>
-                                <td>{{ $member->full_name }}</td>
+                                <td><a href="{{ route('members.show', $member) }}" class="text-decoration-none">{{ $member->full_name }}</a></td>
                                 <td>{{ $member->branch->name ?? '-' }}</td>
                                 <td>{{ $member->telephone1 ?? '-' }}</td>
                                 <td>{{ $member->email ?? '-' }}</td>
@@ -188,10 +188,15 @@
                                 <td class="text-end">
                                     <a href="{{ route('members.show', $member) }}" class="btn btn-sm btn-outline-primary" title="View"><i class="fas fa-eye"></i></a>
                                     @if($canEdit)
-                                        <a href="{{ route('members.edit', $member) }}" class="btn btn-sm btn-outline-secondary" title="Edit"><i class="fas fa-edit"></i></a>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" title="Edit"
+                                            data-url="{{ route('members.update', $member) }}"
+                                            data-record='@json($memberRecords[$member->id] ?? [])'
+                                            onclick="openMemberEdit(this)">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
                                     @endif
                                     @if($canDelete)
-                                        <form action="{{ route('members.destroy', $member) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this member? This cannot be undone.');">
+                                        <form action="{{ route('members.destroy', $member) }}" method="POST" class="d-inline ypa-confirm-delete" data-confirm-title="Delete member?" data-confirm-message="Delete {{ $member->full_name }} ({{ $member->membership_id }})? This cannot be undone.">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete"><i class="fas fa-trash"></i></button>
@@ -200,18 +205,22 @@
                                 </td>
                             </tr>
                         @empty
-                            <tr>
-                                <td colspan="8" class="text-center text-muted py-4">No members found.</td>
+                            <tr class="empty-row">
+                                <td colspan="8"><i class="fas fa-inbox"></i>No members found.</td>
                             </tr>
                         @endforelse
                     </tbody>
                 </table>
             </div>
         </div>
-        <div class="dash-panel-body">
+        <div class="dash-panel-foot">
             {{ $members->links() }}
         </div>
     </div>
 
 </div>
+
+@if($canRegister || $canEdit)
+    @include('members._modal_form')
+@endif
 @endsection

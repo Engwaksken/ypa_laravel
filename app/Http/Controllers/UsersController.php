@@ -57,7 +57,7 @@ class UsersController extends Controller
         $roleFilter = trim((string) $request->query('role', ''));
         $statusFilter = trim((string) $request->query('status', ''));
 
-        $query = User::query()->orderByDesc('id');
+        $query = User::query()->with('branch')->orderByDesc('id');
 
         if ($search !== '') {
             $like = '%' . $search . '%';
@@ -82,24 +82,36 @@ class UsersController extends Controller
             'total' => User::count(),
             'active' => User::where('status', 'active')->count(),
             'inactive' => User::where('status', 'inactive')->count(),
+            'no_branch' => User::whereNull('branch_id')->count(),
         ];
 
-        return view('users.index', compact(
+        return view('users.index', array_merge(compact(
             'users',
             'search',
             'roleFilter',
             'statusFilter',
             'roles',
             'stats'
-        ));
+        ), $this->modalData()));
     }
 
-    public function create(): View
+    /**
+     * Dropdown data for the add/edit user modal (index and show pages).
+     */
+    protected function modalData(): array
     {
-        return view('users.create', [
-            'roles' => $this->getAssignableRoles(),
+        return [
+            'assignableRoles' => array_values($this->getAssignableRoles()),
             'branches' => Branch::query()->orderBy('name')->get(),
-        ]);
+        ];
+    }
+
+    /**
+     * Users are created from the modal on the index page.
+     */
+    public function create(): RedirectResponse
+    {
+        return redirect()->route('users.index');
     }
 
     public function store(StoreUserRequest $request): RedirectResponse
@@ -117,16 +129,17 @@ class UsersController extends Controller
 
     public function show(User $user): View
     {
-        return view('users.show', compact('user'));
+        $user->loadMissing('branch');
+
+        return view('users.show', array_merge(compact('user'), $this->modalData()));
     }
 
-    public function edit(User $user): View
+    /**
+     * Users are edited from the modal on the index/show pages.
+     */
+    public function edit(User $user): RedirectResponse
     {
-        return view('users.edit', [
-            'user' => $user,
-            'roles' => $this->getAssignableRoles(),
-            'branches' => Branch::query()->orderBy('name')->get(),
-        ]);
+        return redirect()->route('users.show', $user);
     }
 
     public function update(UpdateUserRequest $request, User $user): RedirectResponse

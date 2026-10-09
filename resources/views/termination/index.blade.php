@@ -1,68 +1,117 @@
 @extends('layouts.app')
 
+@section('title', 'Contract Termination')
+
 @section('content')
-<div class="container-fluid py-4">
-    <div class="d-flex justify-content-between align-items-start mb-3">
+<div class="dash-wrap">
+
+    <div class="dash-head">
         <div>
-            <h4 class="mb-0">Contract Termination</h4>
-            <small class="text-muted">Closed contract records</small>
+            <h1 class="dash-name">Contract Termination</h1>
+            <div class="dash-date">Closed contract records &middot; {{ number_format($terminations->total()) }} record(s)</div>
         </div>
         @if(app(\App\Services\PermissionService::class)->can('termination'))
-            <a href="{{ route('termination.create') }}" class="btn btn-danger">Terminate Contract</a>
+            <button type="button" class="btn btn-danger" onclick="openTerminationModal()"><i class="fas fa-ban"></i> Terminate Contract</button>
         @endif
     </div>
 
-    @if(session('success'))
-        <div class="alert alert-success">{{ session('success') }}</div>
-    @endif
-
-    <div class="card mb-3">
-        <div class="card-body">
-            <form method="GET" class="row g-2">
-                <div class="col-md-10">
-                    <input type="text" name="search" value="{{ $search }}" class="form-control" placeholder="Search contract number, party, reason...">
+    <div class="dash-panel">
+        <div class="dash-panel-head">
+            <span><i class="fas fa-filter"></i> Filter Terminations</span>
+        </div>
+        <div class="dash-panel-body">
+            <form method="GET" action="{{ route('termination.index') }}" class="row g-3">
+                <div class="col-md-8">
+                    <label class="form-label">Search</label>
+                    <input type="text" name="search" value="{{ $search }}" class="form-control" placeholder="Contract number, party, reason...">
                 </div>
-                <div class="col-md-2 d-grid">
-                    <button class="btn btn-primary" type="submit">Search</button>
+                <div class="col-md-4 d-flex align-items-end gap-2">
+                    <button class="btn btn-primary" type="submit"><i class="fas fa-search"></i> Filter</button>
+                    <a href="{{ route('termination.index') }}" class="btn btn-outline-secondary">Reset</a>
                 </div>
             </form>
         </div>
     </div>
 
-    <div class="card">
-        <div class="table-responsive">
-            <table class="table table-hover mb-0 align-middle">
-                <thead class="table-light">
-                    <tr>
-                        <th>Date</th>
-                        <th>Contract</th>
-                        <th>Party</th>
-                        <th>Reason</th>
-                        <th class="text-end">Paid</th>
-                        <th class="text-end">Deduction</th>
-                        <th class="text-end">Refund</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($terminations as $termination)
-                        <tr>
-                            <td>{{ optional($termination->termination_date)->format('Y-m-d') ?? '-' }}</td>
-                            <td>{{ $termination->contract->contract_number ?? '-' }}</td>
-                            <td>{{ strtolower((string) optional($termination->contract)->contract_for) === 'group' ? optional($termination->contract->group)->group_name : optional(optional($termination->contract)->member)->full_name }}</td>
-                            <td>{{ $termination->reason }}</td>
-                            <td class="text-end">{{ number_format((float) $termination->amount_paid, 2) }}</td>
-                            <td class="text-end">{{ number_format((float) $termination->deduction_amount, 2) }}</td>
-                            <td class="text-end">{{ number_format((float) $termination->refund_amount, 2) }}</td>
-                            <td><a href="{{ route('termination.show', $termination) }}" class="btn btn-sm btn-outline-secondary">View</a></td>
-                        </tr>
-                    @empty
-                        <tr><td colspan="8" class="text-center text-muted py-4">No termination records found.</td></tr>
-                    @endforelse
-                </tbody>
-            </table>
+    <div class="dash-panel mt-4">
+        <div class="dash-panel-head">
+            <span><i class="fas fa-list"></i> Termination Records</span>
+            <span class="text-muted small">{{ $terminations->total() }} result(s)</span>
         </div>
-        <div class="card-body">{{ $terminations->links() }}</div>
+        <div class="dash-panel-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Contract</th>
+                            <th>Party</th>
+                            <th>Reason</th>
+                            <th class="num">Paid</th>
+                            <th class="num">Deduction</th>
+                            <th class="num">Refund</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($terminations as $termination)
+                            <tr>
+                                <td>{{ optional($termination->termination_date)->format('Y-m-d') ?? '-' }}</td>
+                                <td><strong>{{ $termination->contract->contract_number ?? '-' }}</strong></td>
+                                <td>{{ strtolower((string) optional($termination->contract)->contract_for) === 'group' ? optional($termination->contract->group)->group_name : optional(optional($termination->contract)->member)->full_name }}</td>
+                                <td>{{ $termination->reason }}</td>
+                                <td class="num">{{ number_format((float) $termination->amount_paid, 2) }}</td>
+                                <td class="num">{{ number_format((float) $termination->deduction_amount, 2) }}</td>
+                                <td class="num">{{ number_format((float) $termination->refund_amount, 2) }}</td>
+                                <td class="text-end"><a href="{{ route('termination.show', $termination) }}" class="btn btn-sm btn-outline-primary" title="View"><i class="fas fa-eye"></i></a></td>
+                            </tr>
+                        @empty
+                            <tr class="empty-row"><td colspan="8"><i class="fas fa-inbox"></i>No termination records found.</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="dash-panel-foot">{{ $terminations->links() }}</div>
+    </div>
+
+</div>
+
+<div class="modal fade" id="terminationModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form id="terminationForm" method="POST" action="{{ route('termination.store') }}">
+                @csrf
+                <input type="hidden" name="_method" id="terminationFormMethod" value="POST">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="terminationModalTitle">Add Termination</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    @include('termination._fields', ['contract' => null])
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger"><i class="fas fa-save me-1"></i> Save Termination</button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
+
+@push('scripts')
+<script>
+    function openTerminationModal() {
+        var form = document.getElementById('terminationForm');
+        form.reset();
+        form.action = "{{ route('termination.store') }}";
+        document.getElementById('terminationFormMethod').value = 'POST';
+        document.getElementById('terminationDate').value = "{{ now()->format('Y-m-d') }}";
+        document.getElementById('terminationPaid').value = '0.00';
+        if (window.bootstrap && bootstrap.Modal) {
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('terminationModal')).show();
+        }
+    }
+</script>
+@endpush
 @endsection

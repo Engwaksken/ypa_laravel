@@ -81,7 +81,15 @@ class PaymentController extends Controller
         $payments = $query->paginate($perPage)->withQueryString();
         $types = PaymentTransactionType::query()->where('is_active', 1)->orderBy('type_name')->get();
 
-        return view('payments.index', compact('payments', 'search', 'statusFilter', 'typeFilter', 'perPage', 'totalAmount', 'types'));
+        $canRecord = app(\App\Services\PermissionService::class)->can('new_payments');
+        $contracts = $canRecord
+            ? Contract::query()->with(['member', 'group'])->whereNotIn('status', ['TERMINATED', 'CANCELLED', 'COMPLETED'])->orderByDesc('id')->limit(200)->get()
+            : collect();
+        $paymentMethods = $canRecord
+            ? PaymentMethod::query()->where('status', 'active')->orderBy('sort_order')->orderBy('method_name')->get()
+            : collect();
+
+        return view('payments.index', compact('payments', 'search', 'statusFilter', 'typeFilter', 'perPage', 'totalAmount', 'types', 'canRecord', 'contracts', 'paymentMethods'));
     }
 
     public function create(Request $request): View

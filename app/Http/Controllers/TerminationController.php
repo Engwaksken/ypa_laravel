@@ -52,7 +52,9 @@ class TerminationController extends Controller
 
         $terminations = $query->paginate($perPage)->withQueryString();
 
-        return view('termination.index', compact('terminations', 'search', 'perPage'));
+        $contracts = Contract::query()->with(['member', 'group', 'terminations'])->where('status', 'ACTIVE')->whereDoesntHave('terminations')->orderByDesc('id')->limit(200)->get();
+
+        return view('termination.index', compact('terminations', 'search', 'perPage', 'contracts'));
     }
 
     public function create(Request $request): View

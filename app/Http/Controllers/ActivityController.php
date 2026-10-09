@@ -121,7 +121,7 @@ class ActivityController extends Controller
         $activity = Activity::create($payload);
 
         return redirect()
-            ->route('activities.show', $activity)
+            ->route('activities.index')
             ->with('success', 'Activity created successfully. Activity Code: ' . $activity->activity_code);
     }
 
@@ -150,7 +150,7 @@ class ActivityController extends Controller
         $activity->update($payload);
 
         return redirect()
-            ->route('activities.show', $activity)
+            ->route('activities.index')
             ->with('success', 'Activity updated successfully.');
     }
 

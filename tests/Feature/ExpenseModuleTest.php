@@ -151,6 +151,87 @@ class ExpenseModuleTest extends TestCase
        Helpers
     --------------------------------------------------------------- */
 
+    protected function createJournalSchema(): void
+    {
+        Schema::create('journal_entries', function (Blueprint $table) {
+            $table->bigIncrements('id');
+            $table->string('reference_no');
+            $table->date('entry_date');
+            $table->decimal('amount', 15, 2);
+            $table->string('status');
+        });
+        Schema::create('journal_entry_lines', function (Blueprint $table) {
+            $table->bigIncrements('id');
+            $table->unsignedBigInteger('journal_id');
+            $table->string('account_code');
+            $table->string('account_name');
+            $table->decimal('debit', 15, 2);
+            $table->decimal('credit', 15, 2);
+        });
+    }
+
+    public function test_posted_expense_cannot_duplicate_journals_on_update_or_orphan_them_on_delete(): void
+    {
+        $this->createJournalSchema();
+        $admin = $this->createAdmin();
+        $this->actingAs($admin)->postJson(route('expenses.store'), $this->expenseData())->assertCreated();
+        $expense = Expense::first();
+        $this->assertNotNull($expense->journal_id);
+        $this->assertDatabaseCount('journal_entries', 1);
+        $this->assertDatabaseCount('journal_entry_lines', 2);
+        $this->actingAs($admin)->putJson(route('expenses.update', $expense), $this->expenseData(['amount' => 999]))->assertUnprocessable();
+        $this->actingAs($admin)->deleteJson(route('expenses.destroy', $expense))->assertUnprocessable();
+        $this->assertSame('2500.00', $expense->fresh()->amount);
+        $this->assertDatabaseCount('journal_entries', 1);
+        $this->assertDatabaseCount('journal_entry_lines', 2);
+        $this->assertDatabaseCount('expenses', 1);
+    }
+
+    public function test_journal_failure_rolls_back_expense_and_partial_journal(): void
+    {
+        $this->createJournalSchema();
+        // Model an incompatible deployed line schema so the second write fails.
+        Schema::table('journal_entry_lines', function (Blueprint $table) {
+            $table->string('required_unmapped_field');
+        });
+        $this->actingAs($this->createAdmin())->postJson(route('expenses.store'), $this->expenseData())->assertStatus(500);
+        $this->assertDatabaseCount('expenses', 0);
+        $this->assertDatabaseCount('journal_entries', 0);
+        $this->assertDatabaseCount('journal_entry_lines', 0);
+    }
+
+    public function test_unsupported_journal_schema_is_explicitly_rejected_without_saving_expense(): void
+    {
+        Schema::create('journal_entries', function (Blueprint $table) {
+            $table->bigIncrements('id');
+            $table->decimal('amount', 15, 2);
+        });
+        $this->actingAs($this->createAdmin())->postJson(route('expenses.store'), $this->expenseData())->assertUnprocessable();
+        $this->assertDatabaseCount('expenses', 0);
+        $this->assertDatabaseCount('journal_entries', 0);
+    }
+
+    public function test_restricted_expense_user_cannot_write_or_import_another_branch(): void
+    {
+        $operator = $this->createAdmin();
+        $operator->update(['role' => 'restricted_operator', 'branch_id' => $this->branchId()]);
+        foreach (['view_expenses', 'create_expenses', 'edit_expenses', 'delete_expenses', 'expenses_import'] as $permission) {
+            \App\Models\RolePermission::create(['role' => 'restricted_operator', 'permission' => $permission]);
+        }
+        app(\App\Services\PermissionService::class)->clearEffectiveCache();
+        $otherBranch = (int) \DB::table('branches')->where('id', '!=', $this->branchId())->first()->id;
+        $expense = $this->createExpense(['branch_id' => $otherBranch]);
+        $this->actingAs($operator)->postJson(route('expenses.store'), $this->expenseData(['branch_id' => $otherBranch]))->assertForbidden();
+        $this->actingAs($operator)->putJson(route('expenses.update', $expense), $this->expenseData())->assertForbidden();
+        $this->actingAs($operator)->deleteJson(route('expenses.destroy', $expense))->assertForbidden();
+        $csv = "title,amount,expense_date,category,payment_method,branch_id\nOther branch,100,2026-10-03,Supplies,Cash,$otherBranch\n";
+        $this->actingAs($operator)->postJson(route('expenses.import'), [
+            'csv_file' => UploadedFile::fake()->createWithContent('expenses.csv', $csv),
+            'branch_id' => $this->branchId(),
+        ])->assertUnprocessable()->assertJsonPath('imported', 0)->assertJsonPath('skipped', 1);
+        $this->assertDatabaseCount('expenses', 1);
+    }
+
     protected function createAdmin(): User
     {
         return User::create([
@@ -335,7 +416,8 @@ class ExpenseModuleTest extends TestCase
 
         $this->actingAs($admin)->putJson(route('expenses.update', $expense), $data)
             ->assertOk()
-            ->assertJson(['success' => true]);
+            ->assertJson(['success' => true])
+            ->assertJsonPath('message', "Expense 'Updated cleaning supplies' updated successfully.");
 
         $this->assertDatabaseHas('expenses', [
             'id' => $expense->id,

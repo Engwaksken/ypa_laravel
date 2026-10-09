@@ -45,13 +45,6 @@
         </div>
     </div>
 
-    @if(session('success'))
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            {{ session('success') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    @endif
-
     <div class="row g-4">
         <div class="col-lg-4">
             <div class="dash-panel">
@@ -120,8 +113,8 @@
                                         </td>
                                     </tr>
                                 @empty
-                                    <tr>
-                                        <td colspan="3" class="text-center text-muted py-4">No invites sent yet.</td>
+                                    <tr class="empty-row">
+                                        <td colspan="3"><i class="fas fa-inbox"></i>No invites sent yet.</td>
                                     </tr>
                                 @endforelse
                             </tbody>
@@ -158,8 +151,8 @@
                                         </td>
                                     </tr>
                                 @empty
-                                    <tr>
-                                        <td colspan="3" class="text-center text-muted py-4">No attendance recorded yet.</td>
+                                    <tr class="empty-row">
+                                        <td colspan="3"><i class="fas fa-inbox"></i>No attendance recorded yet.</td>
                                     </tr>
                                 @endforelse
                             </tbody>
@@ -188,7 +181,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-primary" onclick="saveInviteSelection()">
+                    <button type="button" class="btn btn-primary" id="saveInvitesButton" disabled onclick="saveInviteSelection()">
                         <i class="fas fa-save"></i> Save Invites
                     </button>
                 </div>
@@ -211,7 +204,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-success" onclick="saveAttendance()">
+                    <button type="button" class="btn btn-success" id="saveAttendanceButton" disabled onclick="saveAttendance()">
                         <i class="fas fa-save"></i> Save Attendance
                     </button>
                 </div>
@@ -239,7 +232,11 @@
             .replace(/'/g, '&#39;');
     }
 
+    let inviteRequest = 0;
+    let attendanceRequest = 0;
     window.openInviteModal = function (meetingId) {
+        const request = ++inviteRequest;
+        document.getElementById('saveInvitesButton').disabled = true;
         document.body.dataset.meetingId = meetingId;
         const content = document.getElementById('inviteModalContent');
         content.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></div>';
@@ -249,13 +246,16 @@
         })
         .then(function (res) { return res.json(); })
         .then(function (data) {
+            if (request !== inviteRequest) return;
             if (!data.success) {
                 content.innerHTML = '<div class="alert alert-danger mb-0">' + esc(data.message || 'Failed to load invites.') + '</div>';
                 return;
             }
             renderInviteList(content, data.invites || []);
+            document.getElementById('saveInvitesButton').disabled = false;
         })
         .catch(function () {
+            if (request !== inviteRequest) return;
             content.innerHTML = '<div class="alert alert-danger mb-0">Failed to load invites.</div>';
         });
     };
@@ -295,6 +295,7 @@
                 })
                 .then(function (res) { return res.json(); })
                 .then(function (data) {
+                    if (searchInput.value.trim() !== term) return;
                     resultsBox.innerHTML = '';
                     (data.members || []).forEach(function (member) {
                         const already = tableBody.querySelector('tr[data-member-id="' + member.id + '"]');
@@ -313,12 +314,17 @@
                         });
                         resultsBox.appendChild(btn);
                     });
+                }).catch(function () {
+                    resultsBox.textContent = 'Unable to search members. Please try again.';
                 });
             });
         }
     }
 
     window.saveInviteSelection = function () {
+        const saveButton = document.getElementById('saveInvitesButton');
+        if (saveButton.disabled) return;
+        saveButton.disabled = true;
         const meetingId = document.body.dataset.meetingId;
         const memberIds = Array.from(document.querySelectorAll('.invite-check:checked')).map(function (cb) { return cb.value; });
 
@@ -340,11 +346,17 @@
                 location.reload();
             } else {
                 alert(data.message || 'Failed to save invites.');
+                saveButton.disabled = false;
             }
+        }).catch(function () {
+            alert('Unable to save invites. Please check your connection and try again.');
+            saveButton.disabled = false;
         });
     };
 
     window.openAttendanceModal = function (meetingId) {
+        const request = ++attendanceRequest;
+        document.getElementById('saveAttendanceButton').disabled = true;
         document.body.dataset.meetingId = meetingId;
         const content = document.getElementById('attendanceModalContent');
         content.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-success" role="status"></div></div>';
@@ -355,12 +367,16 @@
         .then(function (res) { return res.json(); })
         .then(function (data) {
             if (!data.success) {
+                if (request !== attendanceRequest) return;
                 content.innerHTML = '<div class="alert alert-danger mb-0">' + esc(data.message || 'Failed to load attendance.') + '</div>';
                 return;
             }
+            if (request !== attendanceRequest) return;
             renderAttendanceList(content, data.attendance || []);
+            document.getElementById('saveAttendanceButton').disabled = false;
         })
         .catch(function () {
+            if (request !== attendanceRequest) return;
             content.innerHTML = '<div class="alert alert-danger mb-0">Failed to load attendance.</div>';
         });
     };
@@ -399,6 +415,7 @@
                 })
                 .then(function (res) { return res.json(); })
                 .then(function (data) {
+                    if (searchInput.value.trim() !== term) return;
                     resultsBox.innerHTML = '';
                     (data.members || []).forEach(function (member) {
                         const already = tableBody.querySelector('tr[data-member-id="' + member.id + '"]');
@@ -417,12 +434,17 @@
                         });
                         resultsBox.appendChild(btn);
                     });
+                }).catch(function () {
+                    resultsBox.textContent = 'Unable to search members. Please try again.';
                 });
             });
         }
     }
 
     window.saveAttendance = function () {
+        const saveButton = document.getElementById('saveAttendanceButton');
+        if (saveButton.disabled) return;
+        saveButton.disabled = true;
         const meetingId = document.body.dataset.meetingId;
         const attendees = Array.from(document.querySelectorAll('.attend-check:checked')).map(function (cb) { return cb.value; });
 
@@ -444,7 +466,11 @@
                 location.reload();
             } else {
                 alert(data.message || 'Failed to save attendance.');
+                saveButton.disabled = false;
             }
+        }).catch(function () {
+            alert('Unable to save attendance. Please check your connection and try again.');
+            saveButton.disabled = false;
         });
     };
 
@@ -469,6 +495,8 @@
             } else {
                 alert(data.message || 'Failed to mark meeting as completed.');
             }
+        }).catch(function () {
+            alert('Unable to complete the meeting. Please check your connection and try again.');
         });
     };
 })();

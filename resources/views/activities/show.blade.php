@@ -37,12 +37,40 @@
         </div>
     </div>
 
-    @if(session('success'))
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            {{ session('success') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    @php
+        $participantCount = $activity->participants->count();
+        $attendedCount = $activity->participants->where('attended', true)->count();
+    @endphp
+    <div class="dash-grid mb-4">
+        <div class="dash-card accent-primary">
+            <div class="dash-card-top">
+                <span class="dash-card-title">Participants</span>
+                <span class="dash-card-icon"><i class="fas fa-user-group"></i></span>
+            </div>
+            <div class="dash-card-value">{{ number_format($participantCount) }}</div>
         </div>
-    @endif
+        <div class="dash-card accent-success">
+            <div class="dash-card-top">
+                <span class="dash-card-title">Attended</span>
+                <span class="dash-card-icon"><i class="fas fa-user-check"></i></span>
+            </div>
+            <div class="dash-card-value">{{ number_format($attendedCount) }}</div>
+        </div>
+        <div class="dash-card accent-warning">
+            <div class="dash-card-top">
+                <span class="dash-card-title">Budget (UGX)</span>
+                <span class="dash-card-icon"><i class="fas fa-coins"></i></span>
+            </div>
+            <div class="dash-card-value">{{ $activity->budget !== null ? number_format((float) $activity->budget) : '-' }}</div>
+        </div>
+        <div class="dash-card accent-info">
+            <div class="dash-card-top">
+                <span class="dash-card-title">Start Date</span>
+                <span class="dash-card-icon"><i class="fas fa-calendar-day"></i></span>
+            </div>
+            <div class="dash-card-value">{{ $activity->start_date ? $activity->start_date->format('M d, Y') : '-' }}</div>
+        </div>
+    </div>
 
     <div class="row g-4">
         <div class="col-lg-4">
@@ -103,7 +131,7 @@
                 </div>
             @endif
 
-            <div class="dash-panel">
+            <div class="dash-panel {{ $activity->description ? 'mt-4' : '' }}">
                 <div class="dash-panel-head">
                     <span><i class="fas fa-user-group"></i> Participants ({{ $activity->participants->count() }})</span>
                     <a href="{{ route('activities.participants', $activity) }}" class="btn btn-sm btn-outline-primary">Manage</a>
@@ -134,8 +162,8 @@
                                         </td>
                                     </tr>
                                 @empty
-                                    <tr>
-                                        <td colspan="4" class="text-center text-muted py-4">No participants registered yet.</td>
+                                    <tr class="empty-row">
+                                        <td colspan="4"><i class="fas fa-inbox"></i>No participants registered yet.</td>
                                     </tr>
                                 @endforelse
                             </tbody>

@@ -27,24 +27,17 @@
                 </a>
             @endif
             @if($canDelete)
-                <form action="{{ route('mobilizers.destroy', $m) }}" method="POST" onsubmit="return confirm('Delete this mobilizer? This cannot be undone.');">
+                <form action="{{ route('mobilizers.destroy', $m) }}" method="POST" class="ypa-confirm-delete" data-confirm-title="Delete mobilizer?" data-confirm-message="Delete {{ $m->full_name }}? This cannot be undone.">
                     @csrf
                     @method('DELETE')
-                    <button type="submit" class="btn btn-danger"><i class="fas fa-trash"></i> Delete</button>
+                    <button type="submit" class="btn btn-outline-danger"><i class="fas fa-trash"></i> Delete</button>
                 </form>
             @endif
         </div>
     </div>
 
-    @if(session('success'))
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            {{ session('success') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    @endif
-
     <div class="dash-grid mb-4">
-        <div class="dash-card">
+        <div class="dash-card accent-success">
             <div class="dash-card-top">
                 <span class="dash-card-title">Status</span>
                 <span class="dash-card-icon"><i class="fas fa-user-shield"></i></span>
@@ -62,21 +55,21 @@
                 <span class="badge bg-{{ $badge }}">{{ $m->status ?? '-' }}</span>
             </div>
         </div>
-        <div class="dash-card">
+        <div class="dash-card accent-primary">
             <div class="dash-card-top">
                 <span class="dash-card-title">Department</span>
                 <span class="dash-card-icon"><i class="fas fa-building"></i></span>
             </div>
             <div class="dash-card-value">{{ $m->department ?? '-' }}</div>
         </div>
-        <div class="dash-card">
+        <div class="dash-card accent-purple">
             <div class="dash-card-top">
                 <span class="dash-card-title">Position</span>
                 <span class="dash-card-icon"><i class="fas fa-briefcase"></i></span>
             </div>
             <div class="dash-card-value">{{ $m->position ?? '-' }}</div>
         </div>
-        <div class="dash-card">
+        <div class="dash-card accent-info">
             <div class="dash-card-top">
                 <span class="dash-card-title">Branch</span>
                 <span class="dash-card-icon"><i class="fas fa-location-dot"></i></span>
@@ -85,34 +78,42 @@
         </div>
     </div>
 
-    <div class="dash-panel">
-        <div class="dash-panel-head">
-            <span><i class="fas fa-user"></i> Mobilizer Information</span>
-        </div>
-        <div class="dash-panel-body">
-            <div class="row">
-                <div class="col-md-3"><strong>First Name:</strong> {{ $m->first_name }}</div>
-                <div class="col-md-3"><strong>Last Name:</strong> {{ $m->last_name }}</div>
-                <div class="col-md-3"><strong>Contact Number:</strong> {{ $m->contact_number ?? '-' }}</div>
-                <div class="col-md-3"><strong>Email:</strong> {{ $m->email ?? '-' }}</div>
-                <div class="col-md-3 mt-3"><strong>Department:</strong> {{ $m->department ?? '-' }}</div>
-                <div class="col-md-3 mt-3"><strong>Position:</strong> {{ $m->position ?? '-' }}</div>
-                <div class="col-md-3 mt-3"><strong>Supervisor:</strong> {{ $m->supervisor ?? '-' }}</div>
-                <div class="col-md-3 mt-3"><strong>Branch:</strong> {{ $m->branch_region ?? '-' }}</div>
-                <div class="col-md-3 mt-3"><strong>Status:</strong> {{ $m->status ?? '-' }}</div>
-                <div class="col-md-9 mt-3"><strong>Remarks:</strong> {{ $m->remarks ?? '-' }}</div>
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="dash-panel">
+                <div class="dash-panel-head">
+                    <span><i class="fas fa-user"></i> Mobilizer Information</span>
+                </div>
+                <div class="dash-panel-body">
+                    <table class="table table-sm mb-0">
+                        <tbody>
+                            <tr><th class="text-muted" style="width: 35%">First Name</th><td>{{ $m->first_name }}</td></tr>
+                            <tr><th class="text-muted">Last Name</th><td>{{ $m->last_name }}</td></tr>
+                            <tr><th class="text-muted">Contact Number</th><td>{{ $m->contact_number ?? '-' }}</td></tr>
+                            <tr><th class="text-muted">Email</th><td>{{ $m->email ?? '-' }}</td></tr>
+                            <tr><th class="text-muted">Department</th><td>{{ $m->department ?? '-' }}</td></tr>
+                            <tr><th class="text-muted">Position</th><td>{{ $m->position ?? '-' }}</td></tr>
+                            <tr><th class="text-muted">Supervisor</th><td>{{ $m->supervisor ?? '-' }}</td></tr>
+                            <tr><th class="text-muted">Branch / Region</th><td>{{ $m->branch_region ?? '-' }}</td></tr>
+                            <tr><th class="text-muted">Remarks</th><td>{{ $m->remarks ?? '-' }}</td></tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
-    </div>
-
-    <div class="dash-panel mt-4">
-        <div class="dash-panel-head">
-            <span><i class="fas fa-clock"></i> Record Info</span>
-        </div>
-        <div class="dash-panel-body">
-            <div class="row">
-                <div class="col-md-3"><strong>Created:</strong> {{ $m->created_at ? $m->created_at->format('d M Y H:i') : '-' }}</div>
-                <div class="col-md-3"><strong>Updated:</strong> {{ $m->updated_at ? $m->updated_at->format('d M Y H:i') : '-' }}</div>
+        <div class="col-lg-4">
+            <div class="dash-panel">
+                <div class="dash-panel-head">
+                    <span><i class="fas fa-clock"></i> Record Info</span>
+                </div>
+                <div class="dash-panel-body">
+                    <table class="table table-sm mb-0">
+                        <tbody>
+                            <tr><th class="text-muted">Created</th><td>{{ $m->created_at ? $m->created_at->format('d M Y H:i') : '-' }}</td></tr>
+                            <tr><th class="text-muted">Updated</th><td>{{ $m->updated_at ? $m->updated_at->format('d M Y H:i') : '-' }}</td></tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>

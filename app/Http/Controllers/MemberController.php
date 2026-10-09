@@ -132,7 +132,9 @@ class MemberController extends Controller
             'kpi',
             'branches',
             'mobilizers'
-        ));
+        ))->with('memberRecords', $members->getCollection()->mapWithKeys(
+            fn (Member $member) => [$member->id => $this->formRecord($member)]
+        )->all());
     }
 
     public function create(): View
@@ -158,7 +160,7 @@ class MemberController extends Controller
         $member = Member::create($payload);
 
         return redirect()
-            ->route('members.show', $member)
+            ->route('members.index')
             ->with('success', 'Member registered successfully. Membership ID: ' . $membershipId);
     }
 
@@ -166,7 +168,15 @@ class MemberController extends Controller
     {
         $member->load(['branch', 'mobilizer', 'nextOfKin', 'bankDetail']);
 
-        return view('members.show', compact('member'));
+        $data = ['member' => $member];
+
+        if ($this->permission->can('members_edit')) {
+            $data['branches'] = Branch::query()->orderBy('name')->get();
+            $data['mobilizers'] = Mobilizer::query()->orderBy('first_name')->get();
+            $data['memberRecord'] = $this->formRecord($member);
+        }
+
+        return view('members.show', $data);
     }
 
     public function edit(Member $member): View
@@ -174,7 +184,9 @@ class MemberController extends Controller
         $branches = Branch::query()->orderBy('name')->get();
         $mobilizers = Mobilizer::query()->orderBy('first_name')->get();
 
-        return view('members.edit', compact('member', 'branches', 'mobilizers'));
+        $record = $this->formRecord($member);
+
+        return view('members.edit', compact('member', 'branches', 'mobilizers', 'record'));
     }
 
     public function update(UpdateMemberRequest $request, Member $member): RedirectResponse
@@ -189,8 +201,16 @@ class MemberController extends Controller
 
         $member->update($payload);
 
+        // Return to wherever the edit modal was opened (index with filters, or the show page).
+        $previous = url()->previous();
+        $previousPath = (string) parse_url($previous, PHP_URL_PATH);
+        $target = str_starts_with($previous, url('/'))
+            && in_array($previousPath, [parse_url(route('members.index'), PHP_URL_PATH), parse_url(route('members.show', $member), PHP_URL_PATH)], true)
+            ? $previous
+            : route('members.index');
+
         return redirect()
-            ->route('members.show', $member)
+            ->to($target)
             ->with('success', 'Member updated successfully.');
     }
 
@@ -298,6 +318,65 @@ class MemberController extends Controller
         }
 
         return response()->json(['success' => true, 'member' => $data]);
+    }
+
+    /**
+     * Values used to pre-fill the member add/edit form (modal or page). Maps
+     * stored legacy values back onto the select options ("Other" + free text).
+     */
+    protected function formRecord(Member $member): array
+    {
+        $service = MemberService::class;
+        $employment = (string) ($member->employment_status ?? '');
+        $employmentOther = (string) ($member->employment_other ?? '');
+        if ($employment !== '' && !in_array($employment, $service::EMPLOYMENT_STATUSES, true)) {
+            $employmentOther = $employmentOther !== '' ? $employmentOther : $employment;
+            $employment = 'Other';
+        }
+
+        $source = $this->memberService->normalizeSource((string) ($member->source_type ?: $member->source ?: ''));
+        $sourceOther = (string) ($member->source_other ?? '');
+        if ($source !== '' && !in_array($source, $service::SOURCES, true)) {
+            $sourceOther = $sourceOther !== '' ? $sourceOther : (string) $member->source;
+            $source = 'Other';
+        }
+
+        return [
+            'first_name' => $member->first_name,
+            'last_name' => $member->last_name,
+            'other_name' => $member->other_name,
+            'date_of_birth' => $member->date_of_birth ? $member->date_of_birth->format('Y-m-d') : '',
+            'sex' => $member->sex,
+            'marital_status' => $member->marital_status,
+            'nationality' => $member->nationality,
+            'nin' => $member->nin,
+            'tin_number' => $member->tin_number,
+            'children_count' => $member->children_count ?? 0,
+            'address' => $member->address,
+            'region' => $member->region,
+            'district_residence' => $member->district_residence,
+            'district' => $member->district,
+            'employment_status' => $employment,
+            'employment_other' => $employmentOther,
+            'source' => $source,
+            'source_station' => $member->source_station,
+            'source_other' => $sourceOther,
+            'telephone1' => $member->telephone1,
+            'telephone2' => $member->telephone2,
+            'email' => $member->email,
+            'mother_name' => $member->mother_name,
+            'mother_phone' => $member->mother_phone,
+            'father_name' => $member->father_name,
+            'father_phone' => $member->father_phone,
+            'account_type' => $member->account_type,
+            'bank_account' => $member->bank_account,
+            'bank_account_name' => $member->bank_account_name,
+            'bank_name' => $member->bank_name,
+            'bank_branch' => $member->bank_branch,
+            'branch_id' => $member->branch_id,
+            'mobilizer_id' => $member->mobilizer_id,
+            'membership_status' => $member->membership_status ?: 'Pending',
+        ];
     }
 
     /**

@@ -21,5 +21,22 @@
     </tbody></table></div></div><div class="dash-panel-body">{{ $orders->links() }}</div></div>
 </div>
 <div class="modal fade" id="statusModal" tabindex="-1" aria-hidden="true"><div class="modal-dialog"><form class="modal-content" method="POST" id="statusForm">@csrf @method('PATCH')<div class="modal-header"><h5 class="modal-title">Update order status</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><p>Update <strong id="statusOrder"></strong>.</p><select name="status" class="form-select"><option value="processing">Processing</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option></select></div><div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button><button class="btn btn-primary">Save status</button></div></form></div></div>
-@push('scripts')<script>document.getElementById('statusModal')?.addEventListener('show.bs.modal',e=>{const b=e.relatedTarget;document.getElementById('statusOrder').textContent=b.dataset.order;document.getElementById('statusForm').action=b.dataset.action;});</script>@endpush
+@push('scripts')
+<script>
+document.getElementById('statusModal')?.addEventListener('show.bs.modal', event => {
+    const button = event.relatedTarget;
+    if (!button) return;
+    document.getElementById('statusOrder').textContent = button.dataset.order;
+    const form = document.getElementById('statusForm');
+    form.action = button.dataset.action;
+    const allowed = {pending: ['processing', 'cancelled'], processing: ['completed', 'cancelled']}[button.dataset.status] || [];
+    const select = form.querySelector('select[name="status"]');
+    [...select.options].forEach(option => {
+        option.hidden = !allowed.includes(option.value);
+        option.disabled = option.hidden;
+    });
+    select.value = allowed[0] || '';
+});
+</script>
+@endpush
 @endsection

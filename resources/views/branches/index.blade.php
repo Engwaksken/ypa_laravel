@@ -144,6 +144,7 @@
                         <input type="email" name="branch_email" id="branchEmail" class="form-control">
                     </div>
                     <div class="form-check">
+                        <input type="hidden" name="status" value="0">
                         <input type="checkbox" name="status" id="branchActive" value="1" class="form-check-input" checked>
                         <label class="form-check-label" for="branchActive">Active</label>
                     </div>

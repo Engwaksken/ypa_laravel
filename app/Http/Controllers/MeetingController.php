@@ -95,8 +95,8 @@ class MeetingController extends Controller
         $meeting = Meeting::create($payload);
 
         return redirect()
-            ->route('meetings.show', $meeting)
-            ->with('success', 'Meeting created successfully.');
+            ->route('meetings.index')
+            ->with('success', 'Meeting "' . $meeting->meeting_title . '" created successfully.');
     }
 
     public function show(Meeting $meeting): View
@@ -120,7 +120,7 @@ class MeetingController extends Controller
         $meeting->update($payload);
 
         return redirect()
-            ->route('meetings.show', $meeting)
+            ->route('meetings.index')
             ->with('success', 'Meeting updated successfully.');
     }
 

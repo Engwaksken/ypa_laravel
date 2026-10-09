@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Supplier extends Model
 {
@@ -33,5 +34,10 @@ class Supplier extends Model
     public function member(): BelongsTo
     {
         return $this->belongsTo(Member::class, 'member_id');
+    }
+
+    public function stocks(): HasMany
+    {
+        return $this->hasMany(Stock::class, 'supplier_id');
     }
 }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\CustomerRequest;
 use App\Models\Branch;
 use App\Models\Customer;
+use App\Services\BranchAccess;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\Middleware;
@@ -28,7 +29,8 @@ class CustomerController extends Controller
         $branchFilter = trim((string) $request->query('branch', ''));
         $typeFilter = trim((string) $request->query('type', ''));
 
-        $query = Customer::query()->with(['branch', 'member'])->orderByDesc('id');
+        $base = app(BranchAccess::class)->scope(Customer::query());
+        $query = (clone $base)->with(['branch', 'member'])->orderByDesc('id');
 
         if ($search !== '') {
             $like = '%' . $search . '%';
@@ -48,12 +50,12 @@ class CustomerController extends Controller
         }
 
         $customers = $query->paginate(20)->withQueryString();
-        $branches = Branch::query()->orderBy('name')->get();
+        $branches = app(BranchAccess::class)->branches()->get();
 
         $stats = [
-            'total' => Customer::count(),
-            'members' => Customer::where('customer_type', 'member')->count(),
-            'non_members' => Customer::where('customer_type', 'non_member')->count(),
+            'total' => (clone $base)->count(),
+            'members' => (clone $base)->where('customer_type', 'member')->count(),
+            'non_members' => (clone $base)->where('customer_type', 'non_member')->count(),
         ];
 
         return view('customers.index', compact(
@@ -68,6 +70,7 @@ class CustomerController extends Controller
 
     public function store(CustomerRequest $request): RedirectResponse
     {
+        app(BranchAccess::class)->authorize($request->validated('branch_id'));
         Customer::create($request->validated());
 
         return redirect()
@@ -77,6 +80,8 @@ class CustomerController extends Controller
 
     public function update(CustomerRequest $request, Customer $customer): RedirectResponse
     {
+        app(BranchAccess::class)->authorize($customer->branch_id);
+        app(BranchAccess::class)->authorize($request->validated('branch_id'));
         $customer->update($request->validated());
 
         return redirect()
@@ -86,6 +91,7 @@ class CustomerController extends Controller
 
     public function destroy(Customer $customer): RedirectResponse
     {
+        app(BranchAccess::class)->authorize($customer->branch_id);
         $customer->delete();
 
         return redirect()

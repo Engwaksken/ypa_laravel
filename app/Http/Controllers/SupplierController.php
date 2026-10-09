@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\SupplierRequest;
 use App\Models\Branch;
 use App\Models\Supplier;
+use App\Services\BranchAccess;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\Middleware;
@@ -28,7 +29,8 @@ class SupplierController extends Controller
         $branchFilter = trim((string) $request->query('branch', ''));
         $typeFilter = trim((string) $request->query('type', ''));
 
-        $query = Supplier::query()->with(['branch', 'member'])->orderByDesc('id');
+        $base = app(BranchAccess::class)->scope(Supplier::query());
+        $query = (clone $base)->with(['branch', 'member'])->orderByDesc('id');
 
         if ($search !== '') {
             $like = '%' . $search . '%';
@@ -49,12 +51,12 @@ class SupplierController extends Controller
         }
 
         $suppliers = $query->paginate(20)->withQueryString();
-        $branches = Branch::query()->orderBy('name')->get();
+        $branches = app(BranchAccess::class)->branches()->get();
 
         $stats = [
-            'total' => Supplier::count(),
-            'members' => Supplier::where('supplier_type', 'member')->count(),
-            'non_members' => Supplier::where('supplier_type', 'non_member')->count(),
+            'total' => (clone $base)->count(),
+            'members' => (clone $base)->where('supplier_type', 'member')->count(),
+            'non_members' => (clone $base)->where('supplier_type', 'non_member')->count(),
         ];
 
         return view('suppliers.index', compact(
@@ -69,6 +71,7 @@ class SupplierController extends Controller
 
     public function store(SupplierRequest $request): RedirectResponse
     {
+        app(BranchAccess::class)->authorize($request->validated('branch_id'));
         Supplier::create($request->validated());
 
         return redirect()
@@ -78,6 +81,8 @@ class SupplierController extends Controller
 
     public function update(SupplierRequest $request, Supplier $supplier): RedirectResponse
     {
+        app(BranchAccess::class)->authorize($supplier->branch_id);
+        app(BranchAccess::class)->authorize($request->validated('branch_id'));
         $supplier->update($request->validated());
 
         return redirect()
@@ -87,6 +92,7 @@ class SupplierController extends Controller
 
     public function destroy(Supplier $supplier): RedirectResponse
     {
+        app(BranchAccess::class)->authorize($supplier->branch_id);
         $supplier->delete();
 
         return redirect()

@@ -495,68 +495,89 @@ button.logout-link {
 .dash-grid > .dash-card:nth-child(5n + 4) { --ds-card-accent: #7c3aed; }
 .dash-grid > .dash-card:nth-child(5n + 5) { --ds-card-accent: #be123c; }
 
+/* Semantic accents. Bootstrap's border-* utilities are !important and would
+   paint the whole card, so on stat cards they only drive the left accent. */
+.dash-card.accent-primary, .dash-grid > .dash-card.border-primary { --ds-card-accent: #005fa3; }
+.dash-card.accent-success, .dash-grid > .dash-card.border-success, .dash-card.border-success { --ds-card-accent: #15803d; }
+.dash-card.accent-warning, .dash-grid > .dash-card.border-warning { --ds-card-accent: #d97706; }
+.dash-card.accent-danger,  .dash-grid > .dash-card.border-danger,  .dash-card.border-danger  { --ds-card-accent: #dc2626; }
+.dash-card.accent-info,    .dash-grid > .dash-card.border-info    { --ds-card-accent: #0891b2; }
+.dash-card.accent-purple { --ds-card-accent: #7c3aed; }
+.dash-card.accent-muted  { --ds-card-accent: #64748b; }
+
+.dash-card[class*="border-"] {
+    border-color: var(--ds-border) !important;
+    border-left-color: var(--ds-card-accent, var(--ds-brand)) !important;
+}
+
 .dash-card {
+    position: relative;
     background: var(--ds-surface);
     border: 1px solid var(--ds-border);
     border-left: 4px solid var(--ds-card-accent, var(--ds-brand));
-    border-radius: var(--ds-radius);
-    padding: 12px 14px;
+    border-radius: 12px;
+    padding: 10px 14px;
     text-decoration: none;
     color: inherit;
     box-shadow: var(--ds-shadow);
-    transition: .18s;
-    min-height: 96px;
+    transition: transform .18s, box-shadow .18s;
+    min-height: 0;
     min-width: 0;
     display: block;
 }
 
-.dash-card:hover {
+a.dash-card:hover {
     transform: translateY(-2px);
     box-shadow: var(--ds-shadow-hover);
-    border-left-color: var(--ds-card-accent, var(--ds-brand));
 }
 
 .dash-card-top {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 12px;
+    gap: 10px;
 }
 
 .dash-card-title {
-    font-size: .73rem;
-    font-weight: 900;
+    font-size: .7rem;
+    font-weight: 800;
     text-transform: uppercase;
-    letter-spacing: .075em;
+    letter-spacing: .06em;
     color: var(--ds-text-muted);
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .dash-card-icon {
-    width: 30px;
-    height: 30px;
+    width: 28px;
+    height: 28px;
     flex-shrink: 0;
-    border-radius: 9px;
-    background: var(--ds-cyan-bg);
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--ds-card-accent, var(--ds-brand)) 12%, #fff);
     color: var(--ds-card-accent, var(--ds-brand-dark));
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: .85rem;
+    font-size: .8rem;
 }
 
 .dash-card-value {
-    font-size: 1.25rem;
-    font-weight: 950;
+    font-size: 1.2rem;
+    font-weight: 800;
     color: var(--ds-text);
-    margin-top: 8px;
-    line-height: 1.1;
+    margin-top: 4px;
+    line-height: 1.2;
+    font-variant-numeric: tabular-nums;
+    overflow-wrap: anywhere;
 }
 
 .dash-card-desc,
 .dash-card-sub {
-    font-size: .76rem;
+    font-size: .74rem;
     color: var(--ds-text-muted);
-    margin-top: 4px;
+    margin-top: 2px;
 }
 
 .dash-panel {
@@ -972,6 +993,125 @@ button.logout-link {
 .page-link.active {
     background: var(--ds-brand);
     border-color: var(--ds-brand);
+}
+
+/* Tables inside panels: the panel provides the frame. */
+.dash-panel .table-responsive,
+.card .table-responsive {
+    border: 0;
+    border-radius: 0;
+}
+
+.dash-panel .table thead th {
+    border-bottom: 1px solid #cbd5e1;
+}
+
+.table-hover > tbody > tr {
+    transition: background-color .12s;
+}
+
+.table td.num,
+.table th.num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.table .empty-row td,
+.table td.empty-cell {
+    padding: 2.25rem 1rem !important;
+    text-align: center;
+    color: var(--ds-text-muted);
+}
+
+.table .empty-row i,
+.table td.empty-cell i {
+    display: block;
+    font-size: 1.6rem;
+    margin-bottom: .4rem;
+    opacity: .45;
+}
+
+.table td .btn-sm {
+    padding: .25rem .5rem;
+    border-radius: 8px;
+}
+
+/* Pagination footer (resources/views/vendor/pagination/ypa.blade.php) */
+.ypa-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 10px 16px;
+    margin-top: 12px;
+    background: var(--ds-surface);
+    border: 1px solid var(--ds-border);
+    border-radius: 12px;
+    font-size: .82rem;
+    color: var(--ds-text-muted);
+}
+
+.ypa-pagination-summary strong {
+    color: var(--ds-text);
+    font-weight: 700;
+}
+
+.ypa-pagination .pagination {
+    margin-top: 0;
+    gap: 4px;
+}
+
+.ypa-pagination .page-link {
+    min-width: 32px;
+    text-align: center;
+    font-weight: 600;
+}
+
+.dash-panel-foot {
+    border-top: 1px solid var(--ds-border);
+    background: #f8fafc;
+}
+
+.dash-panel-foot:empty {
+    display: none;
+}
+
+.dash-panel-foot .ypa-pagination,
+.dash-panel-body > .ypa-pagination,
+.card-body > .ypa-pagination,
+.card-footer > .ypa-pagination {
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+}
+
+.dash-panel-body:has(> .ypa-pagination:only-child) {
+    padding: 0;
+    border-top: 1px solid var(--ds-border);
+    background: #f8fafc;
+}
+
+/* Modal forms */
+.modal-header .modal-title {
+    font-size: 1.05rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+}
+
+.modal-section-title {
+    font-size: .72rem;
+    font-weight: 800;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--ds-text-muted);
+    border-bottom: 1px solid var(--ds-border);
+    padding-bottom: 6px;
+    margin: 6px 0 2px;
 }
 
 .modal-content {

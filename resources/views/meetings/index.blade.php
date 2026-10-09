@@ -8,7 +8,6 @@
     $canCreate = $permission->can('meetings_create');
     $canEdit = $permission->can('meetings_edit');
     $canDelete = $permission->can('meetings_delete');
-    $canManage = $permission->can('meetings_manage');
 @endphp
 
 <div class="dash-wrap">
@@ -18,59 +17,43 @@
             <h1 class="dash-name">Meetings</h1>
             <div class="dash-date">{{ number_format($kpi['total']) }} meeting(s)</div>
         </div>
-        <div class="d-flex gap-2">
-            @if($canCreate)
-                <a href="{{ route('meetings.create') }}" class="btn btn-primary">
-                    <i class="fas fa-calendar-plus"></i> New Meeting
-                </a>
-            @endif
-        </div>
+        @if($canCreate)
+            <button type="button" class="btn btn-primary" onclick="openMeetingModal()">
+                <i class="fas fa-calendar-plus"></i> Add Meeting
+            </button>
+        @endif
     </div>
 
-    @if(session('success'))
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            {{ session('success') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    @endif
-
-    @if(session('error'))
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            {{ session('error') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    @endif
-
-    <div class="dash-grid mb-4">
-        <div class="dash-card">
+    <div class="dash-grid d-grid-5 mb-4">
+        <div class="dash-card accent-primary">
             <div class="dash-card-top">
-                <span class="dash-card-title">Total Meetings</span>
+                <span class="dash-card-title">Total</span>
                 <span class="dash-card-icon"><i class="fas fa-handshake"></i></span>
             </div>
             <div class="dash-card-value">{{ number_format($kpi['total']) }}</div>
         </div>
-        <div class="dash-card">
+        <div class="dash-card accent-info">
             <div class="dash-card-top">
                 <span class="dash-card-title">Scheduled</span>
                 <span class="dash-card-icon"><i class="fas fa-clock"></i></span>
             </div>
             <div class="dash-card-value">{{ number_format($kpi['scheduled']) }}</div>
         </div>
-        <div class="dash-card">
+        <div class="dash-card accent-warning">
             <div class="dash-card-top">
                 <span class="dash-card-title">Ongoing</span>
                 <span class="dash-card-icon"><i class="fas fa-spinner"></i></span>
             </div>
             <div class="dash-card-value">{{ number_format($kpi['ongoing']) }}</div>
         </div>
-        <div class="dash-card">
+        <div class="dash-card accent-success">
             <div class="dash-card-top">
                 <span class="dash-card-title">Completed</span>
                 <span class="dash-card-icon"><i class="fas fa-circle-check"></i></span>
             </div>
             <div class="dash-card-value">{{ number_format($kpi['completed']) }}</div>
         </div>
-        <div class="dash-card">
+        <div class="dash-card accent-danger">
             <div class="dash-card-top">
                 <span class="dash-card-title">Cancelled</span>
                 <span class="dash-card-icon"><i class="fas fa-circle-xmark"></i></span>
@@ -89,7 +72,7 @@
                     <label class="form-label">Search</label>
                     <input type="text" name="search" value="{{ $search }}" class="form-control" placeholder="Title, location, agenda...">
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <label class="form-label">Status</label>
                     <select name="status" class="form-select">
                         <option value="">All Statuses</option>
@@ -98,7 +81,7 @@
                         @endforeach
                     </select>
                 </div>
-                <div class="col-md-2 d-flex align-items-end gap-2">
+                <div class="col-md-3 d-flex align-items-end gap-2">
                     <button type="submit" class="btn btn-primary"><i class="fas fa-search"></i> Filter</button>
                     <a href="{{ route('meetings.index') }}" class="btn btn-outline-secondary">Reset</a>
                 </div>
@@ -116,9 +99,9 @@
                 <table class="table table-hover align-middle mb-0">
                     <thead>
                         <tr>
-                            <th>Type</th>
                             <th>Title</th>
-                            <th>Meeting Date</th>
+                            <th>Type</th>
+                            <th>Date</th>
                             <th>Time</th>
                             <th>Location</th>
                             <th>Status</th>
@@ -127,22 +110,39 @@
                     </thead>
                     <tbody>
                         @forelse($meetings as $meeting)
+                            @php $meetingTime = $meeting->meeting_time ? substr((string) $meeting->meeting_time, 0, 5) : ''; @endphp
                             <tr>
-                                <td><strong>{{ $meeting->meeting_type }}</strong></td>
-                                <td>{{ $meeting->meeting_title }}</td>
-                                <td>{{ $meeting->meeting_date ? $meeting->meeting_date->format('M d, Y') : '-' }}</td>
-                                <td>{{ $meeting->meeting_time ?? '-' }}</td>
-                                <td>{{ $meeting->location ?? '-' }}</td>
                                 <td>
-                                    <span class="badge bg-{{ $meeting->status_badge }}">{{ $meeting->status ?? '-' }}</span>
+                                    <a href="{{ route('meetings.show', $meeting) }}" class="fw-semibold text-decoration-none">{{ $meeting->meeting_title }}</a>
+                                    @if($meeting->chaired_by)
+                                        <div class="small text-muted">Chair: {{ $meeting->chaired_by }}</div>
+                                    @endif
                                 </td>
-                                <td class="text-end">
+                                <td>{{ $meeting->meeting_type }}</td>
+                                <td>{{ $meeting->meeting_date ? $meeting->meeting_date->format('M d, Y') : '-' }}</td>
+                                <td>{{ $meetingTime ?: '-' }}</td>
+                                <td>{{ $meeting->location ?? '-' }}</td>
+                                <td><span class="badge bg-{{ $meeting->status_badge }}">{{ $meeting->status ?? '-' }}</span></td>
+                                <td class="text-end text-nowrap">
                                     <a href="{{ route('meetings.show', $meeting) }}" class="btn btn-sm btn-outline-primary" title="View"><i class="fas fa-eye"></i></a>
                                     @if($canEdit)
-                                        <a href="{{ route('meetings.edit', $meeting) }}" class="btn btn-sm btn-outline-secondary" title="Edit"><i class="fas fa-edit"></i></a>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" title="Edit"
+                                            data-url="{{ route('meetings.update', $meeting) }}"
+                                            data-type="{{ $meeting->meeting_type }}"
+                                            data-title="{{ $meeting->meeting_title }}"
+                                            data-date="{{ $meeting->meeting_date ? $meeting->meeting_date->format('Y-m-d') : '' }}"
+                                            data-time="{{ $meetingTime }}"
+                                            data-location="{{ $meeting->location ?? '' }}"
+                                            data-chair="{{ $meeting->chaired_by ?? '' }}"
+                                            data-agenda="{{ $meeting->agenda ?? '' }}"
+                                            data-notes="{{ $meeting->notes ?? '' }}"
+                                            data-status="{{ $meeting->status }}"
+                                            onclick="openMeetingEdit(this)">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
                                     @endif
                                     @if($canDelete)
-                                        <form action="{{ route('meetings.destroy', $meeting) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this meeting? This cannot be undone.');">
+                                        <form action="{{ route('meetings.destroy', $meeting) }}" method="POST" class="d-inline ypa-confirm-delete" data-confirm-title="Delete meeting?" data-confirm-message="Delete {{ $meeting->meeting_title }}? This cannot be undone.">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete"><i class="fas fa-trash"></i></button>
@@ -151,18 +151,127 @@
                                 </td>
                             </tr>
                         @empty
-                            <tr>
-                                <td colspan="7" class="text-center text-muted py-4">No meetings found.</td>
+                            <tr class="empty-row">
+                                <td colspan="7"><i class="fas fa-inbox"></i>No meetings found.</td>
                             </tr>
                         @endforelse
                     </tbody>
                 </table>
             </div>
         </div>
-        <div class="dash-panel-body">
-            {{ $meetings->links() }}
-        </div>
+        <div class="dash-panel-foot">{{ $meetings->links() }}</div>
     </div>
 
 </div>
+
+@if($canCreate || $canEdit)
+<div class="modal fade" id="meetingModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form id="meetingForm" method="POST" action="{{ route('meetings.store') }}">
+                @csrf
+                <input type="hidden" name="_method" id="meetingMethod" value="POST">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="meetingModalTitle">Add Meeting</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="modal-section-title">Meeting Details</div>
+                    <div class="row g-3">
+                        <div class="col-md-8">
+                            <label class="form-label">Meeting Title <span class="text-danger">*</span></label>
+                            <input type="text" name="meeting_title" id="meetingTitle" class="form-control" maxlength="255" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Meeting Type <span class="text-danger">*</span></label>
+                            <select name="meeting_type" id="meetingType" class="form-select" required>
+                                @foreach(\App\Services\MeetingService::MEETING_TYPES as $mt)
+                                    <option value="{{ $mt }}">{{ $mt }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Date <span class="text-danger">*</span></label>
+                            <input type="date" name="meeting_date" id="meetingDate" class="form-control" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Time</label>
+                            <input type="time" name="meeting_time" id="meetingTime" class="form-control">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Status <span class="text-danger">*</span></label>
+                            <select name="status" id="meetingStatus" class="form-select" required>
+                                @foreach(\App\Services\MeetingService::STATUSES as $st)
+                                    <option value="{{ $st }}" @selected($st === 'Scheduled')>{{ $st }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Location</label>
+                            <input type="text" name="location" id="meetingLocation" class="form-control" maxlength="255" placeholder="Venue / town">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Chaired By</label>
+                            <input type="text" name="chaired_by" id="meetingChair" class="form-control" maxlength="150" placeholder="Chairperson name">
+                        </div>
+                    </div>
+                    <div class="modal-section-title mt-4">Agenda &amp; Notes</div>
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label">Agenda</label>
+                            <textarea name="agenda" id="meetingAgenda" rows="3" class="form-control"></textarea>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Notes</label>
+                            <textarea name="notes" id="meetingNotes" rows="2" class="form-control"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-save me-1"></i> Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@push('scripts')
+<script>
+    function showMeetingModal() {
+        if (window.bootstrap && bootstrap.Modal) {
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('meetingModal')).show();
+        }
+    }
+
+    function openMeetingModal() {
+        var form = document.getElementById('meetingForm');
+        form.reset();
+        form.action = "{{ route('meetings.store') }}";
+        document.getElementById('meetingMethod').value = 'POST';
+        document.getElementById('meetingModalTitle').textContent = 'Add Meeting';
+        showMeetingModal();
+    }
+
+    function openMeetingEdit(btn) {
+        var form = document.getElementById('meetingForm');
+        var d = btn.dataset;
+        form.reset();
+        form.action = d.url;
+        document.getElementById('meetingMethod').value = 'PUT';
+        document.getElementById('meetingModalTitle').textContent = 'Edit Meeting';
+        document.getElementById('meetingTitle').value = d.title || '';
+        document.getElementById('meetingType').value = d.type || 'Monthly';
+        document.getElementById('meetingDate').value = d.date || '';
+        document.getElementById('meetingTime').value = d.time || '';
+        document.getElementById('meetingStatus').value = d.status || 'Scheduled';
+        document.getElementById('meetingLocation').value = d.location || '';
+        document.getElementById('meetingChair').value = d.chair || '';
+        document.getElementById('meetingAgenda').value = d.agenda || '';
+        document.getElementById('meetingNotes').value = d.notes || '';
+        showMeetingModal();
+    }
+</script>
+@endpush
+@endif
 @endsection

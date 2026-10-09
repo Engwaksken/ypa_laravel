@@ -95,7 +95,13 @@ class GroupController extends Controller
             'categoryFilter',
             'perPage',
             'kpi'
-        ));
+        ))->with([
+            'branches' => Branch::query()->orderBy('name')->get(),
+            'mobilizers' => Mobilizer::query()->orderBy('first_name')->get(),
+            'groupRecords' => $groups->getCollection()->mapWithKeys(
+                fn (Group $group) => [$group->id => $this->formRecord($group)]
+            )->all(),
+        ]);
     }
 
     public function create(): View
@@ -118,7 +124,7 @@ class GroupController extends Controller
         $group = Group::create($payload);
 
         return redirect()
-            ->route('groups.show', $group)
+            ->route('groups.index')
             ->with('success', 'Group created successfully. Group Code: ' . $group->group_code);
     }
 
@@ -136,7 +142,15 @@ class GroupController extends Controller
             'nextOfKin.member',
         ]);
 
-        return view('groups.show', compact('group'));
+        $data = ['group' => $group];
+
+        if ($this->permission->can('groups_edit')) {
+            $data['branches'] = Branch::query()->orderBy('name')->get();
+            $data['mobilizers'] = Mobilizer::query()->orderBy('first_name')->get();
+            $data['groupRecord'] = $this->formRecord($group);
+        }
+
+        return view('groups.show', $data);
     }
 
     public function edit(Group $group): View
@@ -144,7 +158,9 @@ class GroupController extends Controller
         $branches = Branch::query()->orderBy('name')->get();
         $mobilizers = Mobilizer::query()->orderBy('first_name')->get();
 
-        return view('groups.edit', compact('group', 'branches', 'mobilizers'));
+        $record = $this->formRecord($group);
+
+        return view('groups.edit', compact('group', 'branches', 'mobilizers', 'record'));
     }
 
     public function update(UpdateGroupRequest $request, Group $group): RedirectResponse
@@ -157,9 +173,39 @@ class GroupController extends Controller
 
         $group->update($payload);
 
+        // Return to wherever the edit modal was opened (index with filters, or the show page).
+        $previous = url()->previous();
+        $previousPath = (string) parse_url($previous, PHP_URL_PATH);
+        $target = str_starts_with($previous, url('/'))
+            && in_array($previousPath, [parse_url(route('groups.index'), PHP_URL_PATH), parse_url(route('groups.show', $group), PHP_URL_PATH)], true)
+            ? $previous
+            : route('groups.index');
+
         return redirect()
-            ->route('groups.show', $group)
+            ->to($target)
             ->with('success', 'Group updated successfully.');
+    }
+
+    /**
+     * Values used to pre-fill the group add/edit form (modal or page).
+     */
+    protected function formRecord(Group $group): array
+    {
+        return [
+            'group_name' => $group->group_name,
+            'group_category' => $group->group_category,
+            'category_other' => $group->category_other,
+            'formation_date' => $group->formation_date ? $group->formation_date->format('Y-m-d') : '',
+            'status' => $group->status ?: 'Active',
+            'country' => $group->country,
+            'uganda_subregion' => $group->uganda_subregion,
+            'uganda_district' => $group->uganda_district,
+            'branch_id' => $group->branch_id,
+            'mobilizer_id' => $group->mobilizer_id,
+            'bank_name' => $group->bank_name,
+            'bank_account_name' => $group->bank_account_name,
+            'bank_account_number' => $group->bank_account_number,
+        ];
     }
 
     public function destroy(Group $group): RedirectResponse

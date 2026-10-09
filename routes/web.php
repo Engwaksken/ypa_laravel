@@ -5,6 +5,7 @@ use App\Http\Controllers\ActivityParticipantController;
 use App\Http\Controllers\ActivityRegistrationController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BranchController;
+use App\Http\Controllers\BusinessReportController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ContractController;
 use App\Http\Controllers\ContractPdfController;
@@ -13,9 +14,12 @@ use App\Http\Controllers\ContractWorkflowController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\ExpenseController;
+use App\Http\Controllers\ExpiryStockController;
+use App\Http\Controllers\FinancialReportController;
 use App\Http\Controllers\GroupController;
 use App\Http\Controllers\HarvestController;
 use App\Http\Controllers\HarvestDueController;
+use App\Http\Controllers\LowStockController;
 use App\Http\Controllers\MeetingAjaxController;
 use App\Http\Controllers\MeetingController;
 use App\Http\Controllers\MemberController;
@@ -31,8 +35,10 @@ use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\ProjectCategoryController;
 use App\Http\Controllers\PermissionsController;
 use App\Http\Controllers\ReceivableController;
+use App\Http\Controllers\SalesReportController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\StockController;
+use App\Http\Controllers\StockReportController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\TerminationController;
 use App\Http\Controllers\UsersController;
@@ -251,6 +257,10 @@ Route::middleware(['auth', 'user.status'])->group(function () {
     Route::resource('stock', StockController::class)->only(['index', 'store', 'update', 'destroy']);
     Route::resource('customers', CustomerController::class)->only(['index', 'store', 'update', 'destroy']);
     Route::resource('suppliers', SupplierController::class)->only(['index', 'store', 'update', 'destroy']);
+    Route::get('/sales', [\App\Http\Controllers\SaleController::class, 'index'])->name('sales.index');
+    Route::get('/sales/products', [\App\Http\Controllers\SaleController::class, 'products'])->name('sales.products');
+    Route::post('/sales', [\App\Http\Controllers\SaleController::class, 'store'])->name('sales.store');
+    Route::get('/sales/{sale}', [\App\Http\Controllers\SaleController::class, 'show'])->name('sales.show');
     Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
     Route::get('/orders/{order}', [OrderController::class, 'show'])->name('orders.show');
     Route::patch('/orders/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.status');
@@ -272,6 +282,34 @@ Route::middleware(['auth', 'user.status'])->group(function () {
     Route::get('/expenses/template', [ExpenseController::class, 'template'])->name('expenses.template');
     Route::post('/expenses/import', [ExpenseController::class, 'import'])->name('expenses.import')->middleware('throttle:5,1');
     Route::resource('expenses', ExpenseController::class)->only(['index', 'store', 'update', 'destroy']);
+
+    /* ============================================================
+       Reports module
+       ============================================================ */
+
+    // Business Report
+    Route::get('/business-report', [BusinessReportController::class, 'index'])->name('business-report.index');
+    Route::get('/business-report/export', [BusinessReportController::class, 'export'])->name('business-report.export')->middleware('throttle:10,1');
+
+    // Sales Report
+    Route::get('/sales-reports', [SalesReportController::class, 'index'])->name('sales-reports.index');
+    Route::get('/sales-reports/export', [SalesReportController::class, 'export'])->name('sales-reports.export')->middleware('throttle:10,1');
+
+    // Stock Report
+    Route::get('/stock-report', [StockReportController::class, 'index'])->name('stock-report.index');
+    Route::get('/stock-report/export', [StockReportController::class, 'export'])->name('stock-report.export')->middleware('throttle:10,1');
+
+    // Low Stock Report
+    Route::get('/low-stock', [LowStockController::class, 'index'])->name('low-stock.index');
+    Route::get('/low-stock/export', [LowStockController::class, 'export'])->name('low-stock.export')->middleware('throttle:10,1');
+
+    // Expiry Stock Report
+    Route::get('/expiry-stock', [ExpiryStockController::class, 'index'])->name('expiry-stock.index');
+    Route::get('/expiry-stock/export', [ExpiryStockController::class, 'export'])->name('expiry-stock.export')->middleware('throttle:10,1');
+
+    // Financial Report
+    Route::get('/financial-reports', [FinancialReportController::class, 'index'])->name('financial-reports.index');
+    Route::get('/financial-reports/export', [FinancialReportController::class, 'export'])->name('financial-reports.export')->middleware('throttle:10,1');
 
     // Permissions (role matrix).
     Route::get('/permissions', [PermissionsController::class, 'index'])->name('permissions.index');

@@ -40,7 +40,7 @@
             var stack = document.getElementById('ypaFlashStack');
             if (!stack) return;
 
-            stack.querySelectorAll('.ypa-flash').forEach(function (el) {
+            stack.querySelectorAll('.alert-success, .alert-info').forEach(function (el) {
                 setTimeout(function () {
                     if (window.bootstrap && bootstrap.Alert) {
                         bootstrap.Alert.getOrCreateInstance(el).close();

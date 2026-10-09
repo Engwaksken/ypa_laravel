@@ -25,57 +25,43 @@
                 </a>
             @endif
             @if($canCreate)
-                <a href="{{ route('groups.create') }}" class="btn btn-primary">
-                    <i class="fas fa-users"></i> Register Group
-                </a>
+                <button type="button" class="btn btn-primary" onclick="openGroupModal()">
+                    <i class="fas fa-plus"></i> Register Group
+                </button>
             @endif
         </div>
     </div>
 
-    @if(session('success'))
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            {{ session('success') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    @endif
-
-    @if(session('error'))
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            {{ session('error') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    @endif
-
-    <div class="dash-grid mb-4">
-        <div class="dash-card">
+    <div class="dash-grid d-grid-5 mb-4">
+        <div class="dash-card accent-primary">
             <div class="dash-card-top">
                 <span class="dash-card-title">Total Groups</span>
-                <span class="dash-card-icon"><i class="fas fa-users"></i></span>
+                <span class="dash-card-icon"><i class="fas fa-people-group"></i></span>
             </div>
             <div class="dash-card-value">{{ number_format($kpi['total']) }}</div>
         </div>
-        <div class="dash-card">
+        <div class="dash-card accent-success">
             <div class="dash-card-top">
                 <span class="dash-card-title">Active</span>
-                <span class="dash-card-icon"><i class="fas fa-user-check"></i></span>
+                <span class="dash-card-icon"><i class="fas fa-circle-check"></i></span>
             </div>
             <div class="dash-card-value">{{ number_format($kpi['active']) }}</div>
         </div>
-        <div class="dash-card">
+        <div class="dash-card accent-muted">
             <div class="dash-card-top">
                 <span class="dash-card-title">Inactive</span>
-                <span class="dash-card-icon"><i class="fas fa-user-slash"></i></span>
+                <span class="dash-card-icon"><i class="fas fa-circle-pause"></i></span>
             </div>
             <div class="dash-card-value">{{ number_format($kpi['inactive']) }}</div>
         </div>
-        <div class="dash-card">
+        <div class="dash-card accent-warning">
             <div class="dash-card-top">
                 <span class="dash-card-title">Suspended</span>
-                <span class="dash-card-icon"><i class="fas fa-pause-circle"></i></span>
+                <span class="dash-card-icon"><i class="fas fa-ban"></i></span>
             </div>
             <div class="dash-card-value">{{ number_format($kpi['suspended']) }}</div>
         </div>
-        <div class="dash-card">
+        <div class="dash-card accent-danger">
             <div class="dash-card-top">
                 <span class="dash-card-title">Dissolved</span>
                 <span class="dash-card-icon"><i class="fas fa-circle-xmark"></i></span>
@@ -144,7 +130,7 @@
                         @forelse($groups as $group)
                             <tr>
                                 <td><strong>{{ $group->group_code }}</strong></td>
-                                <td>{{ $group->group_name }}</td>
+                                <td><a href="{{ route('groups.show', $group) }}" class="text-decoration-none">{{ $group->group_name }}</a></td>
                                 <td>{{ $group->group_category }}</td>
                                 <td>{{ $group->branch->name ?? '-' }}</td>
                                 <td>{{ $group->uganda_district ?? $group->country ?? '-' }}</td>
@@ -155,10 +141,15 @@
                                 <td class="text-end">
                                     <a href="{{ route('groups.show', $group) }}" class="btn btn-sm btn-outline-primary" title="View"><i class="fas fa-eye"></i></a>
                                     @if($canEdit)
-                                        <a href="{{ route('groups.edit', $group) }}" class="btn btn-sm btn-outline-secondary" title="Edit"><i class="fas fa-edit"></i></a>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" title="Edit"
+                                            data-url="{{ route('groups.update', $group) }}"
+                                            data-record='@json($groupRecords[$group->id] ?? [])'
+                                            onclick="openGroupEdit(this)">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
                                     @endif
                                     @if($canDelete)
-                                        <form action="{{ route('groups.destroy', $group) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this group? This cannot be undone.');">
+                                        <form action="{{ route('groups.destroy', $group) }}" method="POST" class="d-inline ypa-confirm-delete" data-confirm-title="Delete group?" data-confirm-message="Delete {{ $group->group_name }} ({{ $group->group_code }})? This cannot be undone.">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete"><i class="fas fa-trash"></i></button>
@@ -167,18 +158,22 @@
                                 </td>
                             </tr>
                         @empty
-                            <tr>
-                                <td colspan="8" class="text-center text-muted py-4">No groups found.</td>
+                            <tr class="empty-row">
+                                <td colspan="8"><i class="fas fa-inbox"></i>No groups found.</td>
                             </tr>
                         @endforelse
                     </tbody>
                 </table>
             </div>
         </div>
-        <div class="dash-panel-body">
+        <div class="dash-panel-foot">
             {{ $groups->links() }}
         </div>
     </div>
 
 </div>
+
+@if($canCreate || $canEdit)
+    @include('groups._modal_form')
+@endif
 @endsection

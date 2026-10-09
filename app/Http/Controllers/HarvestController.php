@@ -50,7 +50,12 @@ class HarvestController extends Controller
         $totalNet = (clone $query)->sum('net_amount');
         $harvests = $query->paginate($perPage)->withQueryString();
 
-        return view('harvests.index', compact('harvests', 'search', 'statusFilter', 'stageFilter', 'perPage', 'totalAmount', 'totalNet'));
+        $canManage = app(\App\Services\PermissionService::class)->can('harvest_manage');
+        $contracts = $canManage
+            ? Contract::query()->with(['member', 'group'])->whereNotIn('status', ['DRAFT', 'TERMINATED', 'CANCELLED'])->orderByDesc('id')->limit(200)->get()
+            : collect();
+
+        return view('harvests.index', compact('harvests', 'search', 'statusFilter', 'stageFilter', 'perPage', 'totalAmount', 'totalNet', 'canManage', 'contracts'));
     }
 
     public function create(Request $request): View

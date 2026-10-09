@@ -43,7 +43,8 @@ class MobilizerController extends Controller
         $regionFilter = trim((string) $request->query('region', ''));
 
         $query = Mobilizer::query()
-            ->orderByDesc('created_at');
+            ->orderByDesc('created_at')
+            ->orderByDesc('id');
 
         if ($search !== '') {
             $like = '%' . $search . '%';
@@ -68,7 +69,7 @@ class MobilizerController extends Controller
             $query->where('branch_region', $regionFilter);
         }
 
-        $mobilizers = $query->get();
+        $mobilizers = $query->paginate(15)->withQueryString();
 
         // Stats.
         $stats = [

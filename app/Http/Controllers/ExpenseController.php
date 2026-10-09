@@ -54,7 +54,11 @@ class ExpenseController extends Controller
         $canImport = $permission->can('expenses_import');
         $canAllBranches = $permission->canAny(['all_branches', 'view_all_branches']);
 
-        $branches = Branch::query()->orderBy('name')->get(['id', 'name']);
+        if (!$canAllBranches) {
+            app(\App\Services\BranchAccess::class)->authorize($user->branch_id);
+        }
+
+        $branches = app(\App\Services\BranchAccess::class)->branches()->get(['id', 'name']);
 
         $requestedBranch = (int) $request->query('branch', 0);
         $selectedBranch = $canAllBranches
@@ -174,13 +178,17 @@ class ExpenseController extends Controller
     public function store(StoreExpenseRequest $request): JsonResponse|RedirectResponse
     {
         $data = $request->validated();
+        app(\App\Services\BranchAccess::class)->authorize($data['branch_id'] ?? null);
         $data['category'] = $request->resolvedCategory();
         $data['debit_account_code'] = $data['debit_account_code'] ?? '5000';
         $data['credit_account_code'] = $data['credit_account_code'] ?? '1000';
         $data['created_by'] = auth()->id();
 
-        $expense = Expense::create($data);
-        $this->postJournal($expense);
+        $expense = DB::transaction(function () use ($data) {
+            $expense = Expense::create($data);
+            $this->postJournal($expense);
+            return $expense;
+        }, 3);
 
         if ($request->expectsJson()) {
             return response()->json([
@@ -198,13 +206,21 @@ class ExpenseController extends Controller
     public function update(UpdateExpenseRequest $request, Expense $expense): JsonResponse|RedirectResponse
     {
         $data = $request->validated();
+        app(\App\Services\BranchAccess::class)->authorize($expense->branch_id);
+        app(\App\Services\BranchAccess::class)->authorize($data['branch_id'] ?? null);
         $data['category'] = $request->resolvedCategory();
         $data['debit_account_code'] = $data['debit_account_code'] ?? '5000';
         $data['credit_account_code'] = $data['credit_account_code'] ?? '1000';
         $data['updated_by'] = auth()->id();
 
-        $expense->update($data);
-        $this->postJournal($expense);
+        DB::transaction(function () use ($expense, $data) {
+            $locked = Expense::query()->whereKey($expense->id)->lockForUpdate()->firstOrFail();
+            app(\App\Services\BranchAccess::class)->authorize($locked->branch_id);
+            abort_if($locked->journal_id, 422, 'Posted expenses require an accounting adjustment and cannot be edited here.');
+            $locked->update($data);
+            $this->postJournal($locked);
+        }, 3);
+        $expense->refresh();
 
         if ($request->expectsJson()) {
             return response()->json([
@@ -220,8 +236,14 @@ class ExpenseController extends Controller
 
     public function destroy(Request $request, Expense $expense): JsonResponse|RedirectResponse
     {
+        app(\App\Services\BranchAccess::class)->authorize($expense->branch_id);
         $title = $expense->title;
-        $expense->delete();
+        DB::transaction(function () use ($expense) {
+            $locked = Expense::query()->whereKey($expense->id)->lockForUpdate()->firstOrFail();
+            app(\App\Services\BranchAccess::class)->authorize($locked->branch_id);
+            abort_if($locked->journal_id, 422, 'Posted expenses require an accounting adjustment and cannot be deleted here.');
+            $locked->delete();
+        }, 3);
 
         if ($request->expectsJson()) {
             return response()->json([
@@ -347,6 +369,7 @@ class ExpenseController extends Controller
         }
 
         $defaultBranchId = (int) $request->input('branch_id', auth()->user()->branch_id ?? 1);
+        app(\App\Services\BranchAccess::class)->authorize($defaultBranchId);
         if (!Branch::find($defaultBranchId)) {
             return response()->json(['success' => false, 'message' => 'Invalid branch selected.'], 422);
         }
@@ -441,6 +464,7 @@ class ExpenseController extends Controller
 
                     $paymentMethod = in_array($paymentMethod, StoreExpenseRequest::PAYMENT_METHODS, true) ? $paymentMethod : 'Cash';
 
+                    app(\App\Services\BranchAccess::class)->authorize($branchId);
                     Expense::create([
                         'title' => $title,
                         'amount' => $amount,
@@ -454,14 +478,20 @@ class ExpenseController extends Controller
 
                     $imported++;
                 } catch (\Throwable $e) {
-                    $errors[] = "Row $rowNumber: " . $e->getMessage();
+                    if ($e instanceof \Symfony\Component\HttpKernel\Exception\HttpExceptionInterface && $e->getStatusCode() === 403) {
+                        $errors[] = "Row $rowNumber: This branch is outside your access.";
+                    } else {
+                        report($e);
+                        $errors[] = "Row $rowNumber: Unable to save this expense. Check the row and contact support if the problem persists.";
+                    }
                     $skipped++;
                 }
             }
 
             fclose($handle);
         } catch (\Throwable $e) {
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+            report($e);
+            return response()->json(['success' => false, 'message' => 'Unable to process the uploaded CSV.'], 422);
         }
 
         if ($imported > 0) {
@@ -695,6 +725,9 @@ class ExpenseController extends Controller
 
         $permission = app(\App\Services\PermissionService::class);
         $canAllBranches = $permission->canAny(['all_branches', 'view_all_branches']);
+        if (!$canAllBranches) {
+            app(\App\Services\BranchAccess::class)->authorize(auth()->user()->branch_id);
+        }
         $selectedBranch = $canAllBranches
             ? max(0, $requestedBranch)
             : (int) (auth()->user()->branch_id ?? 1);
@@ -868,6 +901,14 @@ class ExpenseController extends Controller
             return;
         }
 
+        if (Schema::hasTable('ledger_entries')) {
+            app(\App\Services\LegacyLedgerService::class)->postExpense($expense);
+            return;
+        }
+
+        abort_unless(Schema::hasTable('journal_entry_lines') && Schema::hasColumns('journal_entry_lines', ['journal_id', 'account_code', 'account_name', 'debit', 'credit']),
+            422, 'This accounting schema is unsupported; expense posting requires ledger reconciliation before use.');
+
         try {
             $reference = 'EXP-' . now()->format('YmdHis') . '-' . $expense->id;
 
@@ -895,7 +936,7 @@ class ExpenseController extends Controller
             }
 
             if ($insert === []) {
-                return;
+                abort(422, 'This accounting schema is unsupported; journal fields are unavailable.');
             }
 
             $journalId = DB::table('journal_entries')->insertGetId($insert);
@@ -918,6 +959,7 @@ class ExpenseController extends Controller
             }
         } catch (\Throwable $e) {
             report($e);
+            throw $e;
         }
     }
 }

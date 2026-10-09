@@ -61,7 +61,15 @@ class ActivityParticipantController extends Controller
 
         $participants = $query->paginate(25)->withQueryString();
 
-        return view('activities.participants', compact('activity', 'participants', 'search'));
+        $totalParticipants = $activity->participants()->count();
+        $attendedParticipants = $activity->participants()->where('attended', true)->count();
+        $stats = [
+            'total' => $totalParticipants,
+            'attended' => $attendedParticipants,
+            'not_attended' => $totalParticipants - $attendedParticipants,
+        ];
+
+        return view('activities.participants', compact('activity', 'participants', 'search', 'stats'));
     }
 
     /**

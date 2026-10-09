@@ -26,6 +26,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Paginator::useBootstrapFive();
+        Paginator::defaultView('pagination::ypa');
 
         // Force HTTPS URL generation in production (the app sits behind a
         // reverse proxy; forwarded headers are trusted in bootstrap/app.php).

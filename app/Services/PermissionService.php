@@ -545,6 +545,12 @@ class PermissionService
             'reports' => [
                 'financial_reports',
                 'financial_reports_export',
+                'business_report',
+                'view_business_report',
+                'business_report_export',
+                'sales_report',
+                'view_sales_report',
+                'sales_report_export',
                 'stock_reports',
                 'stock_report',
                 'view_stock_report',

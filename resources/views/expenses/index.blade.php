@@ -461,8 +461,9 @@ function saveExpense() {
     const url = isEdit
         ? '{{ route('expenses.update', ':id') }}'.replace(':id', document.getElementById('expenseId').value)
         : '{{ route('expenses.store') }}';
-    const method = isEdit ? 'PUT' : 'POST';
+
     const btn = document.getElementById('expenseSaveBtn');
+    if (btn.disabled) return;
     const orig = btn.innerHTML;
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
@@ -470,7 +471,8 @@ function saveExpense() {
     const fd = new FormData(form);
     fd.set('_token', document.querySelector('meta[name="csrf-token"]').content);
 
-    fetch(url, { method: method, body: fd, headers: { 'Accept': 'application/json' } })
+    fd.set('_method', isEdit ? 'PUT' : 'POST');
+    fetch(url, { method: 'POST', body: fd, headers: { 'Accept': 'application/json' } })
         .then(r => r.json().then(data => ({ ok: r.ok, data })))
         .then(({ ok, data }) => {
             if (!ok || !data.success) throw new Error(data.message || 'Failed to save expense.');
@@ -494,6 +496,7 @@ function deleteExpense(id, name) {
 function confirmDeleteExpense() {
     const id = document.getElementById('expenseDeleteId').value;
     const btn = document.getElementById('expenseDeleteBtn');
+    if (btn.disabled) return;
     const orig = btn.innerHTML;
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting...';
@@ -541,6 +544,7 @@ function submitBulkUpload() {
     if (file.size > 5 * 1024 * 1024) return showUploadAlert('File size must be less than 5MB', 'danger');
 
     const btn = document.getElementById('uploadBtn');
+    if (btn.disabled) return;
     const orig = btn.innerHTML;
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';

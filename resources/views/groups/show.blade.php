@@ -20,23 +20,57 @@
             </div>
         </div>
         <div class="d-flex gap-2">
-            @if($canEdit)
-                <a href="{{ route('groups.edit', $group) }}" class="btn btn-outline-secondary">
-                    <i class="fas fa-edit"></i> Edit
-                </a>
-            @endif
             <a href="{{ route('groups.index') }}" class="btn btn-outline-secondary">
                 <i class="fas fa-arrow-left"></i> Back
             </a>
+            @if($canEdit && isset($groupRecord))
+                <button type="button" class="btn btn-primary"
+                    data-url="{{ route('groups.update', $group) }}"
+                    data-record='@json($groupRecord)'
+                    onclick="openGroupEdit(this)">
+                    <i class="fas fa-edit"></i> Edit Group
+                </button>
+            @endif
+            @if($canDelete)
+                <form action="{{ route('groups.destroy', $group) }}" method="POST" class="ypa-confirm-delete" data-confirm-title="Delete group?" data-confirm-message="Delete {{ $group->group_name }} ({{ $group->group_code }})? This cannot be undone.">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="btn btn-outline-danger"><i class="fas fa-trash"></i> Delete</button>
+                </form>
+            @endif
         </div>
     </div>
 
-    @if(session('success'))
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            {{ session('success') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    <div class="dash-grid d-grid-4 mb-4">
+        <div class="dash-card accent-primary">
+            <div class="dash-card-top">
+                <span class="dash-card-title">Members</span>
+                <span class="dash-card-icon"><i class="fas fa-user-group"></i></span>
+            </div>
+            <div class="dash-card-value">{{ number_format($group->members->count()) }}</div>
         </div>
-    @endif
+        <div class="dash-card accent-info">
+            <div class="dash-card-top">
+                <span class="dash-card-title">Coordinators</span>
+                <span class="dash-card-icon"><i class="fas fa-user-tie"></i></span>
+            </div>
+            <div class="dash-card-value">{{ number_format($group->coordinators->count() + $group->nonMemberCoordinators->count()) }}</div>
+        </div>
+        <div class="dash-card accent-purple">
+            <div class="dash-card-top">
+                <span class="dash-card-title">Documents</span>
+                <span class="dash-card-icon"><i class="fas fa-file"></i></span>
+            </div>
+            <div class="dash-card-value">{{ number_format($group->documents->count()) }}</div>
+        </div>
+        <div class="dash-card accent-success">
+            <div class="dash-card-top">
+                <span class="dash-card-title">Formed</span>
+                <span class="dash-card-icon"><i class="fas fa-calendar-day"></i></span>
+            </div>
+            <div class="dash-card-value">{{ $group->formation_date ? $group->formation_date->format('M d, Y') : '-' }}</div>
+        </div>
+    </div>
 
     <div class="row g-4">
         <div class="col-lg-4">
@@ -44,43 +78,43 @@
                 <div class="dash-panel-head">
                     <span><i class="fas fa-circle-info"></i> Group Information</span>
                 </div>
-                <div class="dash-panel-body">
-                    <table class="table table-sm mb-0">
+                <div class="dash-panel-body p-0">
+                    <table class="table table-sm align-middle mb-0">
                         <tbody>
                             <tr>
-                                <th class="text-muted">Group Code</th>
+                                <th class="text-muted fw-semibold ps-3">Group Code</th>
                                 <td>{{ $group->group_code }}</td>
                             </tr>
                             <tr>
-                                <th class="text-muted">Category</th>
+                                <th class="text-muted fw-semibold ps-3">Category</th>
                                 <td>{{ $group->group_category }}</td>
                             </tr>
                             <tr>
-                                <th class="text-muted">Country</th>
+                                <th class="text-muted fw-semibold ps-3">Country</th>
                                 <td>{{ $group->country ?? '-' }}</td>
                             </tr>
                             <tr>
-                                <th class="text-muted">Sub-region</th>
+                                <th class="text-muted fw-semibold ps-3">Sub-region</th>
                                 <td>{{ $group->uganda_subregion ?? '-' }}</td>
                             </tr>
                             <tr>
-                                <th class="text-muted">District</th>
+                                <th class="text-muted fw-semibold ps-3">District</th>
                                 <td>{{ $group->uganda_district ?? '-' }}</td>
                             </tr>
                             <tr>
-                                <th class="text-muted">Formation Date</th>
+                                <th class="text-muted fw-semibold ps-3">Formation Date</th>
                                 <td>{{ $group->formation_date ? $group->formation_date->format('M d, Y') : '-' }}</td>
                             </tr>
                             <tr>
-                                <th class="text-muted">Branch</th>
+                                <th class="text-muted fw-semibold ps-3">Branch</th>
                                 <td>{{ $group->branch->name ?? '-' }}</td>
                             </tr>
                             <tr>
-                                <th class="text-muted">Mobilizer</th>
+                                <th class="text-muted fw-semibold ps-3">Mobilizer</th>
                                 <td>{{ $group->mobilizer->full_name ?? '-' }}</td>
                             </tr>
                             <tr>
-                                <th class="text-muted">Status</th>
+                                <th class="text-muted fw-semibold ps-3">Status</th>
                                 <td><span class="badge bg-{{ $group->status_badge }}">{{ $group->status }}</span></td>
                             </tr>
                         </tbody>
@@ -92,19 +126,19 @@
                 <div class="dash-panel-head">
                     <span><i class="fas fa-building-columns"></i> Bank Details</span>
                 </div>
-                <div class="dash-panel-body">
-                    <table class="table table-sm mb-0">
+                <div class="dash-panel-body p-0">
+                    <table class="table table-sm align-middle mb-0">
                         <tbody>
                             <tr>
-                                <th class="text-muted">Bank Name</th>
+                                <th class="text-muted fw-semibold ps-3">Bank Name</th>
                                 <td>{{ $group->bank_name ?? '-' }}</td>
                             </tr>
                             <tr>
-                                <th class="text-muted">Account Name</th>
+                                <th class="text-muted fw-semibold ps-3">Account Name</th>
                                 <td>{{ $group->bank_account_name ?? '-' }}</td>
                             </tr>
                             <tr>
-                                <th class="text-muted">Account Number</th>
+                                <th class="text-muted fw-semibold ps-3">Account Number</th>
                                 <td>{{ $group->bank_account_number ?? '-' }}</td>
                             </tr>
                         </tbody>
@@ -138,8 +172,8 @@
                                         <td>{{ $gm->role ?? 'Member' }}</td>
                                     </tr>
                                 @empty
-                                    <tr>
-                                        <td colspan="4" class="text-center text-muted py-4">No members in this group yet.</td>
+                                    <tr class="empty-row">
+                                        <td colspan="4"><i class="fas fa-inbox"></i>No members in this group yet.</td>
                                     </tr>
                                 @endforelse
                             </tbody>
@@ -168,8 +202,8 @@
                                         <td>{{ $gc->role ?? 'Coordinator' }}</td>
                                     </tr>
                                 @empty
-                                    <tr>
-                                        <td colspan="2" class="text-center text-muted py-4">No coordinators assigned.</td>
+                                    <tr class="empty-row">
+                                        <td colspan="2"><i class="fas fa-inbox"></i>No coordinators assigned.</td>
                                     </tr>
                                 @endforelse
                             </tbody>
@@ -238,8 +272,8 @@
                                         <td>{{ $doc->created_at ? $doc->created_at->format('M d, Y') : '-' }}</td>
                                     </tr>
                                 @empty
-                                    <tr>
-                                        <td colspan="2" class="text-center text-muted py-4">No documents uploaded.</td>
+                                    <tr class="empty-row">
+                                        <td colspan="2"><i class="fas fa-inbox"></i>No documents uploaded.</td>
                                     </tr>
                                 @endforelse
                             </tbody>
@@ -251,4 +285,7 @@
     </div>
 
 </div>
+@if($canEdit && isset($groupRecord, $branches, $mobilizers))
+    @include('groups._modal_form')
+@endif
 @endsection

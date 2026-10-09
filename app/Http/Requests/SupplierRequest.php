@@ -15,9 +15,9 @@ class SupplierRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'member_id' => ['nullable', 'integer'],
+            'member_id' => ['nullable', 'integer', 'exists:members,id'],
             'supplier_type' => ['required', Rule::in(['member', 'non_member'])],
-            'branch_id' => ['nullable', 'integer'],
+            'branch_id' => ['nullable', 'integer', 'exists:branches,id'],
             'name' => ['required', 'string', 'max:191'],
             'contact_name' => ['nullable', 'string', 'max:191'],
             'phone' => ['nullable', 'string', 'max:50'],

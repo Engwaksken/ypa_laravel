@@ -255,6 +255,7 @@
                         </div>
                         <div class="col-12">
                             <div class="form-check">
+                                <input type="hidden" name="is_active" value="0">
                                 <input type="checkbox" name="is_active" id="productActive" value="1" class="form-check-input" checked>
                                 <label class="form-check-label" for="productActive">Active</label>
                             </div>
@@ -290,6 +291,7 @@
                         <textarea name="description" id="categoryDescription" rows="2" class="form-control"></textarea>
                     </div>
                     <div class="form-check">
+                        <input type="hidden" name="is_active" value="0">
                         <input type="checkbox" name="is_active" id="categoryActive" value="1" class="form-check-input" checked>
                         <label class="form-check-label" for="categoryActive">Active</label>
                     </div>
