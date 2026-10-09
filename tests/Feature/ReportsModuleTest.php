@@ -124,10 +124,11 @@ class ReportsModuleTest extends TestCase
         if (!Schema::hasTable('categories')) {
             Schema::create('categories', function (Blueprint $table) {
                 $table->bigIncrements('id');
-                $table->string('name');
-                $table->string('description')->nullable();
-                $table->boolean('is_active')->default(true);
-                $table->timestamps();
+                $table->string('category_name', 150);
+                $table->text('description')->nullable();
+                $table->enum('status', ['active', 'inactive'])->default('active');
+                $table->timestamp('created_at')->useCurrent();
+                $table->timestamp('updated_at')->useCurrent();
             });
         }
         $this->category = Category::forceCreate(['name' => 'Vegetables']);
