@@ -59,7 +59,7 @@ class ProductController extends Controller
         }
 
         $products = $query->paginate(20)->withQueryString();
-        $categories = Category::query()->orderBy('name')->get();
+        $categories = Category::query()->orderBy('category_name')->get();
         $branches = Branch::query()->orderBy('name')->get();
 
         $stats = [

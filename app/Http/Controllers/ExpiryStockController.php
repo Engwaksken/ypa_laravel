@@ -24,7 +24,7 @@ class ExpiryStockController extends ReportController
     {
         $branchId = $this->selectedBranch($request);
         $branches = $this->branches();
-        $categories = Category::orderBy('name')->get(['id', 'name']);
+        $categories = Category::orderBy('category_name')->get(['id', 'category_name']);
 
         $days = max(1, (int) $request->query('days', 30));
         $selectedCategory = $request->query('category');

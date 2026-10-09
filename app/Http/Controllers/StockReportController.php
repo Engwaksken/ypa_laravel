@@ -27,7 +27,7 @@ class StockReportController extends ReportController
         [$from, $to] = $this->dateRange($request);
         $branchId = $this->selectedBranch($request);
         $branches = $this->branches();
-        $categories = Category::orderBy('name')->get(['id', 'name']);
+        $categories = Category::orderBy('category_name')->get(['id', 'category_name']);
         $suppliers = Supplier::orderBy('name')->get(['id', 'name']);
         $selectedCategory = $request->query('category');
         $selectedSupplier = $request->query('supplier');
