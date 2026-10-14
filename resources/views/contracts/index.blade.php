@@ -3,7 +3,9 @@
 @section('title', 'Contracts')
 
 @section('content')
-@php($perm = app(\App\Services\PermissionService::class))
+@php
+    $perm = app(\App\Services\PermissionService::class);
+@endphp
 <div class="dash-wrap">
 
     <div class="dash-head">

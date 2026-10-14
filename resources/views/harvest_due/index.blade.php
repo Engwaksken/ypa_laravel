@@ -3,7 +3,9 @@
 @section('title', 'Harvest Due')
 
 @section('content')
-@php($canRecord = app(\App\Services\PermissionService::class)->can('harvest_due_full'))
+@php
+    $canRecord = app(\App\Services\PermissionService::class)->can('harvest_due_full');
+@endphp
 <div class="dash-wrap">
 
     <div class="dash-head">
