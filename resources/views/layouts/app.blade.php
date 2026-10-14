@@ -23,7 +23,7 @@
 
 @include('layouts.partials.sidebar')
 
-<main class="main-content" data-stat-density="compact" data-table-export="{{ app(\App\Services\TableExportService::class)->allowed(request()->route()?->getName()) ? 'true' : 'false' }}">
+<main class="main-content" data-stat-density="compact" data-table-pdf-url="{{ route('documents.table-pdf') }}" data-table-export="{{ app(\App\Services\TableExportService::class)->allowed(request()->route()?->getName()) ? 'true' : 'false' }}">
     @include('layouts.partials.flash')
     @yield('content')
 </main>

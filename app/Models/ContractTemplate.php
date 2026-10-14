@@ -14,6 +14,7 @@ class ContractTemplate extends Model
         'project_id',
         'project_type_id',
         'project_category_id',
+        'project_category',
         'template_key',
         'cover_page',
         'template_body',

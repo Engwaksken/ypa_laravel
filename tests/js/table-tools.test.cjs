@@ -1,6 +1,6 @@
 const {test} = require('node:test');
 const assert = require('node:assert/strict');
-const {csv, csvCell, printHtml} = require('../../public/js/table-tools.js');
+const {csv, csvCell} = require('../../public/js/table-tools.js');
 const fs = require('node:fs');
 const vm = require('node:vm');
 
@@ -10,16 +10,6 @@ test('CSV escapes quotes, commas, formulas and leading control characters', () =
         assert.ok(csvCell(value).startsWith('"\''));
     }
     assert.equal(csv(['Name', 'Amount'], [['Jane, Farmer', '100']]), '\uFEFF"Name","Amount"\r\n"Jane, Farmer","100"\r\n');
-});
-
-test('PDF print document uses only supplied columns and text, never source HTML', () => {
-    const html = printHtml('Report <script>', ['Name'], [['<img src=x onerror=alert(1)>']]);
-    assert.ok(html.includes('&lt;script&gt;'));
-    assert.ok(html.includes('&lt;img src=x onerror=alert(1)&gt;'));
-    assert.ok(!html.includes('<img'));
-    assert.ok(!html.includes('<script'));
-    assert.ok(html.includes('Save as PDF'));
-    assert.ok(html.includes('Loaded rows: 1'));
 });
 
 // Minimal DOM harness exercises the shipped script, not a second implementation.
@@ -57,7 +47,7 @@ class Element {
 }
 
 function environment({allowed = true, inForm = false, headerless = false} = {}) {
-    const main = new Element('main'); main.className = 'main-content'; main.dataset.tableExport = String(allowed);
+    const main = new Element('main'); main.className = 'main-content'; main.dataset.tableExport = String(allowed); main.dataset.tablePdfUrl = '/documents/table-pdf';
     const heading = new Element('h1', 'Members'); main.append(heading);
     const table = new Element('table');
     const thead = new Element('thead'); const header = new Element('tr');
@@ -73,19 +63,18 @@ function environment({allowed = true, inForm = false, headerless = false} = {}) 
     }
     const host = new Element(inForm ? 'form' : 'div'); host.append(table); main.append(host);
     const page = new Element('body'); page.append(main);
-    const observers = []; const blobs = []; const popups = [];
-    const document = {querySelector: selector => page.querySelector(selector), title: 'Members',
+    const observers = []; const blobs = []; const pdfs = []; const requests = [];
+    const document = {querySelector: selector => selector.startsWith('meta') ? {content: 'csrf-token'} : page.querySelector(selector), title: 'Members',
         createElement: tag => new Element(tag), createTextNode: value => new Element('text', value)};
     const context = {document, Blob, URL: {createObjectURL: blob => { blobs.push(blob); return 'blob:csv'; }, revokeObjectURL() {}},
         getComputedStyle: node => ({display: node.hidden ? 'none' : 'table-row'}), setTimeout: callback => callback(),
         MutationObserver: class { constructor(callback) { this.callback = callback; observers.push(this); } observe(target) { this.target = target; } },
-        open() { const popup = {opener: {}, focus() {}, print() { this.printed = true; }, document: {
-            open() {}, write(html) { this.html = html; }, close() {}, getElementById() { return new Element('button'); }
-        }}; popups.push(popup); return popup; }};
+        YpaDocumentViewer: {showBlob: (blob, title) => pdfs.push({blob, title})},
+        fetch(url, options) { requests.push({url, options}); return Promise.resolve({ok: true, headers: {get: () => 'application/pdf'}, blob: async () => new Blob(['%PDF-1.7'])}); }};
     context.window = context;
     vm.runInNewContext(fs.readFileSync(require.resolve('../../public/js/table-tools.js'), 'utf8'), context);
     const button = label => main.querySelectorAll('button').find(node => node.textContent === label);
-    return {main, table, tbody, row, emptyCell, button, observers, blobs, popups};
+    return {main, table, tbody, row, emptyCell, button, observers, blobs, pdfs, requests};
 }
 
 test('shared toolbar collapses and expands tables with accessible state', () => {
@@ -106,11 +95,14 @@ test('selected columns control visibility, empty-row spans, CSV and PDF', async 
     assert.equal(env.emptyCell.colSpan, 2);
     env.button('CSV').click();
     assert.equal(await env.blobs[0].text(), '"Name"\r\n"Jane"\r\n'); // Blob strips the UTF-8 BOM on text decoding.
-    env.button('Print / PDF').click();
-    assert.ok(env.popups[0].document.html.includes('<th>Name</th>'));
-    assert.ok(!env.popups[0].document.html.includes('<th>Amount</th>'));
-    assert.ok(!env.popups[0].document.html.includes('<th>Actions</th>'));
-    assert.equal(env.popups[0].opener, null);
+    env.button('PDF').click();
+    await new Promise(resolve => setImmediate(resolve));
+    const payload = JSON.parse(env.requests[0].options.body);
+    assert.deepEqual(payload.headers, ['Name']);
+    assert.deepEqual(payload.rows, [['Jane']]);
+    assert.equal(env.requests[0].options.headers['X-CSRF-TOKEN'], 'csrf-token');
+    assert.equal(env.requests[0].options.method, 'POST');
+    assert.equal(env.pdfs[0].title, 'Members');
     env.button('Show all columns').click();
     assert.equal(env.emptyCell.colSpan, 3);
     assert.equal(env.row.cells[1].classList.contains('ypa-table-column-hidden'), false);
@@ -121,14 +113,14 @@ test('last visible column is protected and action-only exports are disabled', ()
     for (const input of inputs.slice(0, 2)) { input.checked = false; input.listeners.change(); }
     assert.equal(inputs[2].disabled, true);
     assert.equal(env.button('CSV').disabled, true);
-    assert.equal(env.button('Print / PDF').disabled, true);
+    assert.equal(env.button('PDF').disabled, true);
 });
 
 test('permission-restricted pages retain column controls without export buttons', () => {
     const env = environment({allowed: false});
     assert.ok(env.button('Collapse table'));
     assert.equal(env.button('CSV'), undefined);
-    assert.equal(env.button('Print / PDF'), undefined);
+    assert.equal(env.button('PDF'), undefined);
 });
 
 test('editable tables inside forms are not enhanced', () => {

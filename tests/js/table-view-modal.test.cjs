@@ -15,10 +15,13 @@ function node(tag = 'div', attrs = {}) {
 }
 
 function environment() {
-    const main = node(); const modal = node(); const body = node(); const title = node(); const fullPage = node('a');
-    const ids = {tableViewModal: modal, tableViewModalBody: body, tableViewModalTitle: title, tableViewFullPage: fullPage};
+    const main = node(); const modal = node(); const body = node(); const title = node(); const fullPage = node('a'); const download = node('a'); const notice = node();
+    const ids = {tableViewModal: modal, tableViewModalBody: body, tableViewModalTitle: title, tableViewFullPage: fullPage,
+        tableViewPdfDownload: download, tableViewModalNotice: notice};
     const requests = []; const shows = []; const documents = [];
-    const context = {URL, AbortController, location: {origin: 'https://ypa.test', href: 'https://ypa.test/contracts'},
+    const revoked = [];
+    class BrowserURL extends URL { static createObjectURL() { return 'blob:pdf-preview'; } static revokeObjectURL(url) { revoked.push(url); } }
+    const context = {URL: BrowserURL, AbortController, location: {origin: 'https://ypa.test', href: 'https://ypa.test/contracts'},
         document: {querySelector: () => main, getElementById: id => ids[id], createElement: tag => node(tag)},
         bootstrap: {Modal: {getOrCreateInstance: () => ({show: trigger => shows.push(trigger)})}},
         fetch(url, options) { return new Promise((resolve, reject) => requests.push({url, options, resolve, reject})); },
@@ -52,12 +55,12 @@ function environment() {
         main.listeners.click(event);
         return {event, link};
     }
-    return {main, modal, body, title, fullPage, requests, shows, documents, click};
+    return {main, modal, body, title, fullPage, download, requests, shows, documents, revoked, click};
 }
 const flush = () => new Promise(resolve => setImmediate(resolve));
 function respond(request, html, overrides = {}) {
     request.resolve({ok: true, status: 200, redirected: false, headers: {get: () => 'text/html; charset=UTF-8'},
-        text: async () => html, ...overrides});
+        text: async () => html, blob: async () => new Blob(['%PDF-1.7']), ...overrides});
 }
 
 test('table View links open the shared modal and load an authenticated no-cache preview', async () => {
@@ -127,4 +130,24 @@ test('modified clicks, non-table links, existing modal links and external URLs k
         assert.equal(event.prevented, undefined);
         assert.equal(env.requests.length, 0);
     }
+});
+
+test('contract document links load the PDF endpoint and display it within the platform', async () => {
+    const env = environment();
+    env.click({attributes: {'data-document-url': '/contracts/1/pdf'}});
+    assert.equal(env.requests[0].url, 'https://ypa.test/contracts/1/pdf');
+    respond(env.requests[0], '', {headers: {get: () => 'application/pdf'}}); await flush();
+    assert.equal(env.body.childNodes[0].tagName, 'IFRAME');
+    assert.equal(env.body.childNodes[0].src, 'blob:pdf-preview');
+    assert.equal(env.download.hidden, false);
+    env.modal.listeners['hide.bs.modal']();
+    assert.deepEqual(env.revoked, ['blob:pdf-preview']);
+});
+
+test('PDF file links outside tables open the viewer rather than leaving the platform', async () => {
+    const env = environment();
+    const {event} = env.click({table: false, href: 'https://ypa.test/uploads/contract.pdf', label: 'PDF'});
+    assert.equal(event.prevented, true);
+    respond(env.requests[0], '', {headers: {get: () => 'application/pdf'}}); await flush();
+    assert.equal(env.body.childNodes[0].tagName, 'IFRAME');
 });

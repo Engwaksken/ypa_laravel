@@ -28,6 +28,8 @@ class ContractTemplateResolutionTest extends TestCase
             $table->unsignedBigInteger('project_id')->nullable();
             $table->unsignedBigInteger('project_type_id')->nullable();
             $table->unsignedBigInteger('project_category_id')->nullable();
+            $table->string('project_category')->nullable();
+            $table->text('template_sections')->nullable();
             $table->boolean('is_active')->default(true);
             $table->unsignedInteger('version')->default(1);
             $table->text('template_body')->nullable();
@@ -87,6 +89,24 @@ class ContractTemplateResolutionTest extends TestCase
         $specific = $this->template(['project_id' => 10, 'project_category_id' => 3]);
         $this->template(['project_id' => 11, 'project_category_id' => 3, 'version' => 20]);
         $this->assertSame($specific->id, (new ContractService)->resolveTemplate($this->contract())->id);
+    }
+
+    public function test_legacy_category_keys_select_the_correct_agreement_instead_of_a_random_default(): void
+    {
+        $this->template(['project_category' => 'goat', 'version' => 20]);
+        $honey = $this->template(['project_category' => 'bee_honey']);
+        $this->assertSame($honey->id, (new ContractService)->resolveTemplate($this->contract())->id);
+        $honey->update(['project_category' => null, 'template_sections' => ['_cat' => 'honey_bee']]);
+        $this->assertSame($honey->id, (new ContractService)->resolveTemplate($this->contract())->id);
+    }
+
+    public function test_legacy_honey_and_venom_agreements_do_not_cross_match(): void
+    {
+        $this->template(['project_category' => 'honey_bee']);
+        $venom = $this->template(['project_category' => 'bee_venom']);
+        $contract = $this->contract();
+        $contract->bee_sub_type = 'venom';
+        $this->assertSame($venom->id, (new ContractService)->resolveTemplate($contract)->id);
     }
 
     public function test_saved_matching_template_is_preserved_but_unrelated_saved_template_is_not_used(): void
@@ -166,13 +186,52 @@ class ContractTemplateResolutionTest extends TestCase
         $contract->setRelations($fixture->getRelations());
         $contract->shouldReceive('load')->once()->andReturnSelf();
         $screen = (new ContractController)->show($contract)->getData();
+        $renderer = \Mockery::mock(\Barryvdh\DomPDF\PDF::class);
+        \Barryvdh\DomPDF\Facade\Pdf::shouldReceive('loadView')->once()->withArgs(function ($view, $data) use ($screen, $template): bool {
+            $this->assertSame('contracts.pdf', $view);
+            $this->assertSame($template->id, $data['template']->id);
+            $this->assertSame($screen['renderedHtml'], $data['renderedHtml']);
+            $this->assertStringContainsString('CT-001 · Jane Farmer', view($view, $data)->render());
+            return true;
+        })->andReturn($renderer);
+        $renderer->shouldReceive('setPaper')->with('a4')->andReturnSelf();
+        $renderer->shouldReceive('stream')->with('CT-001.pdf')->andReturn(response('%PDF-1.7', 200, ['Content-Type' => 'application/pdf']));
         $response = (new ContractPdfController)->show(Request::create('/contracts/1/pdf'), $contract);
-        $view = $response->getOriginalContent();
-        $this->assertSame($template->id, $view->getData()['template']->id);
-        $this->assertSame($screen['template']->id, $view->getData()['template']->id);
-        $this->assertSame($screen['renderedHtml'], $view->getData()['renderedHtml']);
-        $this->assertStringContainsString('CT-001 · Jane Farmer', $response->getContent());
-        $this->assertStringNotContainsString('<h4>Items</h4>', $response->getContent());
+        $this->assertStringStartsWith('%PDF-', $response->getContent());
+    }
+
+    public function test_dompdf_generates_an_inline_contract_pdf_and_a_separate_download(): void
+    {
+        $this->template(['project_category_id' => 3, 'template_body' => '<h2 style="text-align:center">AGREEMENT</h2><ol type="a"><li>{{farmer_name}}</li></ol>']);
+        $controller = new ContractPdfController;
+        $inline = $controller->show(Request::create('/contracts/1/pdf'), $this->contract());
+        $this->assertStringStartsWith('%PDF-', $inline->getContent());
+        $this->assertSame('application/pdf', $inline->headers->get('Content-Type'));
+        $this->assertStringContainsString('inline', $inline->headers->get('Content-Disposition'));
+        $download = $controller->show(Request::create('/contracts/1/pdf?download=1'), $this->contract());
+        $this->assertStringContainsString('attachment', $download->headers->get('Content-Disposition'));
+    }
+
+    public function test_legacy_inline_formatting_and_structural_placeholders_are_preserved_in_the_pdf_source(): void
+    {
+        $template = $this->template(['template_body' => '<h2 style="text-align:center">Agreement</h2><ol type="a" start="2"><li>Clause</li></ol>{{org_signature_block}}',
+            'template_sections' => ['footer_reg_number' => 'REG-123']]);
+        $html = (new ContractService)->renderTemplate($this->contract(), $template);
+        $this->assertStringContainsString('style="text-align:center"', $html);
+        $this->assertStringContainsString('type="a" start="2"', $html);
+        $this->assertStringContainsString('Officer / Staff', $html);
+        $this->assertStringNotContainsString('{{org_signature_block}}', $html);
+    }
+
+    public function test_missing_template_renders_a_summary_pdf_without_fabricating_legal_terms(): void
+    {
+        $contract = $this->contract();
+        $html = view('contracts.pdf', ['contract' => $contract, 'template' => null, 'renderedHtml' => '',
+            'totals' => (new ContractService)->contractTotals($contract)])->render();
+        $this->assertStringContainsString('no matching agreement template', $html);
+        $this->assertStringContainsString('Jane Farmer', $html);
+        $response = (new ContractPdfController)->show(Request::create('/contracts/1/pdf'), $contract);
+        $this->assertStringStartsWith('%PDF-', $response->getContent());
     }
 
     public function test_project_binding_migration_is_repeatable_and_preserves_existing_templates(): void

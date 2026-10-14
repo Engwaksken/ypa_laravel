@@ -41,6 +41,7 @@ use App\Http\Controllers\StockController;
 use App\Http\Controllers\StockReportController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\TerminationController;
+use App\Http\Controllers\TablePdfController;
 use App\Http\Controllers\UsersController;
 use Illuminate\Support\Facades\Route;
 
@@ -87,6 +88,7 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 Route::middleware(['auth', 'user.status'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::post('/documents/table-pdf', [TablePdfController::class, 'store'])->name('documents.table-pdf')->middleware('throttle:10,1');
 });
 
 /* ============================================================

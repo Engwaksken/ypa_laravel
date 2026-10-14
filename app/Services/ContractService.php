@@ -9,37 +9,69 @@ class ContractService
 {
     public function resolveTemplate(Contract $contract, ?int $requestedId = null): ?ContractTemplate
     {
-        $contract->loadMissing(['project', 'projectData']);
+        $contract->loadMissing(['project.category', 'projectData']);
         $typeId = (int) ($contract->project_type_id ?: $contract->project?->project_type_id);
         $categoryId = (int) ($contract->project_category_id ?: $contract->project?->project_category_id);
         $matching = ContractTemplate::query()
             ->where(fn ($query) => $query->whereNull('project_id')->orWhere('project_id', 0)
                 ->orWhere('project_id', (int) $contract->project_id))
             ->where(fn ($query) => $query->whereNull('project_type_id')->orWhere('project_type_id', 0)
-                ->orWhere('project_type_id', $typeId))
-            ->where(fn ($query) => $query->whereNull('project_category_id')->orWhere('project_category_id', 0)
-                ->orWhere('project_category_id', $categoryId));
+                ->orWhere('project_type_id', $typeId));
+
+        $categoryKey = $this->categoryKey((string) ($contract->project?->category?->category_name ?: $contract->project?->project_name));
+        if (in_array($categoryKey, ['honey_bee', 'bee_venom'], true) && str_contains(strtolower((string) $contract->bee_sub_type), 'venom')) {
+            $categoryKey = 'bee_venom';
+        }
+        $matchesCategory = function (ContractTemplate $template) use ($categoryId, $categoryKey): bool {
+            $raw = $template->getAttributes()['project_category_id'] ?? null;
+            if (is_numeric($raw) && (int) $raw > 0) {
+                return (int) $raw === $categoryId;
+            }
+            $legacy = trim((string) ($template->project_category ?: ($template->template_sections['_cat'] ?? '') ?: $raw));
+
+            return $legacy === '' || $legacy === '0' || $this->categoryKey($legacy) === $categoryKey;
+        };
 
         if ($requestedId !== null) {
-            return (clone $matching)->where('is_active', true)->findOrFail($requestedId);
+            $requested = (clone $matching)->where('is_active', true)->findOrFail($requestedId);
+            if (! $matchesCategory($requested)) {
+                throw (new \Illuminate\Database\Eloquent\ModelNotFoundException)->setModel(ContractTemplate::class, [$requestedId]);
+            }
+
+            return $requested;
         }
 
         // Keep a saved version (even if retired) when it belongs to this project.
         $key = trim((string) ($contract->template_path ?: $contract->projectData?->template_key));
         if ($key !== '') {
             $saved = (clone $matching)->where(fn ($query) => $query->where('template_key', $key)
-                ->orWhere('template_name', $key))->orderByDesc('version')->orderByDesc('id')->first();
+                ->orWhere('template_name', $key))->orderByDesc('version')->orderByDesc('id')->get()->first($matchesCategory);
             if ($saved) {
                 return $saved;
             }
         }
 
         // Specific project, exact category + type, category default, type default, global default.
-        return $matching->where('is_active', true)
-            ->orderByRaw('CASE WHEN project_id > 0 THEN 0 ELSE 1 END')
-            ->orderByRaw('CASE WHEN project_category_id > 0 THEN 0 ELSE 1 END')
-            ->orderByRaw('CASE WHEN project_type_id > 0 THEN 0 ELSE 1 END')
-            ->orderByDesc('version')->orderByDesc('id')->first();
+        return $matching->where('is_active', true)->get()->filter($matchesCategory)->sortBy(fn ($template) => [
+            $template->project_id ? 0 : 1,
+            (($template->getAttributes()['project_category_id'] ?? null) || $template->project_category || ($template->template_sections['_cat'] ?? null)) ? 0 : 1,
+            $template->project_type_id ? 0 : 1,
+            -(int) $template->version,
+            -(int) $template->id,
+        ])->first();
+    }
+
+    private function categoryKey(string $value): string
+    {
+        $key = strtolower(trim(str_replace(['-', '_'], ' ', $value)));
+        if (str_contains($key, 'venom')) return 'bee_venom';
+        if (str_contains($key, 'honey') || str_contains($key, 'bee')) return 'honey_bee';
+        if (str_contains($key, 'planned') || str_contains($key, 'kid')) return 'planned_kid';
+        if (str_contains($key, 'cdc') || str_contains($key, 'caprine')) return 'cdc';
+        if (str_contains($key, 'maize')) return 'maize';
+        if (str_contains($key, 'goat')) return 'goat';
+
+        return $key;
     }
 
     public function nextContractNumber(): string
@@ -112,6 +144,8 @@ class ContractService
         $sidecar = $contract->projectData?->data_json ?? [];
         $nextOfKin = $contract->member?->nextOfKin->first();
         $bank = $contract->member?->bankDetail;
+        $bankBranch = (string) ($bank?->bank_branch ?? $contract->member?->bank_branch ?? '');
+        $contractType = (string) ($contract->contract_type_name ?? $sidecar['contract_type_name'] ?? $template->template_sections['title'] ?? 'Contract Agreement');
 
         $replacements = [
             '{{contract_number}}' => (string) ($contract->contract_number ?? ''),
@@ -122,12 +156,13 @@ class ContractService
             '{{party_phone}}' => $partyPhone,
             '{{party_email}}' => $partyEmail,
             '{{project_name}}' => $projectName,
-            '{{branch}}' => $branchName,
+            '{{branch}}' => $bankBranch ?: $branchName,
+            '{{branch_name}}' => $branchName,
             '{{payment_method}}' => $paymentMethod,
             '{{payment_frequency}}' => (string) ($contract->payment_frequency ?? ''),
             '{{membership_id}}' => (string) ($contract->member->membership_id ?? ''),
             '{{group_code}}' => (string) ($contract->group->group_code ?? ''),
-            '{{signing_date}}' => optional($contract->signing_date)?->format('Y-m-d') ?? '',
+            '{{signing_date}}' => optional($contract->signing_date)?->format('jS \d\a\y \o\f F, Y') ?? '',
             '{{start_date}}' => optional($contract->start_date)?->format('Y-m-d') ?? '',
             '{{end_date}}' => optional($contract->end_date)?->format('Y-m-d') ?? '',
             '{{contract_amount}}' => number_format((float) ($contract->contract_amount ?? 0), 2),
@@ -144,11 +179,14 @@ class ContractService
             '{{monthly_payout_amount}}' => number_format((float) ($item->monthly_payout_amount ?? 0), 2),
             '{{total_hives}}' => number_format((float) ($item->total_hives ?? 0), 2),
             '{{project_category}}' => (string) ($contract->project?->category?->category_name ?? ''),
-            '{{project_type}}' => (string) ($contract->project?->category?->category_name ?? ''),
+            '{{project_type}}' => $contractType,
+            '{{project_type_name}}' => $contractType,
+            '{{contract_type_name}}' => $contractType,
             '{{farmer_name}}' => $partyName,
             '{{farmer_phone}}' => $partyPhone,
             '{{membership_number}}' => (string) ($contract->member?->membership_id ?? ''),
-            '{{reg_number}}' => (string) ($contract->member?->membership_id ?? $contract->group?->group_code ?? ''),
+            '{{reg_number}}' => (string) ($contract->contract_number ?? ''),
+            '{{registration_number}}' => (string) ($contract->contract_number ?? ''),
             '{{nin}}' => (string) ($contract->member?->nin ?? ''),
             '{{address}}' => (string) ($contract->member?->address ?? ''),
             '{{region}}' => (string) ($contract->region ?? $contract->member?->region ?? ''),
@@ -175,7 +213,26 @@ class ContractService
             '{{account_name}}' => (string) ($bank?->account_name ?? $contract->member?->bank_account_name ?? ''),
             '{{account_number}}' => (string) ($bank?->bank_account ?? $contract->member?->bank_account ?? ''),
             '{{director_name}}' => (string) ($contract->director_name ?? ''),
+            '{{bank_branch}}' => $bankBranch,
+            '{{farmer_email}}' => $partyEmail,
+            '{{project_code}}' => (string) ($contract->project_code ?: $contract->project?->project_code),
+            '{{item_quantity}}' => (string) ($item?->quantity ?? ''),
+            '{{total_scheduled}}' => number_format($totals['total_payable'], 2),
+            '{{total_outstanding}}' => number_format($totals['total_outstanding'], 2),
+            '{{contract_amount_paid}}' => number_format((float) ($contract->contract_amount_paid ?? $totals['total_paid']), 2),
+            '{{contract_amount_outstanding}}' => number_format($totals['total_outstanding'], 2),
+            '{{status}}' => (string) ($contract->status ?? ''),
+            '{{workflow_status}}' => (string) ($contract->workflow_status ?? ''),
         ];
+        foreach (['management_model', 'investment_period', 'duration', 'duration_months', 'expected_quantity',
+            'expected_units', 'goats_purchased', 'hives_purchased', 'total_goats', 'total_acreages', 'acreages_purchased',
+            'units', 'units_1dp', 'units_2dp', 'unit_label', 'kg_per_bag', 'harvest_frequency', 'mobile_money',
+            'projected_harvest_amount', 'projected_harvest_balance', 'purchase_fee', 'purchase_price', 'cost_per_kg',
+            'harvest_per_bag', 'harvest_cash_per_acre', 'seasonal_harvest_quantity', 'total_quantity_at_harvest',
+            'seasonal_harvest_amount', 'amount_at_maturity', 'final_payout', 'quarterly_payout', 'rep_name'] as $key) {
+            $value = $sidecar[$key] ?? $contract->getAttribute($key) ?? $item?->getAttribute($key) ?? '';
+            $replacements['{{' . $key . '}}'] = is_scalar($value) ? (string) $value : '';
+        }
 
         // Legacy templates embed these structural blocks; newer ones store them separately.
         $footer = (string) ($template->contract_footer ?? '');
@@ -187,7 +244,16 @@ class ContractService
         if ($signature !== '' && !str_contains($templateBody, '{{contract_signature}}') && !str_contains($templateBody, $signature)) {
             $body .= $signature;
         }
-        $body = (string) ($template->cover_page ?? '') . $body;
+        $cover = trim((string) ($template->cover_page ?? ''));
+        if ($cover !== '') {
+            $body = '<section class="contract-cover-custom" style="page-break-after:always;">' . $cover . '</section>' . $body;
+        }
+        $body = strtr($body, [
+            '{{org_signature_block}}' => view('contracts.documents.organization-signatures', compact('contract'))->render(),
+            '{{director_signature}}' => '<span>Signature: ___________________________</span>',
+            '{{receipt_section}}' => $contract->receipt_number
+                ? '<p><strong>Receipt:</strong> ' . e($contract->receipt_number) . '</p>' : '',
+        ]);
         // Values are text, not template markup. Escaping prevents data-driven HTML injection.
         $rendered = strtr($body, array_map(fn ($value) => e($value), $replacements));
 
@@ -260,7 +326,7 @@ class ContractService
 
     protected function sanitizeElementAttributes(\DOMElement $element): void
     {
-        $allowedAttributes = ['class', 'colspan', 'href', 'rowspan', 'src', 'alt', 'title', 'style'];
+        $allowedAttributes = ['class', 'colspan', 'href', 'rowspan', 'src', 'alt', 'title', 'style', 'type', 'start', 'value', 'width', 'height'];
 
         for ($index = $element->attributes->length - 1; $index >= 0; $index--) {
             $attribute = $element->attributes->item($index);

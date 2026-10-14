@@ -15,7 +15,8 @@
             <div class="dash-date">{{ ucfirst((string) $contract->contract_for) }} contract &middot; {{ $party ?: '-' }}</div>
         </div>
         <div class="d-flex gap-2 flex-wrap">
-            <a href="{{ route('contracts.pdf', $contract) }}" class="btn btn-outline-secondary"><i class="fas fa-file-pdf"></i> PDF</a>
+            <a href="{{ route('contracts.pdf', $contract) }}" data-pdf-preview class="btn btn-outline-secondary"><i class="fas fa-file-pdf"></i> View PDF</a>
+            <a href="{{ route('contracts.pdf', ['contract' => $contract, 'download' => 1]) }}" download class="btn btn-outline-secondary">Download PDF</a>
             @if($perm->can('new_payments'))
                 <a href="{{ route('payments.create', ['contract_id' => $contract->id]) }}" class="btn btn-outline-success"><i class="fas fa-money-bill-wave"></i> Record Payment</a>
             @endif
@@ -39,14 +40,14 @@
     <div class="dash-panel mb-4 contract-document" data-table-tools="off">
         <div class="dash-panel-head">
             <span><i class="fas fa-file-alt"></i> Contract Document{{ $template ? ' · ' . $template->template_name . ' (v' . $template->version . ')' : '' }}</span>
-            <a href="{{ route('contracts.pdf', $contract) }}" class="btn btn-sm btn-outline-secondary">Print / PDF</a>
+            <a href="{{ route('contracts.pdf', $contract) }}" data-pdf-preview class="btn btn-sm btn-outline-secondary">View PDF</a>
         </div>
         <div class="dash-panel-body">
-            @if($template)
-                {!! $renderedHtml !!}
-            @else
-                <div class="alert alert-warning mb-0">No matching contract template is configured for this project and category. Configure an active template in Contract Templates.</div>
-            @endif
+            @unless($template)
+                <div class="alert alert-warning">No matching agreement template is configured. The document below shows the contract summary, not legal agreement terms.</div>
+            @endunless
+            <iframe class="platform-pdf-frame" src="{{ route('contracts.pdf', $contract) }}" title="Contract document {{ $contract->contract_number }}" loading="lazy"></iframe>
+            <p class="small text-muted mt-2 mb-0">If your browser cannot display the PDF, use Download PDF above.</p>
         </div>
     </div>
 

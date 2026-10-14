@@ -5,9 +5,11 @@ namespace App\Http\Controllers;
 use App\Models\Contract;
 use App\Services\ContractService;
 use App\Services\PermissionService;
+use App\Services\PdfAssetService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\Middleware;
-use Illuminate\View\View;
+use Illuminate\Http\Response;
 
 class ContractPdfController extends Controller
 {
@@ -30,29 +32,23 @@ class ContractPdfController extends Controller
         ];
     }
 
-    public function show(Request $request, Contract $contract): View|\Symfony\Component\HttpFoundation\BinaryFileResponse|\Illuminate\Http\Response
+    public function show(Request $request, Contract $contract): Response
     {
         $contract->loadMissing(['member', 'group', 'project', 'branch', 'paymentMethod', 'items']);
 
-        $data = $request->validate(['template_id' => ['nullable', 'integer', 'min:1']]);
+        $data = $request->validate(['template_id' => ['nullable', 'integer', 'min:1'], 'download' => ['nullable', 'boolean']]);
         $template = $this->contractService->resolveTemplate($contract, isset($data['template_id']) ? (int) $data['template_id'] : null);
 
         $renderedHtml = $template ? $this->contractService->renderTemplate($contract, $template) : '';
 
-        if (class_exists('Barryvdh\\DomPDF\\Facade\\Pdf')) {
-            return \Barryvdh\DomPDF\Facade\Pdf::loadView('contracts.pdf', [
-                'contract' => $contract,
-                'template' => $template,
-                'renderedHtml' => $renderedHtml,
-                'browserPrint' => false,
-            ])->download(($contract->contract_number ?: 'contract') . '.pdf');
-        }
-
-        return response()->view('contracts.pdf', [
+        $pdf = Pdf::loadView('contracts.pdf', [
             'contract' => $contract,
             'template' => $template,
-            'renderedHtml' => $renderedHtml,
-            'browserPrint' => true,
-        ]);
+            'renderedHtml' => app(PdfAssetService::class)->localizeImages($renderedHtml),
+            'totals' => $this->contractService->contractTotals($contract),
+        ])->setPaper('a4');
+        $filename = preg_replace('/[^A-Za-z0-9_-]/', '-', (string) ($contract->contract_number ?: 'contract')) . '.pdf';
+
+        return $request->boolean('download') ? $pdf->download($filename) : $pdf->stream($filename);
     }
 }

@@ -16,24 +16,8 @@
         return '\uFEFF' + [headers, ...rows].map(row => row.map(csvCell).join(',')).join('\r\n') + '\r\n';
     }
 
-    function escapeHtml(value) {
-        return String(value).replace(/[&<>"']/g, char => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[char]));
-    }
-
-    function printHtml(title, headers, rows) {
-        const cells = (values, tag) => values.map(value => '<' + tag + '>' + escapeHtml(value) + '</' + tag + '>').join('');
-        return '<!doctype html><html><head><meta charset="utf-8"><title>' + escapeHtml(title) + '</title>' +
-            '<style>@page{size:landscape;margin:12mm}body{font:12px Arial,sans-serif;color:#111}table{width:100%;border-collapse:collapse;table-layout:fixed}' +
-            'th,td{border:1px solid #bbb;padding:6px;text-align:left;overflow-wrap:anywhere}thead{display:table-header-group}tr{break-inside:avoid}' +
-            '@media print{.screen-only{display:none}}button{padding:8px;margin-bottom:12px}</style></head><body>' +
-            '<div class="screen-only"><button type="button" id="print-button">Print / Save as PDF</button>' +
-            '<p>Choose “Save as PDF” in the print dialog. Only loaded rows and selected columns are included.</p></div>' +
-            '<h1>' + escapeHtml(title) + '</h1><p>Loaded rows: ' + rows.length + '</p><table><thead><tr>' + cells(headers, 'th') +
-            '</tr></thead><tbody>' + rows.map(row => '<tr>' + cells(row, 'td') + '</tr>').join('') + '</tbody></table></body></html>';
-    }
-
     // CommonJS exposes pure helpers for tests; no browser dependency is needed.
-    if (typeof module !== 'undefined' && module.exports) module.exports = {csv, csvCell, printHtml};
+    if (typeof module !== 'undefined' && module.exports) module.exports = {csv, csvCell};
     if (!root.document) return;
     const document = root.document;
     const main = document.querySelector('main.main-content');
@@ -124,6 +108,7 @@
         details.append(choices);
         toolbar.append(details);
         const inputs = [];
+        let pdfInFlight = false;
         const notice = document.createElement('small');
         notice.className = 'text-muted';
         notice.setAttribute('role', 'status');
@@ -146,7 +131,7 @@
                 input.disabled = selected[index] && count === 1;
             });
             const canExport = selected.some((value, index) => value && exportable[index]);
-            exportButtons.forEach(node => { node.disabled = !canExport; });
+            exportButtons.forEach((node, index) => { node.disabled = !canExport || (index === 1 && pdfInFlight); });
             notice.textContent = 'Exports include selected data columns and loaded rows only.';
         }
 
@@ -184,16 +169,32 @@
                 link.click();
                 root.setTimeout(() => URL.revokeObjectURL(url), 1000);
             }));
-            exportButtons.push(button('Print / PDF', () => {
+            exportButtons.push(button('PDF', async () => {
+                if (pdfInFlight) return;
+                pdfInFlight = true;
                 const data = snapshot();
-                const popup = root.open('', '_blank');
-                if (!popup) { notice.textContent = 'Allow pop-ups to open the PDF print view.'; return; }
-                popup.opener = null;
-                popup.document.open();
-                popup.document.write(printHtml(title, data.headers, data.rows));
-                popup.document.close();
-                popup.document.getElementById('print-button').addEventListener('click', () => popup.print());
-                popup.focus();
+                const pdfButton = exportButtons[1];
+                pdfButton.disabled = true;
+                notice.textContent = 'Generating PDF…';
+                try {
+                    if (!root.YpaDocumentViewer || !main.dataset.tablePdfUrl) throw new Error('The document viewer is unavailable. Reload this page.');
+                    const response = await root.fetch(main.dataset.tablePdfUrl, {
+                        method: 'POST', credentials: 'same-origin', cache: 'no-store',
+                        headers: {'Content-Type': 'application/json', Accept: 'application/pdf, application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''},
+                        body: JSON.stringify({title, headers: data.headers, rows: data.rows})
+                    });
+                    if (!response.ok || !(response.headers.get('Content-Type') || '').includes('application/pdf')) {
+                        throw new Error('PDF generation failed. Check your session or filter the table to at most 500 rows and 30 columns.');
+                    }
+                    root.YpaDocumentViewer.showBlob(await response.blob(), title, pdfButton);
+                    notice.textContent = 'PDF opened in the platform document viewer.';
+                } catch (error) {
+                    notice.textContent = error.message || 'Unable to generate the PDF.';
+                } finally {
+                    pdfInFlight = false;
+                    pdfButton.disabled = !selected.some((value, index) => value && exportable[index]);
+                }
             }));
         }
         update();
