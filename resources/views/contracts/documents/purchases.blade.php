@@ -15,4 +15,7 @@
         <thead><tr><th>No.</th><th>Item</th><th>Values (Amount UGX)</th></tr></thead>
         <tbody>@foreach($purchaseRows as $row)<tr><td class="row-number">{{ $loop->iteration }}</td><td><strong>{{ $row[0] }}</strong></td><td class="amount">{{ $row[1] }}</td></tr>@endforeach</tbody>
     </table>
+    @foreach($document['integrityWarnings'] ?? [] as $warning)
+        <p style="margin-top:12px;color:#92400e;"><strong>Financial review:</strong> {{ $warning }}</p>
+    @endforeach
 </section>

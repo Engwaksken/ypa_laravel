@@ -46,6 +46,9 @@
             @if($documentWarnings ?? [])
                 <div class="alert alert-warning">Missing recorded contract details: {{ implode(', ', $documentWarnings) }}. Update the member record before issuing the final agreement.</div>
             @endif
+            @foreach($integrityWarnings ?? [] as $warning)
+                <div class="alert alert-warning">{{ $warning }}</div>
+            @endforeach
             @unless($template)
                 <div class="alert alert-warning">No matching agreement template is configured. The document below shows the contract summary, not legal agreement terms.</div>
             @endunless

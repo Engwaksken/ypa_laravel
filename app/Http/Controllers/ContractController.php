@@ -140,12 +140,14 @@ class ContractController extends Controller
         $template = $this->contractService->resolveTemplate($contract);
         $renderedHtml = $template ? $this->contractService->renderTemplate($contract, $template) : '';
         $documentWarnings = app(\App\Services\ContractPdfDocumentService::class)->missingDetails($contract);
+        $integrityWarnings = app(\App\Services\ContractIntegrityService::class)->warnings($contract);
 
-        return view('contracts.show', compact('contract', 'template', 'renderedHtml', 'documentWarnings'));
+        return view('contracts.show', compact('contract', 'template', 'renderedHtml', 'documentWarnings', 'integrityWarnings'));
     }
 
     public function edit(Contract $contract): View
     {
+        app(\App\Services\ContractIntegrityService::class)->assertEditable($contract);
         $contract->load(['items']);
 
         return view('contracts.edit', array_merge($this->formData(), compact('contract')));
@@ -175,6 +177,11 @@ class ContractController extends Controller
         $userId = auth()->id();
 
         DB::transaction(function () use ($contract, $data, $userId): void {
+            $contract = Contract::query()->lockForUpdate()->findOrFail($contract->id);
+            app(\App\Services\ContractIntegrityService::class)->assertEditable($contract);
+            if ($contract->payments()->exists() || $contract->itemHarvests()->exists() || $contract->harvests()->exists()) {
+                throw ValidationException::withMessages(['contract' => 'Contracts with financial records cannot have their items replaced through the draft editor.']);
+            }
             $payload = $this->contractPayload($data, $userId, false, $contract);
             $payload['updated_by'] = $userId;
 

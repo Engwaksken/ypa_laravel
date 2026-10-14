@@ -45,6 +45,7 @@ class ContractPdfDocumentService
             'mode' => $contract->management_model ?: ($template?->template_sections['subtitle'] ?? ''),
             'standardSignatures' => $standardSignatures,
             'warnings' => $this->missingDetails($contract),
+            'integrityWarnings' => app(ContractIntegrityService::class)->warnings($contract),
             'receipt' => $this->receipt($contract),
         ];
     }
@@ -133,16 +134,20 @@ class ContractPdfDocumentService
                 'contract' => (float) $payment->contract_amount_paid,
             ];
             $paid = (float) ($payment->total_amount_paid ?? 0);
-            if ($paid <= 0) $paid = (float) $payment->amount > 0 ? (float) $payment->amount : array_sum($components);
+            $componentTotal = round(array_sum($components), 2);
+            if ($paid <= 0) $paid = $componentTotal > 0 ? $componentTotal : (float) $payment->amount;
             return $components + ['date' => $payment->transaction_date ?? $payment->created_at,
+                'conflict' => $componentTotal > 0 && abs(round($paid, 2) - $componentTotal) >= 0.01,
                 'total' => round($paid, 2), 'method' => $payment->paymentMethod?->method_name,
                 'reference' => $payment->reference ?: $payment->receipt_number ?: $payment->transaction_number];
         });
         // These are recorded totals, not fees inferred from today's project settings.
-        $scheduled = max((float) $contract->total_payable, (float) $contract->contract_amount, (float) $contract->total_amount,
-            (float) ($payments->max('total_amount') ?? 0));
+        $scheduled = $contract->total_payable ?? $contract->total_amount ?? $contract->contract_amount
+            ?? $payments->max('total_amount') ?? 0;
         $paid = round($rows->sum('total'), 2);
 
-        return ['rows' => $rows, 'scheduled' => round($scheduled, 2), 'paid' => $paid, 'outstanding' => max(0.0, round($scheduled - $paid, 2))];
+        return ['rows' => $rows, 'scheduled' => round((float) $scheduled, 2), 'paid' => $paid,
+            'conflict' => $rows->contains(fn ($row) => $row['conflict']),
+            'outstanding' => max(0.0, round((float) $scheduled - $paid, 2))];
     }
 }

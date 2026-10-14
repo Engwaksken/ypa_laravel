@@ -68,6 +68,21 @@ class ProjectCalculationTest extends TestCase
         $this->assertSame($this->schema(), $result['schema']);
     }
 
+    public function test_harvest_uses_configurable_weight_and_rate_without_rounding_to_two_hundred_thousand(): void
+    {
+        $project = new Project(['calculation_schema' => ['inputs' => [
+            ['key' => 'bags', 'label' => 'Bags', 'type' => 'number', 'required' => true],
+            ['key' => 'kg_per_bag', 'label' => 'Kg per bag', 'type' => 'number', 'required' => true],
+            ['key' => 'cost_per_kg', 'label' => 'Rate per kg', 'type' => 'number', 'required' => true],
+        ], 'formulas' => [
+            ['key' => 'bag_rate', 'label' => 'Rate per bag', 'expression' => 'kg_per_bag * cost_per_kg'],
+            ['key' => 'harvest', 'label' => 'Harvest total', 'expression' => 'bags * bag_rate', 'target' => 'projected_harvest_amount'],
+        ]]]);
+        $result = (new ProjectCalculationService)->calculate($project, ['bags' => 108, 'kg_per_bag' => 150, 'cost_per_kg' => 1333], 12);
+        $this->assertSame(199950.0, $result['results']['bag_rate']);
+        $this->assertSame(21594600.0, $result['targets']['projected_harvest_amount']);
+    }
+
     public function test_schema_changes_and_fee_changes_do_not_change_existing_agreements(): void
     {
         $service = new ProjectCalculationService;

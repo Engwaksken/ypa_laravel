@@ -130,7 +130,45 @@ class ContractPdfDocumentTest extends TestCase
         $this->assertStringContainsString('21,600,000.00', $html);
         $this->assertStringContainsString('12,100,000.00', $html);
         $this->assertStringContainsString('100,000.00', $html);
-        $this->assertStringNotContainsString('21,594,600', $html);
+        $this->assertStringContainsString('21,594,600', $html);
+        $this->assertStringContainsString('stored figures are unchanged', $html);
+        $this->assertEquals(21600000, $contract->projected_harvest_amount);
+    }
+
+    public function test_receipt_does_not_replace_current_schedule_with_an_old_payment_snapshot(): void
+    {
+        $contract = $this->contract();
+        $contract->payments->first()->total_amount = 20000000;
+        $this->assertSame(12100000.0, (new ContractPdfDocumentService)->receipt($contract)['scheduled']);
+    }
+
+    public function test_receipt_fallback_includes_registration_instead_of_only_contract_amount(): void
+    {
+        $contract = $this->contract();
+        $payment = $contract->payments->first();
+        $payment->total_amount_paid = null;
+        $payment->amount = 12000000;
+        $receipt = (new ContractPdfDocumentService)->receipt($contract);
+        $this->assertSame(12100000.0, $receipt['paid']);
+        $this->assertFalse($receipt['conflict']);
+    }
+
+    public function test_conflicting_explicit_payment_totals_require_reconciliation_not_a_fake_receipt(): void
+    {
+        $contract = $this->contract();
+        $contract->payments->first()->total_amount_paid = 12000000;
+        $document = (new ContractPdfDocumentService)->prepare($contract, null, '');
+        $html = view('contracts.documents.receipt', compact('contract', 'document'))->render();
+        $this->assertSame(12000000.0, $document['receipt']['paid']);
+        $this->assertStringContainsString('Reconciliation required', $html);
+        $this->assertStringNotContainsString('OFFICIAL PAYMENT RECEIPT', $html);
+    }
+
+    public function test_unit_count_placeholder_is_numeric_not_a_unit_label(): void
+    {
+        $contract = $this->contract();
+        $template = new ContractTemplate(['template_body' => '<p>{{number_of_units}} {{expected_units}}</p>']);
+        $this->assertSame('<p>108 bags</p>', (new ContractService)->renderTemplate($contract, $template));
     }
 
     public function test_dompdf_renders_separate_cover_agreement_signatures_purchase_items_and_receipt_pages(): void

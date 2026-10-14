@@ -193,7 +193,7 @@ class ContractService
             '{{district}}' => (string) ($contract->district ?? $contract->member?->district ?? ''),
             '{{amount_paid}}' => number_format($totals['total_paid'], 2),
             '{{amount_in_words}}' => (string) ($contract->amount_in_words ?? ''),
-            '{{number_of_units}}' => (string) ($contract->expected_units ?? $contract->hives ?? $item?->quantity ?? ''),
+            '{{number_of_units}}' => (string) ($contract->expected_quantity ?? $contract->hives ?? $item?->quantity ?? ''),
             '{{acreage}}' => (string) ($sidecar['maize_acres'] ?? ''),
             '{{monthly_payment}}' => number_format((float) ($contract->monthly_payout_amount ?? $item?->monthly_payout_amount ?? 0), 2),
             '{{quarterly_payment}}' => (string) ($sidecar['quarterly_payment'] ?? ''),

@@ -39,6 +39,9 @@ class ConfigurableContractTest extends TestCase
             $table->timestamps();
         });
         Schema::create('contract_items', function (Blueprint $table) { $table->id(); $table->unsignedInteger('contract_id'); });
+        foreach (['contract_item_harvests', 'contract_harvests'] as $name) {
+            Schema::create($name, function (Blueprint $table) { $table->id(); $table->unsignedInteger('contract_id'); });
+        }
         Schema::create('payment_transactions', function (Blueprint $table) {
             $table->id(); $table->unsignedInteger('contract_id'); $table->string('status');
             $table->decimal('contract_amount_paid', 15, 2); $table->decimal('amount', 15, 2);
@@ -81,23 +84,34 @@ class ConfigurableContractTest extends TestCase
         $this->assertSame($project->calculation_schema, $contract->project_calculation['schema']);
     }
 
-    public function test_update_keeps_saved_definition_but_recalculates_inputs_and_approved_payments(): void
+    public function test_update_keeps_saved_definition_and_recalculates_unpaid_draft_inputs(): void
     {
         $project = $this->project(); $data = $this->data($project);
         $this->post(route('contracts.store'), $data)->assertRedirect();
         $contract = Contract::firstOrFail();
-        DB::table('payment_transactions')->insert([
-            ['contract_id' => $contract->id, 'status' => 'APPROVED', 'amount' => 500, 'contract_amount_paid' => 500],
-            ['contract_id' => $contract->id, 'status' => 'PENDING', 'amount' => 1000, 'contract_amount_paid' => 1000],
-        ]);
         $project->update(['registration_fee' => 900, 'calculation_schema' => ['inputs' => [], 'formulas' => []]]);
         $data['project_inputs']['ponds'] = 6;
         $this->put(route('contracts.update', $contract), $data)->assertRedirect();
         $contract->refresh();
         $this->assertSame('3150.00', $contract->total_payable);
-        $this->assertSame('500.00', $contract->total_paid);
-        $this->assertSame('2650.00', $contract->total_outstanding);
+        $this->assertSame('0.00', $contract->total_paid);
+        $this->assertSame('3150.00', $contract->total_outstanding);
         $this->assertSame(6, $contract->project_calculation['inputs']['ponds']);
+    }
+
+    public function test_update_cannot_rewrite_contracts_with_payments_or_signed_approvals(): void
+    {
+        $project = $this->project(); $data = $this->data($project);
+        $this->post(route('contracts.store'), $data)->assertRedirect();
+        $contract = Contract::firstOrFail();
+        $data['project_inputs']['ponds'] = 6;
+        $contract->update(['workflow_step' => 1, 'workflow_status' => 'pending_accountant']);
+        $this->putJson(route('contracts.update', $contract), $data)->assertUnprocessable()->assertJsonValidationErrors('contract');
+        $contract->update(['workflow_step' => 0, 'workflow_status' => 'draft']);
+        DB::table('payment_transactions')->insert(['contract_id' => $contract->id, 'status' => 'APPROVED', 'amount' => 500, 'contract_amount_paid' => 500]);
+        $this->putJson(route('contracts.update', $contract), $data)->assertUnprocessable()->assertJsonValidationErrors('contract');
+        $this->assertSame('2150.00', $contract->fresh()->total_payable);
+        $this->assertSame(4, $contract->fresh()->project_calculation['inputs']['ponds']);
     }
 
     public function test_invalid_project_inputs_do_not_create_contracts(): void

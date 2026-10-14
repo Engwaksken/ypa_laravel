@@ -5,7 +5,7 @@
     <table class="receipt-heading">
         <tr>
             <td class="logo-cell">@if($document['logo'])<img src="{{ $document['logo'] }}" alt="YPA Logo">@endif</td>
-            <td class="receipt-title"><h2>{{ $receipt['rows']->isNotEmpty() ? 'OFFICIAL PAYMENT RECEIPT' : 'PAYMENT SUMMARY' }}</h2><span class="muted">{{ ucfirst((string) $contract->contract_for) }} Contract</span></td>
+            <td class="receipt-title"><h2>{{ $receipt['rows']->isNotEmpty() && !($receipt['conflict'] ?? false) ? 'OFFICIAL PAYMENT RECEIPT' : 'PAYMENT SUMMARY' }}</h2><span class="muted">{{ ucfirst((string) $contract->contract_for) }} Contract</span></td>
             <td class="contract-number"><span class="muted">CONTRACT NO.</span><br><strong>{{ $contract->contract_number }}</strong></td>
         </tr>
     </table>
@@ -14,6 +14,9 @@
     <p><strong>Total Scheduled:</strong> UGX {{ number_format($receipt['scheduled'], 2) }}</p>
     <p><strong>Total Paid:</strong> UGX {{ number_format($receipt['paid'], 2) }}</p>
     <p><strong>Outstanding:</strong> UGX {{ number_format($receipt['outstanding'], 2) }}</p>
+    @if($receipt['conflict'] ?? false)
+        <p style="color:#92400e;"><strong>Reconciliation required:</strong> A recorded payment total differs from its fee breakdown. Recorded amounts are shown unchanged; verify the ledger before issuing this receipt.</p>
+    @endif
     @if($receipt['rows']->isEmpty())
         <p class="muted">No approved payment transactions are recorded for this contract. This summary is not proof of payment.</p>
     @else
