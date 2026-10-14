@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Contract;
-use App\Models\ContractTemplate;
 use App\Services\ContractService;
 use App\Services\PermissionService;
 use Illuminate\Http\Request;
@@ -35,18 +34,17 @@ class ContractPdfController extends Controller
     {
         $contract->loadMissing(['member', 'group', 'project', 'branch', 'paymentMethod', 'items']);
 
-        $template = null;
-        if ($request->filled('template_id')) {
-            $template = ContractTemplate::query()->find((int) $request->query('template_id'));
-        }
+        $data = $request->validate(['template_id' => ['nullable', 'integer', 'min:1']]);
+        $template = $this->contractService->resolveTemplate($contract, isset($data['template_id']) ? (int) $data['template_id'] : null);
 
-        $renderedHtml = $this->contractService->renderTemplate($contract, $template);
+        $renderedHtml = $template ? $this->contractService->renderTemplate($contract, $template) : '';
 
         if (class_exists('Barryvdh\\DomPDF\\Facade\\Pdf')) {
             return \Barryvdh\DomPDF\Facade\Pdf::loadView('contracts.pdf', [
                 'contract' => $contract,
                 'template' => $template,
                 'renderedHtml' => $renderedHtml,
+                'browserPrint' => false,
             ])->download(($contract->contract_number ?: 'contract') . '.pdf');
         }
 
@@ -54,6 +52,7 @@ class ContractPdfController extends Controller
             'contract' => $contract,
             'template' => $template,
             'renderedHtml' => $renderedHtml,
+            'browserPrint' => true,
         ]);
     }
 }

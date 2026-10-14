@@ -7,6 +7,7 @@ use App\Http\Requests\UpdateContractTemplateRequest;
 use App\Models\Contract;
 use App\Models\ContractTemplate;
 use App\Models\ProjectCategory;
+use App\Models\Project;
 use App\Services\ContractService;
 use App\Services\PermissionService;
 use Illuminate\Http\RedirectResponse;
@@ -57,6 +58,7 @@ class ContractTemplateController extends Controller
     protected function modalData(): array
     {
         return [
+            'projects' => Project::query()->orderBy('project_name')->get(['id', 'project_name']),
             'projectCategories' => ProjectCategory::query()->orderBy('category_name')->get(['id', 'category_name']),
         ];
     }
@@ -139,6 +141,7 @@ class ContractTemplateController extends Controller
 
         return [
             'template_name' => $data['template_name'],
+            'project_id' => $data['project_id'] ?? null,
             'project_type_id' => $data['project_type_id'] ?? null,
             'project_category_id' => $data['project_category_id'] ?? null,
             'template_key' => $data['template_key'] ?? null,

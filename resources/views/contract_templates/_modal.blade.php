@@ -1,4 +1,4 @@
-{{-- Add/Edit contract template modal. Requires $projectCategories. --}}
+{{-- Add/Edit contract template modal. Requires $projects and $projectCategories. --}}
 <div class="modal fade" id="contractTemplateModal" tabindex="-1" aria-labelledby="contractTemplateModalTitle" aria-hidden="true">
     <div class="modal-dialog modal-xl">
         <div class="modal-content">
@@ -19,6 +19,15 @@
                         <div class="col-md-6">
                             <label class="form-label" for="ctKey">Template Key</label>
                             <input type="text" name="template_key" id="ctKey" class="form-control" maxlength="255">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="ctProject">Specific Project</label>
+                            <select name="project_id" id="ctProject" class="form-select">
+                                <option value="">All matching projects (default)</option>
+                                @foreach($projects as $project)
+                                    <option value="{{ $project->id }}">{{ $project->project_name }}</option>
+                                @endforeach
+                            </select>
                         </div>
                         <div class="col-md-3">
                             <label class="form-label" for="ctProjectType">Project Type ID</label>
@@ -104,7 +113,7 @@
         document.getElementById('contractTemplateMethod').value = 'PUT';
         document.getElementById('contractTemplateModalTitle').textContent = 'Edit Contract Template';
         var map = {
-            ctName: d.name, ctKey: d.key, ctProjectType: d.projectType, ctProjectCategory: d.projectCategory,
+            ctName: d.name, ctKey: d.key, ctProject: d.project, ctProjectType: d.projectType, ctProjectCategory: d.projectCategory,
             ctVersion: d.version || '1', ctCover: d.cover, ctBody: d.body, ctFooter: d.footer,
             ctSignature: d.signature, ctSections: d.sections
         };

@@ -36,6 +36,7 @@
                         <tr><th class="w-25">Version</th><td>{{ $template->version }}</td></tr>
                         <tr><th>Status</th><td><span class="badge bg-{{ $template->is_active ? 'success' : 'secondary' }}">{{ $template->is_active ? 'Active' : 'Inactive' }}</span></td></tr>
                         <tr><th>Project Type</th><td>{{ $template->project_type_id ?? '-' }}</td></tr>
+                        <tr><th>Specific Project</th><td>{{ optional($projects->firstWhere('id', $template->project_id))->project_name ?? 'All matching projects' }}</td></tr>
                         <tr><th>Project Category</th><td>{{ optional($projectCategories->firstWhere('id', $template->project_category_id))->category_name ?? ($template->project_category_id ?? '-') }}</td></tr>
                         <tr><th>Created By</th><td>{{ optional($template->creator)->name ?? '-' }}</td></tr>
                         <tr><th>Last Updated</th><td>{{ optional($template->updated_at)->format('Y-m-d H:i') ?? '-' }}{{ $template->updater ? ' by ' . $template->updater->name : '' }}</td></tr>

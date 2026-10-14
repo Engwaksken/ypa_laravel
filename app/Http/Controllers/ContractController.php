@@ -137,18 +137,8 @@ class ContractController extends Controller
             'notifications', 'terminations', 'schedules', 'payouts', 'harvests', 'itemHarvests',
         ]);
 
-        $template = null;
-        $renderedHtml = '';
-        if (!empty($contract->template_path)) {
-            $template = ContractTemplate::query()
-                ->where('template_name', $contract->template_path)
-                ->orWhere('template_key', $contract->template_path)
-                ->first();
-
-            if ($template) {
-                $renderedHtml = $this->contractService->renderTemplate($contract, $template);
-            }
-        }
+        $template = $this->contractService->resolveTemplate($contract);
+        $renderedHtml = $template ? $this->contractService->renderTemplate($contract, $template) : '';
 
         return view('contracts.show', compact('contract', 'template', 'renderedHtml'));
     }
@@ -295,28 +285,7 @@ class ContractController extends Controller
 
     public function pdf(Contract $contract, Request $request)
     {
-        $contract->loadMissing(['member', 'group', 'project', 'branch', 'paymentMethod', 'items']);
-        $template = null;
-
-        if ($request->filled('template_id')) {
-            $template = ContractTemplate::query()->find((int) $request->query('template_id'));
-        }
-
-        $html = $this->contractService->renderTemplate($contract, $template);
-
-        if (class_exists('Barryvdh\\DomPDF\\Facade\\Pdf')) {
-            return \Barryvdh\DomPDF\Facade\Pdf::loadView('contracts.pdf', [
-                'contract' => $contract,
-                'template' => $template,
-                'renderedHtml' => $html,
-            ])->download(($contract->contract_number ?: 'contract') . '.pdf');
-        }
-
-        return response()->view('contracts.pdf', [
-            'contract' => $contract,
-            'template' => $template,
-            'renderedHtml' => $html,
-        ]);
+        return app(ContractPdfController::class)->show($request, $contract);
     }
 
     protected function formData(): array

@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
     <link rel="stylesheet" href="{{ asset('vendor/bootstrap/bootstrap.min.css') }}">
     <link rel="stylesheet" href="{{ asset('css/app.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/table-tools.css') }}">
     @stack('styles')
 </head>
 <body>
@@ -22,7 +23,7 @@
 
 @include('layouts.partials.sidebar')
 
-<main class="main-content" data-stat-density="compact">
+<main class="main-content" data-stat-density="compact" data-table-export="{{ app(\App\Services\TableExportService::class)->allowed(request()->route()?->getName()) ? 'true' : 'false' }}">
     @include('layouts.partials.flash')
     @yield('content')
 </main>
@@ -65,5 +66,6 @@
 @include('layouts.partials.modal-focus')
 @stack('scripts')
 @include('layouts.partials.modal-validation')
+<script src="{{ asset('js/table-tools.js') }}" defer></script>
 </body>
 </html>

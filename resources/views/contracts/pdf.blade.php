@@ -12,10 +12,21 @@
         table { width: 100%; border-collapse: collapse; }
         th, td { border: 1px solid #ccc; padding: 6px; text-align: left; }
         h1, h2, h3, h4 { margin: 0 0 8px 0; }
+        @media print { .screen-only { display: none; } }
     </style>
 </head>
 <body>
+    @if($browserPrint ?? true)
+    <div class="screen-only" style="margin-bottom:16px">
+        <button type="button" onclick="window.print()">Print / Save as PDF</button>
+        <p>Choose Save as PDF in your browser's print dialog.</p>
+    </div>
+    @endif
     <div class="container">
+        @if($template)
+            <article class="contract-document">{!! $renderedHtml !!}</article>
+        @else
+        <p>No matching template is configured for this project and category. The summary below is not a templated contract.</p>
         <div class="section">
             <h2>{{ $contract->contract_number }}</h2>
             <div class="muted">{{ ucfirst((string) $contract->contract_for) }} contract</div>
@@ -56,6 +67,7 @@
                 </tbody>
             </table>
         </div>
+        @endif
     </div>
 </body>
 </html>

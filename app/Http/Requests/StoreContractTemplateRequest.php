@@ -15,6 +15,7 @@ class StoreContractTemplateRequest extends FormRequest
     {
         return [
             'template_name' => ['required', 'string', 'max:255'],
+            'project_id' => ['nullable', 'integer', 'exists:projects,id'],
             'project_type_id' => ['nullable', 'integer', 'exists:project_types,id'],
             'project_category_id' => ['nullable', 'integer', 'exists:project_categories,id'],
             'template_key' => ['nullable', 'string', 'max:255'],

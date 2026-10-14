@@ -11,6 +11,7 @@ class ContractTemplate extends Model
 
     protected $fillable = [
         'template_name',
+        'project_id',
         'project_type_id',
         'project_category_id',
         'template_key',
@@ -27,6 +28,7 @@ class ContractTemplate extends Model
 
     protected $casts = [
         'template_name' => 'string',
+        'project_id' => 'integer',
         'project_type_id' => 'integer',
         'project_category_id' => 'integer',
         'version' => 'integer',

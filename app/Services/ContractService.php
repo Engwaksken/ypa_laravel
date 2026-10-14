@@ -7,6 +7,41 @@ use App\Models\ContractTemplate;
 
 class ContractService
 {
+    public function resolveTemplate(Contract $contract, ?int $requestedId = null): ?ContractTemplate
+    {
+        $contract->loadMissing(['project', 'projectData']);
+        $typeId = (int) ($contract->project_type_id ?: $contract->project?->project_type_id);
+        $categoryId = (int) ($contract->project_category_id ?: $contract->project?->project_category_id);
+        $matching = ContractTemplate::query()
+            ->where(fn ($query) => $query->whereNull('project_id')->orWhere('project_id', 0)
+                ->orWhere('project_id', (int) $contract->project_id))
+            ->where(fn ($query) => $query->whereNull('project_type_id')->orWhere('project_type_id', 0)
+                ->orWhere('project_type_id', $typeId))
+            ->where(fn ($query) => $query->whereNull('project_category_id')->orWhere('project_category_id', 0)
+                ->orWhere('project_category_id', $categoryId));
+
+        if ($requestedId !== null) {
+            return (clone $matching)->where('is_active', true)->findOrFail($requestedId);
+        }
+
+        // Keep a saved version (even if retired) when it belongs to this project.
+        $key = trim((string) ($contract->template_path ?: $contract->projectData?->template_key));
+        if ($key !== '') {
+            $saved = (clone $matching)->where(fn ($query) => $query->where('template_key', $key)
+                ->orWhere('template_name', $key))->orderByDesc('version')->orderByDesc('id')->first();
+            if ($saved) {
+                return $saved;
+            }
+        }
+
+        // Specific project, exact category + type, category default, type default, global default.
+        return $matching->where('is_active', true)
+            ->orderByRaw('CASE WHEN project_id > 0 THEN 0 ELSE 1 END')
+            ->orderByRaw('CASE WHEN project_category_id > 0 THEN 0 ELSE 1 END')
+            ->orderByRaw('CASE WHEN project_type_id > 0 THEN 0 ELSE 1 END')
+            ->orderByDesc('version')->orderByDesc('id')->first();
+    }
+
     public function nextContractNumber(): string
     {
         $prefix = 'CT-' . now()->format('Ymd') . '-';
@@ -51,12 +86,13 @@ class ContractService
 
     public function renderTemplate(Contract $contract, ?ContractTemplate $template = null): string
     {
+        $template ??= $this->resolveTemplate($contract);
         $templateBody = (string) ($template?->template_body ?? '');
         if ($templateBody === '') {
             return '';
         }
 
-        $contract->loadMissing(['member', 'group', 'project', 'branch', 'paymentMethod', 'items']);
+        $contract->loadMissing(['member.nextOfKin', 'member.bankDetail', 'group', 'project.category', 'branch', 'paymentMethod', 'items', 'projectData']);
 
         $memberName = trim((string) optional($contract->member)->full_name);
         $groupName = trim((string) ($contract->group->group_name ?? ''));
@@ -73,6 +109,9 @@ class ContractService
 
         $item = $contract->items->first();
         $totals = $this->contractTotals($contract);
+        $sidecar = $contract->projectData?->data_json ?? [];
+        $nextOfKin = $contract->member?->nextOfKin->first();
+        $bank = $contract->member?->bankDetail;
 
         $replacements = [
             '{{contract_number}}' => (string) ($contract->contract_number ?? ''),
@@ -104,9 +143,53 @@ class ContractService
             '{{monthly_return}}' => number_format((float) ($item->monthly_return ?? 0), 2),
             '{{monthly_payout_amount}}' => number_format((float) ($item->monthly_payout_amount ?? 0), 2),
             '{{total_hives}}' => number_format((float) ($item->total_hives ?? 0), 2),
+            '{{project_category}}' => (string) ($contract->project?->category?->category_name ?? ''),
+            '{{project_type}}' => (string) ($contract->project?->category?->category_name ?? ''),
+            '{{farmer_name}}' => $partyName,
+            '{{farmer_phone}}' => $partyPhone,
+            '{{membership_number}}' => (string) ($contract->member?->membership_id ?? ''),
+            '{{reg_number}}' => (string) ($contract->member?->membership_id ?? $contract->group?->group_code ?? ''),
+            '{{nin}}' => (string) ($contract->member?->nin ?? ''),
+            '{{address}}' => (string) ($contract->member?->address ?? ''),
+            '{{region}}' => (string) ($contract->region ?? $contract->member?->region ?? ''),
+            '{{district}}' => (string) ($contract->district ?? $contract->member?->district ?? ''),
+            '{{amount_paid}}' => number_format($totals['total_paid'], 2),
+            '{{amount_in_words}}' => (string) ($contract->amount_in_words ?? ''),
+            '{{number_of_units}}' => (string) ($contract->expected_units ?? $contract->hives ?? $item?->quantity ?? ''),
+            '{{acreage}}' => (string) ($sidecar['maize_acres'] ?? ''),
+            '{{monthly_payment}}' => number_format((float) ($contract->monthly_payout_amount ?? $item?->monthly_payout_amount ?? 0), 2),
+            '{{quarterly_payment}}' => (string) ($sidecar['quarterly_payment'] ?? ''),
+            '{{seasonal_harvest}}' => (string) ($sidecar['seasonal_harvest'] ?? ''),
+            '{{bags_per_season}}' => (string) ($sidecar['bags_per_season'] ?? ''),
+            '{{expected_kids}}' => (string) ($sidecar['expected_kids'] ?? ''),
+            '{{harvest_amount}}' => number_format((float) ($contract->projected_harvest_amount ?? 0), 2),
+            '{{price_per_goat}}' => (string) ($sidecar['goat_purchase_price'] ?? $sidecar['cdc_purchase_price'] ?? ''),
+            '{{price_per_hive}}' => number_format((float) ($item?->unit_price ?? 0), 2),
+            '{{guardian_name}}' => (string) ($sidecar['guardian_name'] ?? ''),
+            '{{guardian_phone}}' => (string) ($sidecar['guardian_phone'] ?? ''),
+            '{{planned_kid_name}}' => (string) ($sidecar['planned_kid_name'] ?? ''),
+            '{{planned_kid_age}}' => (string) ($sidecar['planned_kid_age'] ?? ''),
+            '{{next_of_kin_name}}' => (string) ($nextOfKin?->full_name ?? ''),
+            '{{next_of_kin_phone}}' => (string) ($nextOfKin?->phone ?? $nextOfKin?->telephone1 ?? ''),
+            '{{bank_name}}' => (string) ($bank?->bank_name ?? $contract->member?->bank_name ?? ''),
+            '{{account_name}}' => (string) ($bank?->account_name ?? $contract->member?->bank_account_name ?? ''),
+            '{{account_number}}' => (string) ($bank?->bank_account ?? $contract->member?->bank_account ?? ''),
+            '{{director_name}}' => (string) ($contract->director_name ?? ''),
         ];
 
-        $rendered = str_replace(array_keys($replacements), array_values($replacements), $templateBody);
+        // Legacy templates embed these structural blocks; newer ones store them separately.
+        $footer = (string) ($template->contract_footer ?? '');
+        $signature = (string) ($template->contract_signature ?? '');
+        $body = strtr($templateBody, ['{{contract_footer}}' => $footer, '{{contract_signature}}' => $signature]);
+        if ($footer !== '' && !str_contains($templateBody, '{{contract_footer}}') && !str_contains($templateBody, $footer)) {
+            $body .= $footer;
+        }
+        if ($signature !== '' && !str_contains($templateBody, '{{contract_signature}}') && !str_contains($templateBody, $signature)) {
+            $body .= $signature;
+        }
+        $body = (string) ($template->cover_page ?? '') . $body;
+        // Values are text, not template markup. Escaping prevents data-driven HTML injection.
+        $rendered = strtr($body, array_map(fn ($value) => e($value), $replacements));
 
         return $this->sanitizeHtml($rendered);
     }

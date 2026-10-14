@@ -36,6 +36,20 @@
         </div>
     </div>
 
+    <div class="dash-panel mb-4 contract-document" data-table-tools="off">
+        <div class="dash-panel-head">
+            <span><i class="fas fa-file-alt"></i> Contract Document{{ $template ? ' · ' . $template->template_name . ' (v' . $template->version . ')' : '' }}</span>
+            <a href="{{ route('contracts.pdf', $contract) }}" class="btn btn-sm btn-outline-secondary">Print / PDF</a>
+        </div>
+        <div class="dash-panel-body">
+            @if($template)
+                {!! $renderedHtml !!}
+            @else
+                <div class="alert alert-warning mb-0">No matching contract template is configured for this project and category. Configure an active template in Contract Templates.</div>
+            @endif
+        </div>
+    </div>
+
     <div class="dash-grid mb-4">
         <div class="dash-card accent-primary">
             <div class="dash-card-top">
@@ -129,16 +143,5 @@
         </div>
     @endif
 
-    @if($template)
-        <div class="dash-panel mt-4">
-            <div class="dash-panel-head">
-                <span><i class="fas fa-file-alt"></i> Rendered Template Preview</span>
-                <a href="{{ route('contracts.pdf', $contract) }}" class="btn btn-sm btn-outline-secondary"><i class="fas fa-download"></i> Download PDF</a>
-            </div>
-            <div class="dash-panel-body">
-                {!! $renderedHtml !!}
-            </div>
-        </div>
-    @endif
 </div>
 @endsection

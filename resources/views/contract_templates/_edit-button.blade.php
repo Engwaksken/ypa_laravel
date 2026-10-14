@@ -3,6 +3,7 @@
     data-url="{{ route('contract-templates.update', $template) }}"
     data-name="{{ $template->template_name }}"
     data-key="{{ $template->template_key ?? '' }}"
+    data-project="{{ $template->project_id ?? '' }}"
     data-project-type="{{ $template->project_type_id ?? '' }}"
     data-project-category="{{ $template->project_category_id ?? '' }}"
     data-version="{{ $template->version ?? 1 }}"
