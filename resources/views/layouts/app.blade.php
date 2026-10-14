@@ -29,6 +29,7 @@
 </main>
 
 @include('layouts.partials.confirm-delete')
+@include('layouts.partials.table-view-modal')
 
 <script>
 (function () {
@@ -67,5 +68,6 @@
 @stack('scripts')
 @include('layouts.partials.modal-validation')
 <script src="{{ asset('js/table-tools.js') }}" defer></script>
+<script src="{{ asset('js/table-view-modal.js') }}" defer></script>
 </body>
 </html>
