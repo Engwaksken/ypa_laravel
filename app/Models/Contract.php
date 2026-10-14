@@ -212,6 +212,11 @@ class Contract extends Model
         return $this->hasMany(ContractSchedule::class, 'contract_id');
     }
 
+    public function payments(): HasMany
+    {
+        return $this->hasMany(PaymentTransaction::class, 'contract_id');
+    }
+
     public function payouts(): HasMany
     {
         return $this->hasMany(ContractPayout::class, 'contract_id');

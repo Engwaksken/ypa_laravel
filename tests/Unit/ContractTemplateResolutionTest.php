@@ -49,7 +49,7 @@ class ContractTemplateResolutionTest extends TestCase
         $member->setRelation('bankDetail', null);
         $contract = new Contract(['project_id' => 10, 'contract_number' => 'CT-001', 'contract_for' => 'member', 'total_payable' => 1000, 'total_paid' => 100]);
         foreach (['project' => $project, 'projectData' => null, 'member' => $member, 'group' => null,
-            'branch' => null, 'paymentMethod' => null, 'items' => collect()] as $relation => $value) {
+            'branch' => null, 'paymentMethod' => null, 'items' => collect(), 'payments' => collect()] as $relation => $value) {
             $contract->setRelation($relation, $value);
         }
 
@@ -195,6 +195,8 @@ class ContractTemplateResolutionTest extends TestCase
             return true;
         })->andReturn($renderer);
         $renderer->shouldReceive('setPaper')->with('a4')->andReturnSelf();
+        $renderer->shouldReceive('render')->once()->andReturnSelf();
+        $renderer->shouldReceive('getDomPDF')->once()->andReturn(new \Dompdf\Dompdf(config('dompdf.options')));
         $renderer->shouldReceive('stream')->with('CT-001.pdf')->andReturn(response('%PDF-1.7', 200, ['Content-Type' => 'application/pdf']));
         $response = (new ContractPdfController)->show(Request::create('/contracts/1/pdf'), $contract);
         $this->assertStringStartsWith('%PDF-', $response->getContent());

@@ -53,13 +53,4 @@
         <tr><td><span class="label">Payment Date</span>{{ $contract->payment_date?->format('d M Y') ?? '-' }}</td><td><span class="label">Receipt Number</span>{{ $contract->receipt_number ?: '-' }}</td></tr>
     </table>
 </section>
-@if($contract->items->isNotEmpty())
-<section class="section">
-    <h3>Contract Items</h3>
-    <table class="items"><thead><tr><th>Name</th><th>Quantity</th><th>Unit Price</th><th>Monthly Return</th></tr></thead><tbody>
-        @foreach($contract->items as $item)<tr><td>{{ $item->item_name }}</td><td>{{ $item->quantity }}</td><td>{{ $money($item->unit_price) }}</td><td>{{ $money($item->monthly_return) }}</td></tr>@endforeach
-    </tbody></table>
-</section>
-@endif
 @if($contract->notes)<section class="section"><h3>Notes &amp; Remarks</h3><p>{!! nl2br(e($contract->notes)) !!}</p></section>@endif
-@include('contracts.documents.organization-signatures')

@@ -23,9 +23,10 @@ class PdfAssetServiceTest extends TestCase
         try {
             $service = new PdfAssetService;
             $html = $service->localizeImages('<img src="/' . $name . '">');
-            $this->assertStringContainsString('src="file:///', $html);
+            $this->assertStringContainsString('src="file://', $html);
             $this->assertStringContainsString($name, $html);
             $this->assertSame($html, $service->localizeImages('<img src="' . rtrim(config('app.url'), '/') . '/' . $name . '">'));
+            $this->assertNotNull(\Dompdf\Helpers::build_url('file://', '', public_path(), $service->localImageUri('/' . $name), [public_path()]));
         } finally {
             unlink($file);
         }

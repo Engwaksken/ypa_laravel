@@ -132,15 +132,16 @@ class ContractController extends Controller
     public function show(Contract $contract): View
     {
         $contract->load([
-            'member', 'group', 'project', 'branch', 'paymentMethod', 'creator', 'updater',
+            'member.bankDetail', 'member.nextOfKin', 'group', 'project', 'branch', 'paymentMethod', 'creator', 'updater',
             'items.project', 'projectData', 'approvals.user', 'attachments.uploader',
             'notifications', 'terminations', 'schedules', 'payouts', 'harvests', 'itemHarvests',
         ]);
 
         $template = $this->contractService->resolveTemplate($contract);
         $renderedHtml = $template ? $this->contractService->renderTemplate($contract, $template) : '';
+        $documentWarnings = app(\App\Services\ContractPdfDocumentService::class)->missingDetails($contract);
 
-        return view('contracts.show', compact('contract', 'template', 'renderedHtml'));
+        return view('contracts.show', compact('contract', 'template', 'renderedHtml', 'documentWarnings'));
     }
 
     public function edit(Contract $contract): View

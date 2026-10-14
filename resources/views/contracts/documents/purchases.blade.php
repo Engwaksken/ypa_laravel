@@ -1,17 +1,18 @@
-<section class="section">
-    <h3>Purchases and Harvests</h3>
+@php
+    $unitQuantity = $contract->items->sum('quantity');
+    $purchaseRows = [
+        ['Date', $contract->signing_date?->format('jS F, Y') ?? '-'],
+        ['Purchased Quantity', $unitQuantity > 0 ? number_format($unitQuantity, 2) . ' ' . ($contract->items->first()?->unit_name ?? '') : '-'],
+        ['Contract Amount Paid (UGX)', 'UGX ' . number_format((float) ($contract->contract_amount_paid ?? $totals['total_paid']), 2)],
+        ['Harvest Quantity', $contract->expected_quantity !== null ? $contract->expected_quantity . ' ' . $contract->expected_units : '-'],
+        ['Amount at Harvest (UGX)', $contract->projected_harvest_amount !== null ? 'UGX ' . number_format((float) $contract->projected_harvest_amount, 2) : '-'],
+        ['Remaining Harvest Balance (UGX)', $contract->projected_harvest_balance !== null ? 'UGX ' . number_format((float) $contract->projected_harvest_balance, 2) : '-'],
+    ];
+@endphp
+<section class="appendix-page section">
+    <h3 class="appendix-title">A TABLE SHOWING PURCHASES AND HARVESTS</h3>
     <table class="finance">
-        <tr><td>Purchase / Contract Amount</td><td class="amount">UGX {{ number_format($totals['total_payable']) }}</td></tr>
-        @if($contract->expected_quantity !== null)<tr><td>Expected Harvest Quantity</td><td class="amount">{{ $contract->expected_quantity }} {{ $contract->expected_units }}</td></tr>@endif
-        @if($contract->projected_harvest_amount !== null)<tr><td>Recorded Projected Harvest Amount</td><td class="amount">UGX {{ number_format((float) $contract->projected_harvest_amount) }}</td></tr>@endif
-        @if($contract->projected_harvest_balance !== null)<tr><td>Recorded Harvest Balance</td><td class="amount">UGX {{ number_format((float) $contract->projected_harvest_balance) }}</td></tr>@endif
+        <thead><tr><th>No.</th><th>Item</th><th>Values (Amount UGX)</th></tr></thead>
+        <tbody>@foreach($purchaseRows as $row)<tr><td class="row-number">{{ $loop->iteration }}</td><td><strong>{{ $row[0] }}</strong></td><td class="amount">{{ $row[1] }}</td></tr>@endforeach</tbody>
     </table>
 </section>
-@if($contract->items->isNotEmpty())
-<section class="section">
-    <h3>Detailed Contract Items</h3>
-    <table class="items"><thead><tr><th>Item</th><th>Type</th><th>Quantity</th><th>Unit Price</th><th>Monthly Return</th></tr></thead><tbody>
-        @foreach($contract->items as $item)<tr><td>{{ $item->item_name }}</td><td>{{ $item->item_type }}</td><td>{{ $item->quantity }} {{ $item->unit_name }}</td><td>UGX {{ number_format((float) $item->unit_price) }}</td><td>UGX {{ number_format((float) $item->monthly_return) }}</td></tr>@endforeach
-    </tbody></table>
-</section>
-@endif

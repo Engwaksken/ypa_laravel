@@ -6,6 +6,7 @@ use App\Models\Contract;
 use App\Services\ContractService;
 use App\Services\PermissionService;
 use App\Services\PdfAssetService;
+use App\Services\ContractPdfDocumentService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\Middleware;
@@ -34,7 +35,8 @@ class ContractPdfController extends Controller
 
     public function show(Request $request, Contract $contract): Response
     {
-        $contract->loadMissing(['member', 'group', 'project', 'branch', 'paymentMethod', 'items']);
+        $contract->loadMissing(['member.nextOfKin', 'member.bankDetail', 'group', 'project', 'branch', 'paymentMethod', 'items.project',
+            'payments' => fn ($query) => $query->whereRaw("UPPER(COALESCE(status, '')) = 'APPROVED'")->orderBy('transaction_date')->orderBy('id'), 'payments.paymentMethod']);
 
         $data = $request->validate(['template_id' => ['nullable', 'integer', 'min:1'], 'download' => ['nullable', 'boolean']]);
         $template = $this->contractService->resolveTemplate($contract, isset($data['template_id']) ? (int) $data['template_id'] : null);
@@ -46,7 +48,13 @@ class ContractPdfController extends Controller
             'template' => $template,
             'renderedHtml' => app(PdfAssetService::class)->localizeImages($renderedHtml),
             'totals' => $this->contractService->contractTotals($contract),
+            'document' => app(ContractPdfDocumentService::class)->prepare($contract, $template, $renderedHtml),
         ])->setPaper('a4');
+        $pdf->render();
+        $dompdf = $pdf->getDomPDF();
+        $canvas = $dompdf->getCanvas();
+        $font = $dompdf->getFontMetrics()->getFont('DejaVu Sans', 'normal');
+        $canvas->page_text(245, $canvas->get_height() - 24, 'Page {PAGE_NUM} of {PAGE_COUNT}', $font, 8, [0.4, 0.4, 0.4]);
         $filename = preg_replace('/[^A-Za-z0-9_-]/', '-', (string) ($contract->contract_number ?: 'contract')) . '.pdf';
 
         return $request->boolean('download') ? $pdf->download($filename) : $pdf->stream($filename);

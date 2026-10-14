@@ -162,7 +162,7 @@ class ContractService
             '{{payment_frequency}}' => (string) ($contract->payment_frequency ?? ''),
             '{{membership_id}}' => (string) ($contract->member->membership_id ?? ''),
             '{{group_code}}' => (string) ($contract->group->group_code ?? ''),
-            '{{signing_date}}' => optional($contract->signing_date)?->format('jS \d\a\y \o\f F, Y') ?? '',
+            '{{signing_date}}' => optional($contract->signing_date)?->format('jS F, Y') ?? '',
             '{{start_date}}' => optional($contract->start_date)?->format('Y-m-d') ?? '',
             '{{end_date}}' => optional($contract->end_date)?->format('Y-m-d') ?? '',
             '{{contract_amount}}' => number_format((float) ($contract->contract_amount ?? 0), 2),
@@ -248,7 +248,15 @@ class ContractService
         if ($cover !== '') {
             $body = '<section class="contract-cover-custom" style="page-break-after:always;">' . $cover . '</section>' . $body;
         }
+        try {
+            $logoPath = \App\Models\Setting::asset('site_logo', 'images/logo.png');
+        } catch (\Throwable) {
+            $logoPath = 'images/logo.png';
+        }
+        $logoHtml = app(PdfAssetService::class)->localImageUri($logoPath)
+            ? '<img src="' . e(asset($logoPath)) . '" alt="YPA Logo">' : '';
         $body = strtr($body, [
+            '{{cover_logo}}' => $logoHtml,
             '{{org_signature_block}}' => view('contracts.documents.organization-signatures', compact('contract'))->render(),
             '{{director_signature}}' => '<span>Signature: ___________________________</span>',
             '{{receipt_section}}' => $contract->receipt_number
