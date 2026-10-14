@@ -2,28 +2,17 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-class UpdateProjectRequest extends FormRequest
+class UpdateProjectRequest extends StoreProjectRequest
 {
-    public function authorize(): bool { return true; }
-
     public function rules(): array
     {
-        return [
-            'project_category_id' => ['required', 'integer', 'exists:project_categories,id'],
-            'project_name' => ['required', 'string', 'max:191'],
+        return array_replace(parent::rules(), [
             'project_code' => [
                 'required', 'string', 'max:100',
                 Rule::unique('projects', 'project_code')->ignore($this->route('project')),
             ],
-            'description' => ['required', 'string'],
-            'start_date' => ['required', 'date'],
-            'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
-            'registration_fee' => ['required', 'numeric', 'min:0'],
-            'administrative_fee' => ['nullable', 'numeric', 'min:0'],
-            'status' => ['required', Rule::in(StoreProjectRequest::STATUSES)],
-        ];
+        ]);
     }
 }

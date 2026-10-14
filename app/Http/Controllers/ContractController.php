@@ -150,6 +150,24 @@ class ContractController extends Controller
         return view('contracts.edit', array_merge($this->formData(), compact('contract')));
     }
 
+    public function calculateProject(Request $request): JsonResponse
+    {
+        abort_unless($this->permission->can('contracts_create') || $this->permission->can('contracts_edit'), 403);
+        $data = $request->validate([
+            'project_id' => ['required', 'integer', 'exists:projects,id'],
+            'contract_id' => ['nullable', 'integer', 'exists:contracts,id'],
+            'duration' => ['required', 'integer', 'min:1'],
+            'project_inputs' => ['sometimes', 'array', 'max:30'],
+            'project_inputs.*' => ['nullable', 'max:500'],
+        ]);
+        $contract = ! empty($data['contract_id']) ? Contract::findOrFail($data['contract_id']) : null;
+        abort_unless($this->permission->can($contract ? 'contracts_edit' : 'contracts_create'), 403);
+        $calculation = app(\App\Services\ProjectCalculationService::class)->calculate(
+            Project::findOrFail($data['project_id']), $data['project_inputs'] ?? [], $data['duration'], $contract);
+
+        return response()->json(['calculation' => $calculation]);
+    }
+
     public function update(UpdateContractRequest $request, Contract $contract): RedirectResponse
     {
         $data = $request->validated();
@@ -303,7 +321,12 @@ class ContractController extends Controller
     protected function contractPayload(array $data, int $userId, bool $resetWorkflow = true, ?Contract $contract = null): array
     {
         $contractFor = strtolower((string) ($data['contract_for'] ?? 'member'));
-        $project = Project::query()->find((int) ($data['project_id'] ?? 0));
+        $project = Project::query()->lockForUpdate()->findOrFail((int) ($data['project_id'] ?? 0));
+        $calculation = app(\App\Services\ProjectCalculationService::class)->calculate($project, $data['project_inputs'] ?? [], (int) ($data['duration'] ?? 0), $contract);
+        $targets = $calculation['targets'] ?? [];
+        if (isset($targets['total_payable'])) {
+            $data['total_amount'] = $data['contract_amount'] = $targets['total_payable'];
+        }
         $totalPayable = round((float) ($data['total_amount'] ?? $data['contract_amount'] ?? 0), 2);
 
         // Paid/outstanding are derived from APPROVED payment transactions only —
@@ -341,6 +364,18 @@ class ContractController extends Controller
         if ($resetWorkflow) {
             $payload['workflow_status'] = 'draft';
             $payload['workflow_step'] = 0;
+        }
+
+        // Only whitelisted outputs affect contract columns; paid totals stay payment-derived.
+        foreach (array_keys($contract?->project_calculation['targets'] ?? []) as $previousTarget) {
+            if ($previousTarget !== 'total_payable' && in_array($previousTarget, \App\Services\ProjectCalculationService::TARGETS, true)
+                && ! array_key_exists($previousTarget, $targets)) {
+                $payload[$previousTarget] = null;
+            }
+        }
+        $payload = array_replace($payload, $targets);
+        if ($calculation !== null || $contract?->project_calculation !== null) {
+            $payload['project_calculation'] = $calculation;
         }
 
         return $payload;

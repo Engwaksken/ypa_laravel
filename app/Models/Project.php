@@ -23,6 +23,7 @@ class Project extends Model
         'administrative_fee',
         'status',
         'created_by',
+        'calculation_schema',
     ];
 
     protected $casts = [
@@ -35,6 +36,7 @@ class Project extends Model
         'start_date' => 'date',
         'end_date' => 'date',
         'status' => 'string',
+        'calculation_schema' => 'array',
     ];
 
     public function branch(): BelongsTo

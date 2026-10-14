@@ -255,6 +255,9 @@ class ContractService
                 ? '<p><strong>Receipt:</strong> ' . e($contract->receipt_number) . '</p>' : '',
         ]);
         // Values are text, not template markup. Escaping prevents data-driven HTML injection.
+        foreach (array_merge($contract->project_calculation['inputs'] ?? [], $contract->project_calculation['results'] ?? []) as $key => $value) {
+            $replacements['{{project.' . $key . '}}'] = (string) $value;
+        }
         $rendered = strtr($body, array_map(fn ($value) => e($value), $replacements));
 
         return $this->sanitizeHtml($rendered);

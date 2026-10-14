@@ -4,13 +4,20 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\Validator;
 
 class StoreProjectRequest extends FormRequest
 {
     public const STATUSES = ['Planning', 'Active', 'On Hold', 'Completed', 'Cancelled'];
 
     public function authorize(): bool { return true; }
+
+    protected function prepareForValidation(): void
+    {
+        if (is_string($this->input('calculation_schema'))) {
+            $decoded = json_decode($this->input('calculation_schema'), true);
+            if (is_array($decoded)) $this->merge(['calculation_schema' => $decoded]);
+        }
+    }
 
     public function rules(): array
     {
@@ -24,6 +31,16 @@ class StoreProjectRequest extends FormRequest
             'registration_fee' => ['required', 'numeric', 'min:0'],
             'administrative_fee' => ['nullable', 'numeric', 'min:0'],
             'status' => ['required', Rule::in(self::STATUSES)],
+            'calculation_schema' => ['sometimes', 'nullable', 'array:inputs,formulas', function ($attribute, $value, $fail) {
+                if (! is_array($value)) return;
+                try {
+                    app(\App\Services\ProjectCalculationService::class)->validateSchema($value);
+                } catch (\InvalidArgumentException $e) {
+                    $fail($e->getMessage());
+                } catch (\Illuminate\Validation\ValidationException $e) {
+                    foreach ($e->errors() as $messages) foreach ($messages as $message) $fail($message);
+                }
+            }],
         ];
     }
 }

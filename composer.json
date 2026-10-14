@@ -34,7 +34,8 @@
             "node tests/js/modal-workflows.test.cjs",
             "node tests/js/pos-workflows.test.cjs",
             "node tests/js/table-tools.test.cjs",
-            "node tests/js/table-view-modal.test.cjs"
+            "node tests/js/table-view-modal.test.cjs",
+            "node tests/js/project-calculations.test.cjs"
         ],
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",

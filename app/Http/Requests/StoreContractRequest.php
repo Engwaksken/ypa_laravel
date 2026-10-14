@@ -20,6 +20,8 @@ class StoreContractRequest extends FormRequest
             'member_id' => ['required_if:contract_for,member', 'nullable', 'integer', 'exists:members,id'],
             'group_id' => ['required_if:contract_for,group', 'nullable', 'integer', 'exists:groups,id'],
             'project_id' => ['required', 'integer', 'exists:projects,id'],
+            'project_inputs' => ['sometimes', 'array', 'max:30'],
+            'project_inputs.*' => ['nullable', 'max:500'],
             'branch_id' => ['required', 'integer', 'exists:branches,id'],
             'payment_method_id' => ['nullable', 'integer', 'exists:payment_methods,id'],
             'payment_frequency' => ['required', Rule::in(Contract::PAYMENT_FREQUENCIES)],

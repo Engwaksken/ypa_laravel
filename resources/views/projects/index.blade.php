@@ -202,6 +202,7 @@
                             <input type="number" name="administrative_fee" id="administrative_fee" class="form-control" step="0.01" min="0">
                         </div>
                     </div>
+                    @include('projects._calculation-builder')
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -255,6 +256,7 @@
 @endpush
 
 @push('scripts')
+<script src="{{ asset('js/project-calculation-builder.js') }}?v={{ filemtime(public_path('js/project-calculation-builder.js')) }}"></script>
 <script>
 function esc(v) {
     const d = document.createElement('div');
@@ -284,6 +286,7 @@ function showFormAlert(html, type) {
 
 function submitProjectForm() {
     const form = document.getElementById('projectForm');
+    window.YpaProjectCalculationBuilder?.sync();
     if (!form.checkValidity()) { form.reportValidity(); return; }
 
     const btn = document.getElementById('saveBtn');
@@ -307,7 +310,7 @@ function submitProjectForm() {
     fetch(url, { method: 'POST', body: fd, headers: { 'Accept': 'application/json' } })
         .then(r => r.json().then(data => ({ ok: r.ok, status: r.status, data })))
         .then(({ ok, data }) => {
-            if (!ok || !data.success) throw new Error(data.message || 'Failed to save project.');
+            if (!ok || !data.success) throw new Error(data.errors ? Object.values(data.errors).flat().join(' ') : (data.message || 'Failed to save project.'));
             showFormAlert('&#10003; ' + esc(data.message), 'success');
             setTimeout(() => window.location.reload(), 700);
         })
@@ -352,6 +355,11 @@ function viewProject(id) {
                 + '</div>'
                 + '<div class="pj-view-section" style="grid-column:1/-1;"><h6>Description</h6>'
                 + '<p style="font-size:.9rem;line-height:1.65;">' + esc(p.description || '—') + '</p>'
+                + '</div>'
+                + '<div class="pj-view-section" style="grid-column:1/-1;"><h6>Fields and Calculations</h6>'
+                + (p.calculation_schema?.inputs || []).map(field => '<p>' + esc(field.label) + ' (<code>' + esc(field.key) + '</code>, ' + esc(field.type) + ')</p>').join('')
+                + (p.calculation_schema?.formulas || []).map(formula => '<p>' + esc(formula.label) + ': <code>' + esc(formula.expression) + '</code>' + (formula.target ? ' → ' + esc(formula.target) : '') + '</p>').join('')
+                + (!p.calculation_schema || (!p.calculation_schema.inputs.length && !p.calculation_schema.formulas.length) ? '<p>Manual amounts; no formulas configured.</p>' : '')
                 + '</div></div>';
         })
         .catch(err => {
@@ -366,6 +374,7 @@ function openCreateModal() {
     document.getElementById('projectModalTitle').innerHTML = '<i class="fas fa-diagram-project" aria-hidden="true"></i> New Project';
     document.getElementById('saveBtn').innerHTML = '<i class="fas fa-floppy-disk" aria-hidden="true"></i> Create Project';
     document.getElementById('projectForm').reset();
+    window.YpaProjectCalculationBuilder?.load(null);
     document.getElementById('project_id').value = '';
     document.getElementById('project_code').disabled = false;
     document.getElementById('formAlert').innerHTML = '';
@@ -377,6 +386,7 @@ function editProject(id) {
     document.getElementById('projectModalTitle').innerHTML = '<i class="fas fa-pen" aria-hidden="true"></i> Edit Project';
     document.getElementById('saveBtn').innerHTML = '<i class="fas fa-floppy-disk" aria-hidden="true"></i> Update Project';
     document.getElementById('projectForm').reset();
+    window.YpaProjectCalculationBuilder?.load(null);
     document.getElementById('project_id').value = id;
     document.getElementById('formAlert').innerHTML = '';
     bootstrap.Modal.getOrCreateInstance(document.getElementById('projectModal')).show();
@@ -398,6 +408,7 @@ function editProject(id) {
             document.getElementById('registration_fee').value = p.registration_fee || 0;
             document.getElementById('administrative_fee').value = p.administrative_fee || 0;
             document.getElementById('status').value = p.status || 'Planning';
+            window.YpaProjectCalculationBuilder?.load(p.calculation_schema);
             document.getElementById('saveBtn').disabled = false;
         })
         .catch(err => {

@@ -260,6 +260,7 @@ class ProjectController extends Controller
             'status',
             'created_at',
             'updated_at',
+            'calculation_schema',
         ]);
 
         $data['category_name'] = $project->category->category_name ?? '';

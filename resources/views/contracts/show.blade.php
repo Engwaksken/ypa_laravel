@@ -91,6 +91,7 @@
         </div>
     </div>
 
+    @include('contracts.documents.project-calculation')
     <div class="dash-panel mt-4">
         <div class="dash-panel-head">
             <span><i class="fas fa-boxes"></i> Contract Items</span>

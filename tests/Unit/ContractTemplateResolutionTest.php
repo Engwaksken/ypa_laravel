@@ -234,6 +234,16 @@ class ContractTemplateResolutionTest extends TestCase
         $this->assertStringStartsWith('%PDF-', $response->getContent());
     }
 
+    public function test_dynamic_project_placeholders_use_saved_values_and_are_escaped(): void
+    {
+        $contract = $this->contract();
+        $contract->project_calculation = ['inputs' => ['site' => '<script>unsafe</script>'], 'results' => ['yield_total' => 500]];
+        $template = $this->template(['template_body' => '<p>{{project.site}} / {{project.yield_total}}</p>']);
+        $html = (new ContractService)->renderTemplate($contract, $template);
+        $this->assertStringContainsString('&lt;script&gt;unsafe&lt;/script&gt; / 500', $html);
+        $this->assertStringNotContainsString('<script>', $html);
+    }
+
     public function test_project_binding_migration_is_repeatable_and_preserves_existing_templates(): void
     {
         $template = $this->template();

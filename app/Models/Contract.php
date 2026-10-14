@@ -12,6 +12,7 @@ class Contract extends Model
     protected $table = 'contracts';
 
     protected $fillable = [
+        'project_calculation',
         'contract_number',
         'member_id',
         'group_id',
@@ -98,6 +99,7 @@ class Contract extends Model
     public const WORKFLOW_STATUSES = ['draft', 'pending_officer', 'pending_accountant', 'pending_director', 'finalising', 'approved', 'rejected'];
 
     protected $casts = [
+        'project_calculation' => 'array',
         'contract_number' => 'string',
         'contract_for' => 'string',
         'project_code' => 'string',

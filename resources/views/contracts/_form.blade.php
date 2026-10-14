@@ -105,4 +105,5 @@
     </div>
 </div>
 
+@include('contracts._project-calculation')
 @include('contracts._items')

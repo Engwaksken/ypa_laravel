@@ -59,5 +59,6 @@
     @else
         @include('contracts.documents.summary')
     @endif
+    @include('contracts.documents.project-calculation')
 </body>
 </html>

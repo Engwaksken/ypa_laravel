@@ -238,6 +238,7 @@ Route::middleware(['auth', 'user.status'])->group(function () {
     Route::resource('contract-templates', ContractTemplateController::class)
         ->parameters(['contract-templates' => 'contractTemplate']);
 
+    Route::post('/contracts/project-calculation', [ContractController::class, 'calculateProject'])->name('contracts.project-calculation')->middleware('throttle:30,1');
     Route::resource('contracts', ContractController::class);
 });
 

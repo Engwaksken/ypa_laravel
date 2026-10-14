@@ -85,6 +85,7 @@ class ProjectModuleTest extends TestCase
                 $table->decimal('registration_fee', 15, 2)->default(0)->index();
                 $table->decimal('administrative_fee', 15, 2)->default(0);
                 $table->string('status', 30)->default('Planning')->index();
+                $table->json('calculation_schema')->nullable();
                 $table->unsignedBigInteger('created_by')->nullable()->index();
                 $table->timestamp('created_at')->useCurrent();
                 $table->timestamp('updated_at')->nullable();
@@ -227,6 +228,48 @@ class ProjectModuleTest extends TestCase
         $this->assertEquals($category->id, $project->project_category_id);
         $this->assertEquals($admin->id, $project->created_by);
         $this->assertEquals('2000.00', (string) $project->administrative_fee);
+    }
+
+    public function test_admin_can_create_and_edit_configurable_project_fields_and_formulas(): void
+    {
+        $admin = $this->createAdmin(); $category = $this->createCategory();
+        $schema = ['inputs' => [['key' => 'units', 'label' => 'Units', 'type' => 'number', 'required' => true]],
+            'formulas' => [['key' => 'cost', 'label' => 'Cost', 'expression' => 'units * 500 + registration_fee', 'target' => 'total_payable']]];
+        $data = $this->projectData($category, ['calculation_schema' => json_encode($schema)]);
+        $this->actingAs($admin)->postJson(route('projects.store'), $data)->assertCreated();
+        $project = Project::where('project_code', $data['project_code'])->firstOrFail();
+        $this->assertSame($schema, $project->calculation_schema);
+        $this->getJson(route('projects.ajax.details', ['id' => $project->id]))->assertJsonPath('project.calculation_schema.formulas.0.expression', $schema['formulas'][0]['expression']);
+        $schema['formulas'][0]['expression'] = 'units * 700';
+        $data['calculation_schema'] = $schema;
+        $this->putJson(route('projects.update', $project), $data)->assertOk();
+        $this->assertSame('units * 700', $project->fresh()->calculation_schema['formulas'][0]['expression']);
+    }
+
+    public function test_invalid_formulas_are_rejected_on_create_and_update(): void
+    {
+        $admin = $this->createAdmin(); $category = $this->createCategory();
+        $data = $this->projectData($category);
+        $schema = ['inputs' => [], 'formulas' => [['key' => 'cost', 'label' => 'Cost', 'expression' => 'system(1)']]];
+        $this->actingAs($admin)->postJson(route('projects.store'), array_merge($data, ['calculation_schema' => $schema]))->assertUnprocessable()->assertJsonValidationErrors('calculation_schema');
+        $project = Project::create($data);
+        $this->putJson(route('projects.update', $project), array_merge($data, ['calculation_schema' => $schema]))->assertUnprocessable()->assertJsonValidationErrors('calculation_schema');
+        $this->assertNull($project->fresh()->calculation_schema);
+    }
+
+    public function test_member_cannot_configure_project_formulas(): void
+    {
+        $this->actingAs($this->createMemberUser())->postJson(route('projects.store'), $this->projectData($this->createCategory()))->assertForbidden();
+    }
+
+    public function test_contract_calculation_preview_requires_contract_permissions(): void
+    {
+        $project = Project::create($this->projectData($this->createCategory(), ['calculation_schema' => ['inputs' => [],
+            'formulas' => [['key' => 'fee', 'label' => 'Fee', 'expression' => 'registration_fee', 'target' => 'total_payable']]]]));
+        $data = ['project_id' => $project->id, 'duration' => 12];
+        $this->postJson(route('contracts.project-calculation'), $data)->assertUnauthorized();
+        $this->actingAs($this->createMemberUser())->postJson(route('contracts.project-calculation'), $data)->assertForbidden();
+        $this->actingAs($this->createAdmin())->postJson(route('contracts.project-calculation'), $data)->assertOk()->assertJsonPath('calculation.targets.total_payable', 5000);
     }
 
     public function test_store_project_validates_required_fields(): void
