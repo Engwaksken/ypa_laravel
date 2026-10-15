@@ -24,7 +24,16 @@
             <div class="col-md-4 d-flex align-items-end gap-3"><button class="btn btn-outline-primary" type="submit"><i class="fas fa-arrow-right-to-bracket me-1"></i>Load branch</button><small class="text-muted">Loading a branch starts a new cart.</small></div>
         </form>
     </div></div>
+    @php($checkoutActive = $branchId > 0)
+    <ul class="nav nav-tabs sales-workspace-tabs" id="salesWorkspaceTabs" role="tablist">
+        @if($branchId > 0)
+            <li class="nav-item" role="presentation"><button class="nav-link {{ $checkoutActive || !$sales->isEmpty() ? 'active' : '' }}" id="sales-checkout-tab" data-bs-toggle="tab" data-bs-target="#sales-checkout" type="button" role="tab" aria-controls="sales-checkout" aria-selected="{{ $checkoutActive || !$sales->isEmpty() ? 'true' : 'false' }}"><i class="fas fa-cart-shopping me-2"></i>New sale</button></li>
+        @endif
+        <li class="nav-item" role="presentation"><button class="nav-link {{ !$checkoutActive && ($branchId <= 0 || $sales->isEmpty()) ? 'active' : '' }}" id="sales-history-tab" data-bs-toggle="tab" data-bs-target="#sales-history" type="button" role="tab" aria-controls="sales-history" aria-selected="{{ !$checkoutActive && ($branchId <= 0 || $sales->isEmpty()) ? 'true' : 'false' }}"><i class="fas fa-clock-rotate-left me-2"></i>Recent invoices <span class="sales-tab-count">{{ $sales->total() }}</span></button></li>
+    </ul>
+    <div class="tab-content sales-workspace-content" id="salesWorkspaceContent">
     @if($branchId > 0)
+    <section class="tab-pane fade {{ $checkoutActive || !$sales->isEmpty() ? 'show active' : '' }}" id="sales-checkout" role="tabpanel" aria-labelledby="sales-checkout-tab" tabindex="0">
     @if($unavailableSelections->isNotEmpty())<div class="alert alert-warning" role="alert">Some previously selected products are no longer available in this branch and were removed from the cart. Review the remaining quantities and total before processing.</div>@endif
     <form method="POST" action="{{ route('sales.store') }}" id="posForm" novalidate>
         @csrf
@@ -64,8 +73,12 @@
             </div></div></div>
         </div>
     </form>
+    </section>
     @endif
+    <section class="tab-pane fade {{ !$checkoutActive && ($branchId <= 0 || $sales->isEmpty()) ? 'show active' : '' }}" id="sales-history" role="tabpanel" aria-labelledby="sales-history-tab" tabindex="0">
     @include('sales.partials.history')
+    </section>
+    </div>
 </div>
 @push('scripts')
 <script src="{{ asset('js/pos.js') }}"></script>
@@ -75,6 +88,7 @@
 .sales-page-heading{margin-bottom:1.35rem}.sales-branch-panel{border-top:3px solid var(--ds-brand)}.sales-section-heading{display:flex;align-items:center;gap:12px;margin-bottom:1.1rem}.sales-section-heading>div{display:grid;gap:2px}.sales-section-heading strong{font-size:.98rem}.sales-section-heading small{color:var(--ds-text-muted)}.sales-heading-icon{display:grid;place-items:center;width:42px;height:42px;border-radius:12px;background:#eaf4fc;color:var(--ds-brand);font-size:1.05rem}
 .sales-search-wrap{position:relative}.sales-search-wrap>i{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:#64748b;pointer-events:none}.sales-search-wrap input{padding-left:40px;min-height:44px}.sales-invoice-panel{position:sticky;top:76px;border-top:3px solid var(--ds-brand)}.sales-invoice-panel .dash-panel-body{padding:1.2rem}.sales-invoice-panel .form-control,.sales-invoice-panel .form-select{min-height:42px}.sales-totals{padding:14px 12px;margin:1rem 0!important;background:#f5f8fc;border:1px solid #e2e8f0;border-radius:10px}.sales-totals dt,.sales-totals dd{margin-bottom:8px}.sales-totals dt:last-of-type,.sales-totals dd:last-of-type{margin-bottom:0}.sales-totals #posTotal{font-size:1.2rem;color:var(--ds-brand)}
 .sales-page-heading+.sales-branch-panel{box-shadow:0 4px 18px #0f172a0a}.sales-branch-panel .btn,.sales-branch-panel select{min-height:42px}
+.sales-workspace-tabs{gap:6px;border-bottom:1px solid #dbe3ec;margin:0 0 1.2rem;padding:0 8px}.sales-workspace-tabs .nav-link{border:0;border-bottom:3px solid transparent;border-radius:8px 8px 0 0;padding:12px 16px;color:#64748b;font-weight:700}.sales-workspace-tabs .nav-link:hover{color:var(--ds-brand);background:#f4f8fc}.sales-workspace-tabs .nav-link.active{color:var(--ds-brand);background:#fff;border-bottom-color:var(--ds-brand)}.sales-tab-count{display:inline-grid;place-items:center;min-width:22px;height:22px;margin-left:5px;padding:0 6px;border-radius:999px;background:#eef2f7;color:#475569;font-size:.72rem}.sales-workspace-content>.tab-pane{outline:none}
 @media(max-width:991.98px){.sales-invoice-panel{position:static}.sales-invoice-panel .dash-panel-body{padding:1rem}}
 @media(max-width:575.98px){.sales-section-heading small{line-height:1.4}.sales-branch-panel .col-md-4{align-items:flex-start!important;flex-direction:column}.sales-branch-panel .col-md-4 small{margin:0}}
 </style>
