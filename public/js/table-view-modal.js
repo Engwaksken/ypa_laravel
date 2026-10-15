@@ -20,20 +20,36 @@
         if (download) { download.hidden = true; download.removeAttribute('href'); }
     }
 
-    function displayPdf(blob, label) {
+    function displayPdf(blob, label, printWhenReady = false) {
         releasePdf();
         objectUrl = root.URL.createObjectURL(blob);
         const frame = document.createElement('iframe');
         frame.className = 'platform-pdf-frame';
         frame.title = label;
         frame.src = objectUrl;
+        if (printWhenReady) {
+            frame.addEventListener('load', () => {
+                // Wait for the PDF viewer to finish initializing and the modal
+                // to become visible before invoking the browser print dialog.
+                root.setTimeout(() => {
+                    try {
+                        frame.contentWindow?.focus();
+                        frame.contentWindow?.print();
+                    } catch (_) {
+                        if (notice) notice.textContent = 'The PDF is ready. Use the browser print command if the print dialog did not open.';
+                    }
+                }, 500);
+            }, {once: true});
+        }
         body.replaceChildren(frame);
         if (download) {
             download.href = objectUrl;
             download.download = (label.replace(/[^a-z0-9_-]+/gi, '-').slice(0, 100) || 'document') + '.pdf';
             download.hidden = false;
         }
-        if (notice) notice.textContent = 'PDF preview. Use Download PDF if your browser does not display embedded documents.';
+        if (notice) notice.textContent = printWhenReady
+            ? 'Opening the print dialog. Use Download PDF to save a copy.'
+            : 'PDF preview. Use Download PDF if your browser does not display embedded documents.';
     }
 
     root.YpaDocumentViewer = {
@@ -43,7 +59,7 @@
             title.textContent = label;
             fullPage.hidden = true;
             body.setAttribute('aria-busy', 'false');
-            displayPdf(blob, label);
+            displayPdf(blob, label, true);
             root.bootstrap.Modal.getOrCreateInstance(modal).show(trigger);
         }
     };
