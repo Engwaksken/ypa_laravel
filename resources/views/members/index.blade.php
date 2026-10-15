@@ -175,10 +175,10 @@
                                         if (\Illuminate\Support\Facades\Schema::hasTable('payment_transactions') && \Illuminate\Support\Facades\Schema::hasColumn('payment_transactions', 'member_id') && \Illuminate\Support\Facades\Schema::hasColumn('payment_transactions', 'total_amount_paid') && \Illuminate\Support\Facades\Schema::hasColumn('payment_transactions', 'total_amount_outstanding')) {
                                             $row = \Illuminate\Support\Facades\DB::table('payment_transactions')
                                                 ->where('member_id', $member->id)
-                                                ->selectRaw('COALESCE(SUM(total_amount_paid),0) as paid, COALESCE(SUM(total_amount_outstanding),0) as out')
+                                                ->selectRaw('COALESCE(SUM(total_amount_paid),0) as paid, COALESCE(SUM(total_amount_outstanding),0) as outstanding_balance')
                                                 ->first();
                                             $paid = (float) ($row->paid ?? 0);
-                                            $out = (float) ($row->out ?? 0);
+                                            $out = (float) ($row->outstanding_balance ?? 0);
                                             $ps = $paid <= 0 ? 'UNPAID' : ($out <= 0.009 ? 'PAID' : 'PARTIAL');
                                         }
                                         $pBadge = match($ps) { 'PAID' => 'success', 'PARTIAL' => 'warning', default => 'secondary' };

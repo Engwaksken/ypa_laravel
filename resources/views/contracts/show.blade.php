@@ -42,7 +42,7 @@
             <span><i class="fas fa-file-alt"></i> Contract Document{{ $template ? ' · ' . $template->template_name . ' (v' . $template->version . ')' : '' }}</span>
             <a href="{{ route('contracts.pdf', $contract) }}" data-pdf-preview class="btn btn-sm btn-outline-secondary">View PDF</a>
         </div>
-        <div class="dash-panel-body">
+        <div class="dash-panel-body contract-preview-panel">
             @if($documentWarnings ?? [])
                 <div class="alert alert-warning">Missing recorded contract details: {{ implode(', ', $documentWarnings) }}. Update the member record before issuing the final agreement.</div>
             @endif
@@ -52,7 +52,7 @@
             @unless($template)
                 <div class="alert alert-warning">No matching agreement template is configured. The document below shows the contract summary, not legal agreement terms.</div>
             @endunless
-            <iframe class="platform-pdf-frame" src="{{ route('contracts.pdf', $contract) }}" title="Contract document {{ $contract->contract_number }}" loading="lazy"></iframe>
+            <iframe class="platform-pdf-frame contract-document-frame" src="{{ route('contracts.pdf', $contract) }}#view=FitH" title="Contract document {{ $contract->contract_number }}" loading="lazy"></iframe>
             <p class="small text-muted mt-2 mb-0">If your browser cannot display the PDF, use Download PDF above.</p>
         </div>
     </div>
@@ -153,3 +153,11 @@
 
 </div>
 @endsection
+
+@push('styles')
+<style>
+.contract-preview-panel{background:#eef2f7}.contract-document-frame{display:block;width:100%;height:min(82vh,1200px);min-height:680px;border:1px solid #dbe3ec;border-radius:8px;background:#fff;box-shadow:0 8px 28px #0f172a1a}.contract-document .dash-panel-head{background:#fff}
+@media(max-width:640px){.contract-document-frame{height:70vh;min-height:480px}}
+@media print{.dash-head,.contract-document .dash-panel-head,.dash-panel:not(.contract-document){display:none!important}.contract-document{border:0!important;box-shadow:none!important}.contract-document-frame{height:100vh;border:0;box-shadow:none}}
+</style>
+@endpush

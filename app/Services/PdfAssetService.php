@@ -15,7 +15,23 @@ class PdfAssetService
         }
         $path = rawurldecode((string) ($parts['path'] ?? ''));
         if (str_contains($path, "\0")) return null;
-        $file = realpath(public_path(ltrim(str_replace('\\', '/', $path), '/')));
+        $relative = ltrim(str_replace('\\', '/', $path), '/');
+        $candidates = [public_path($relative)];
+        // Common Laravel uploads may be stored on the public disk without a
+        // public/storage symlink, so try that trusted local disk as well.
+        if (str_starts_with($relative, 'storage/')) {
+            $candidates[] = storage_path('app/public/' . substr($relative, strlen('storage/')));
+        } else {
+            $candidates[] = storage_path('app/public/' . $relative);
+        }
+        $file = null;
+        foreach ($candidates as $candidate) {
+            $resolved = realpath($candidate);
+            if ($resolved && is_file($resolved)) {
+                $file = $resolved;
+                break;
+            }
+        }
         $roots = array_filter([realpath(public_path()), realpath(storage_path('app/public'))]);
         $allowed = $file && is_file($file) && collect($roots)->contains(fn ($root) =>
             str_starts_with($file, rtrim($root, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR));

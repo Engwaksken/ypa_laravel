@@ -91,7 +91,8 @@ class MemberController extends Controller
             'to' => 0.0,
         ];
 
-        if (Schema::hasTable('payment_transactions') && Schema::hasColumn('payment_transactions', 'membership_fee_paid') && Schema::hasColumn('payment_transactions', 'total_amount_paid') && Schema::hasColumn('payment_transactions', 'total_amount_outstanding') && Schema::hasColumn('payment_transactions', 'registration_fee_paid') && Schema::hasColumn('payment_transactions', 'admin_fee_paid') && Schema::hasColumn('payment_transactions', 'contract_amount_paid')) {
+        $ledgerColumns = ['member_id', 'membership_fee_paid', 'registration_fee_paid', 'admin_fee_paid', 'contract_amount_paid', 'total_amount_paid', 'total_amount_outstanding'];
+        if (Schema::hasTable('payment_transactions') && collect($ledgerColumns)->every(fn (string $column) => Schema::hasColumn('payment_transactions', $column))) {
             $ledger = DB::table('payment_transactions')
                 ->whereNotNull('member_id')
                 ->selectRaw("
@@ -434,17 +435,18 @@ class MemberController extends Controller
      */
     protected function ledgerPayStatus(Member $member): string
     {
-        if (!Schema::hasTable('payment_transactions')) {
+        if (!Schema::hasTable('payment_transactions') || !Schema::hasColumn('payment_transactions', 'member_id')
+            || !Schema::hasColumn('payment_transactions', 'total_amount_paid') || !Schema::hasColumn('payment_transactions', 'total_amount_outstanding')) {
             return 'UNPAID';
         }
 
         $row = DB::table('payment_transactions')
             ->where('member_id', $member->id)
-            ->selectRaw('COALESCE(SUM(total_amount_paid),0) as paid, COALESCE(SUM(total_amount_outstanding),0) as out')
+            ->selectRaw('COALESCE(SUM(total_amount_paid),0) as paid, COALESCE(SUM(total_amount_outstanding),0) as outstanding_balance')
             ->first();
 
         $paid = (float) ($row->paid ?? 0);
-        $out = (float) ($row->out ?? 0);
+        $out = (float) ($row->outstanding_balance ?? 0);
 
         if ($paid <= 0) {
             return 'UNPAID';
