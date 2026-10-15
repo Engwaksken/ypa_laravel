@@ -91,7 +91,7 @@ class MemberController extends Controller
             'to' => 0.0,
         ];
 
-        if (Schema::hasTable('payment_transactions') && Schema::hasColumn('payment_transactions', 'membership_fee_paid') && Schema::hasColumn('payment_transactions', 'total_amount_paid')) {
+        if (Schema::hasTable('payment_transactions') && Schema::hasColumn('payment_transactions', 'membership_fee_paid') && Schema::hasColumn('payment_transactions', 'total_amount_paid') && Schema::hasColumn('payment_transactions', 'total_amount_outstanding') && Schema::hasColumn('payment_transactions', 'registration_fee_paid') && Schema::hasColumn('payment_transactions', 'admin_fee_paid') && Schema::hasColumn('payment_transactions', 'contract_amount_paid')) {
             $ledger = DB::table('payment_transactions')
                 ->whereNotNull('member_id')
                 ->selectRaw("
@@ -392,32 +392,26 @@ class MemberController extends Controller
 
         $like = '%' . $search . '%';
 
-        $query->where(function ($q) use ($like, $search) {
-            $q->where('first_name', 'like', $like)
-                ->orWhere('last_name', 'like', $like)
-                ->orWhere('other_name', 'like', $like)
-                ->orWhere('email', 'like', $like)
-                ->orWhere('membership_id', 'like', $like)
-                ->orWhere('telephone1', 'like', $like)
-                ->orWhere('telephone2', 'like', $like)
-                ->orWhere('nin', 'like', $like)
-                ->orWhere('tin_number', 'like', $like)
-                ->orWhere('tin', 'like', $like)
-                ->orWhere('tax_identification_number', 'like', $like)
-                ->orWhere('bank_account', 'like', $like)
-                ->orWhere('source', 'like', $like)
-                ->orWhere('source_type', 'like', $like)
-                ->orWhere('source_station', 'like', $like)
-                ->orWhere('radio_station', 'like', $like)
-                ->orWhere('tv_station', 'like', $like)
-                ->orWhereRaw("TRIM(CONCAT_WS(' ', COALESCE(first_name,''), COALESCE(last_name,''), COALESCE(other_name,''))) LIKE ?", [$like]);
+        $columns = array_values(array_filter([
+            'first_name', 'last_name', 'other_name', 'email', 'membership_id', 'telephone1', 'telephone2',
+            'nin', 'tin_number', 'tin', 'tax_identification_number', 'bank_account', 'source', 'source_type',
+            'source_station', 'radio_station', 'tv_station',
+        ], fn (string $column) => Schema::hasColumn('members', $column)));
+        $nameColumns = array_values(array_intersect(['first_name', 'last_name', 'other_name'], $columns));
+
+        $query->where(function ($q) use ($like, $search, $columns, $nameColumns) {
+            foreach ($columns as $column) {
+                $q->orWhere($column, 'like', $like);
+            }
+            if ($nameColumns) {
+                $parts = implode(", ' ', ", array_map(fn (string $column) => "COALESCE(`{$column}`, '')", $nameColumns));
+                $q->orWhereRaw("TRIM(CONCAT({$parts})) LIKE ?", [$like]);
+            }
 
             // Branch name search.
-            $q->orWhereHas('branch', function ($bq) use ($like) {
-                $bq->where('name', 'like', $like)
-                    ->orWhere('branch_name', 'like', $like)
-                    ->orWhere('title', 'like', $like);
-            });
+            if (Schema::hasTable('branches') && Schema::hasColumn('branches', 'name')) {
+                $q->orWhereHas('branch', fn ($bq) => $bq->where('name', 'like', $like));
+            }
 
             // Per-token search (legacy behaviour).
             foreach (preg_split('/\s+/', $search) ?: [] as $token) {
@@ -426,21 +420,10 @@ class MemberController extends Controller
                     continue;
                 }
                 $tokenLike = '%' . $token . '%';
-                $q->orWhere(function ($tq) use ($tokenLike) {
-                    $tq->where('first_name', 'like', $tokenLike)
-                        ->orWhere('last_name', 'like', $tokenLike)
-                        ->orWhere('other_name', 'like', $tokenLike)
-                        ->orWhere('membership_id', 'like', $tokenLike)
-                        ->orWhere('telephone1', 'like', $tokenLike)
-                        ->orWhere('telephone2', 'like', $tokenLike)
-                        ->orWhere('nin', 'like', $tokenLike)
-                        ->orWhere('tin_number', 'like', $tokenLike)
-                        ->orWhere('tin', 'like', $tokenLike)
-                        ->orWhere('source', 'like', $tokenLike)
-                        ->orWhere('source_type', 'like', $tokenLike)
-                        ->orWhere('source_station', 'like', $tokenLike)
-                        ->orWhere('radio_station', 'like', $tokenLike)
-                        ->orWhere('tv_station', 'like', $tokenLike);
+                $q->orWhere(function ($tq) use ($tokenLike, $columns) {
+                    foreach ($columns as $column) {
+                        $tq->orWhere($column, 'like', $tokenLike);
+                    }
                 });
             }
         });

@@ -246,6 +246,61 @@
 @push('scripts')
 <script>
 window.YpaMemberForm = (function () {
+    function setupTabs(form) {
+        const fields = form.querySelector('.member-form-fields');
+        if (!fields || fields.dataset.tabsReady) return;
+        const headings = [...fields.querySelectorAll(':scope > .col-12 .modal-section-title')];
+        if (headings.length < 2) return;
+        fields.dataset.tabsReady = '1';
+        const groups = headings.map(function (heading, index) {
+            const section = heading.closest('.col-12');
+            const nodes = [];
+            let node = section;
+            while (node) {
+                const next = node.nextElementSibling;
+                if (node !== section && node.matches('.col-12') && node.querySelector('.modal-section-title')) break;
+                nodes.push(node);
+                node = next;
+            }
+            return { title: heading.textContent.trim(), nodes: nodes, id: 'member-tab-' + Math.random().toString(36).slice(2) };
+        });
+        const nav = document.createElement('div');
+        nav.className = 'nav nav-tabs member-form-tabs mb-3';
+        nav.setAttribute('role', 'tablist');
+        const content = document.createElement('div');
+        content.className = 'tab-content';
+        groups.forEach(function (group, index) {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'nav-link' + (index === 0 ? ' active' : '');
+            button.textContent = group.title;
+            button.setAttribute('role', 'tab');
+            button.setAttribute('aria-selected', index === 0 ? 'true' : 'false');
+            const pane = document.createElement('div');
+            pane.className = 'tab-pane' + (index === 0 ? ' active show' : '');
+            pane.id = group.id;
+            pane.setAttribute('role', 'tabpanel');
+            group.nodes.forEach(function (item) { pane.appendChild(item); });
+            button.addEventListener('click', function () {
+                nav.querySelectorAll('.nav-link').forEach(function (tab) { tab.classList.remove('active'); tab.setAttribute('aria-selected', 'false'); });
+                content.querySelectorAll('.tab-pane').forEach(function (tabPane) { tabPane.classList.remove('active', 'show'); });
+                button.classList.add('active');
+                button.setAttribute('aria-selected', 'true');
+                pane.classList.add('active', 'show');
+            });
+            nav.appendChild(button);
+            content.appendChild(pane);
+        });
+        fields.append(nav, content);
+        form.addEventListener('invalid', function (event) {
+            const pane = event.target.closest('.tab-pane');
+            if (!pane || pane.classList.contains('active')) return;
+            const index = [...content.children].indexOf(pane);
+            nav.children[index]?.click();
+            event.target.focus();
+        }, true);
+    }
+
     function sync(form) {
         const source = form.querySelector('[data-member-source]');
         const station = form.querySelector('[data-member-station]');
@@ -275,6 +330,7 @@ window.YpaMemberForm = (function () {
     function bind(form) {
         if (!form || form.dataset.memberBound) return;
         form.dataset.memberBound = '1';
+        setupTabs(form);
         form.addEventListener('change', function (e) {
             if (e.target.matches('[data-member-source], [data-member-employment]')) sync(form);
         });

@@ -4,14 +4,15 @@
     <style>
         body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
         .container { max-width: 600px; margin: 0 auto; padding: 0; }
-        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+        .header { background: #005fa3; color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+        .logo { display:block; max-width:180px; max-height:64px; margin:0 auto 14px; }
         .header h1 { margin: 0 0 10px 0; font-size: 28px; }
         .header p { margin: 0; font-size: 14px; opacity: 0.9; }
         .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
         .content h2 { color: #333; margin-top: 0; }
-        .code-box { background: white; border: 2px dashed #667eea; border-radius: 8px; padding: 20px; text-align: center; margin: 20px 0; }
+        .code-box { background: white; border: 2px dashed #005fa3; border-radius: 8px; padding: 20px; text-align: center; margin: 20px 0; }
         .code-label { margin: 0; color: #666; font-size: 14px; margin-bottom: 10px; }
-        .code { font-size: 36px; font-weight: bold; color: #667eea; letter-spacing: 8px; font-family: "Courier New", monospace; margin: 10px 0; }
+        .code { font-size: 36px; font-weight: bold; color: #005fa3; letter-spacing: 8px; font-family: "Courier New", monospace; margin: 10px 0; }
         .warning { background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; border-radius: 4px; }
         .warning strong { color: #856404; }
         .info-box { background: #e3f2fd; border-left: 4px solid #2196F3; padding: 15px; margin: 20px 0; border-radius: 4px; }
@@ -21,6 +22,7 @@
 <body>
     <div class="container">
         <div class="header">
+            <img class="logo" src="{{ asset('images/logo.png') }}" alt="{{ config('app.name') }}">
             <h1>{{ config('app.name') }}</h1>
             <p>Two-Factor Authentication</p>
         </div>

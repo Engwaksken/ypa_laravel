@@ -4,11 +4,12 @@
     <style>
         body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
         .container { max-width: 600px; margin: 0 auto; padding: 0; }
-        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+        .header { background: #005fa3; color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+        .logo { display:block; max-width:180px; max-height:64px; margin:0 auto 14px; }
         .header h1 { margin: 0 0 10px 0; font-size: 28px; }
         .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
         .content h2 { color: #333; margin-top: 0; }
-        .btn { display: inline-block; padding: 15px 40px; background: #667eea; color: white !important; text-decoration: none; border-radius: 6px; margin: 20px 0; font-weight: bold; }
+        .btn { display: inline-block; padding: 15px 40px; background: #005fa3; color: white !important; text-decoration: none; border-radius: 6px; margin: 20px 0; font-weight: bold; }
         .warning { background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; border-radius: 4px; }
         .warning strong { color: #856404; }
         .footer { text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; color: #666; font-size: 12px; }
@@ -17,6 +18,7 @@
 <body>
     <div class="container">
         <div class="header">
+            <img class="logo" src="{{ asset('images/logo.png') }}" alt="{{ config('app.name') }}">
             <h1>{{ config('app.name') }}</h1>
             <p>Password Reset Request</p>
         </div>

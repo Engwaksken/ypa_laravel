@@ -41,8 +41,11 @@
                        maxlength="6"
                        pattern="[0-9]{6}"
                        inputmode="numeric"
+                       value="{{ old('code') }}"
                        required
                        autofocus>
+                <div class="form-text">Enter the 6-digit code from the email. The code expires after 10 minutes.</div>
+                @error('code')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
             </div>
 
             <button type="submit" name="verify" class="btn-primary">

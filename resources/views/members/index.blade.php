@@ -172,7 +172,7 @@
                                 <td>
                                     @php
                                         $ps = 'UNPAID';
-                                        if (\Illuminate\Support\Facades\Schema::hasTable('payment_transactions')) {
+                                        if (\Illuminate\Support\Facades\Schema::hasTable('payment_transactions') && \Illuminate\Support\Facades\Schema::hasColumn('payment_transactions', 'member_id') && \Illuminate\Support\Facades\Schema::hasColumn('payment_transactions', 'total_amount_paid') && \Illuminate\Support\Facades\Schema::hasColumn('payment_transactions', 'total_amount_outstanding')) {
                                             $row = \Illuminate\Support\Facades\DB::table('payment_transactions')
                                                 ->where('member_id', $member->id)
                                                 ->selectRaw('COALESCE(SUM(total_amount_paid),0) as paid, COALESCE(SUM(total_amount_outstanding),0) as out')
