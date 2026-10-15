@@ -13,7 +13,7 @@
     $stationKind = in_array($v('source'), ['Radio', 'TV'], true) ? $v('source') : '';
 @endphp
 
-<div class="row g-3 member-form-fields">
+<div class="member-form-fields">
     <div class="col-12"><div class="modal-section-title">Personal details</div></div>
     <div class="col-md-4">
         <label class="form-label">First Name <span class="text-danger">*</span></label>
@@ -265,10 +265,16 @@ window.YpaMemberForm = (function () {
             return { title: heading.textContent.trim(), nodes: nodes, id: 'member-tab-' + Math.random().toString(36).slice(2) };
         });
         const nav = document.createElement('div');
-        nav.className = 'nav nav-tabs member-form-tabs mb-3';
+        nav.className = 'nav nav-tabs member-form-tabs';
         nav.setAttribute('role', 'tablist');
+        const navColumn = document.createElement('div');
+        navColumn.className = 'member-form-tabs-column';
+        navColumn.appendChild(nav);
         const content = document.createElement('div');
-        content.className = 'tab-content';
+        content.className = 'tab-content member-form-tab-content';
+        const contentColumn = document.createElement('div');
+        contentColumn.className = 'member-form-content-column';
+        contentColumn.appendChild(content);
         groups.forEach(function (group, index) {
             const button = document.createElement('button');
             button.type = 'button';
@@ -277,7 +283,7 @@ window.YpaMemberForm = (function () {
             button.setAttribute('role', 'tab');
             button.setAttribute('aria-selected', index === 0 ? 'true' : 'false');
             const pane = document.createElement('div');
-            pane.className = 'tab-pane' + (index === 0 ? ' active show' : '');
+            pane.className = 'tab-pane row g-3' + (index === 0 ? ' active show' : '');
             pane.id = group.id;
             pane.setAttribute('role', 'tabpanel');
             group.nodes.forEach(function (item) { pane.appendChild(item); });
@@ -291,7 +297,12 @@ window.YpaMemberForm = (function () {
             nav.appendChild(button);
             content.appendChild(pane);
         });
-        fields.append(nav, content);
+        fields.append(navColumn, contentColumn);
+        const firstInvalid = fields.querySelector('.is-invalid');
+        const invalidPane = firstInvalid?.closest('.tab-pane');
+        if (invalidPane && !invalidPane.classList.contains('active')) {
+            nav.children[[...content.children].indexOf(invalidPane)]?.click();
+        }
         form.addEventListener('invalid', function (event) {
             const pane = event.target.closest('.tab-pane');
             if (!pane || pane.classList.contains('active')) return;

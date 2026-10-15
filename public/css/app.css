@@ -63,13 +63,50 @@ a:focus-visible {
     white-space: nowrap;
 }
 
-.member-form-fields > .tab-content,
-.member-form-fields > .member-form-tabs {
+.member-form-tabs-column,
+.member-form-content-column {
     width: 100%;
 }
 
-.member-form-fields > .tab-content > .tab-pane:not(.active) {
+.member-form-tabs-column {
+    margin-bottom: 1rem;
+}
+
+.member-form-tab-content {
+    width: 100%;
+}
+
+.member-form-tab-content > .tab-pane {
+    margin: 0;
+    min-width: 0;
+}
+
+.member-form-tab-content > .tab-pane:not(.active) {
     display: none;
+}
+
+.member-form-tab-content > .tab-pane > [class*="col-"] {
+    min-width: 0;
+}
+
+#memberModal .modal-dialog {
+    width: min(1320px, calc(100vw - 2rem));
+    max-width: none;
+}
+
+#memberModal .modal-content {
+    max-height: calc(100vh - 2rem);
+}
+
+#memberModal .modal-body {
+    overflow-y: auto;
+    padding: 1.25rem clamp(1rem, 2.5vw, 2rem);
+}
+
+@media (max-width: 575.98px) {
+    #memberModal .modal-dialog { width: calc(100vw - 1rem); margin: .5rem; }
+    #memberModal .modal-body { padding: 1rem .75rem; }
+    .member-form-tabs-column { margin-left: -.25rem; margin-right: -.25rem; width: auto; }
 }
 
 /* ------------------------------------------------------------
