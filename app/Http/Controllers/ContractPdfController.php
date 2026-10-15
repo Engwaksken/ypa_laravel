@@ -11,6 +11,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Http\Response;
+use Illuminate\View\View;
 
 class ContractPdfController extends Controller
 {
@@ -58,5 +59,44 @@ class ContractPdfController extends Controller
         $filename = preg_replace('/[^A-Za-z0-9_-]/', '-', (string) ($contract->contract_number ?: 'contract')) . '.pdf';
 
         return $request->boolean('download') ? $pdf->download($filename) : $pdf->stream($filename);
+    }
+
+    public function print(Request $request, Contract $contract): View
+    {
+        $contract->loadMissing(['member.nextOfKin', 'member.bankDetail', 'group', 'project', 'branch', 'paymentMethod', 'items.project']);
+        $data = $request->validate(['template_id' => ['nullable', 'integer', 'min:1']]);
+        $template = $this->contractService->resolveTemplate($contract, isset($data['template_id']) ? (int) $data['template_id'] : null);
+        $html = $template ? $this->contractService->renderTemplate($contract, $template) : '';
+        $sections = app(ContractPdfDocumentService::class)->sections($html);
+        $group = strtolower((string) $contract->contract_for) === 'group';
+        $nextOfKin = $contract->member?->nextOfKin?->first();
+        try { $logo = \App\Models\Setting::asset('site_logo', 'images/logo.png'); }
+        catch (\Throwable) { $logo = 'images/logo.png'; }
+
+        return view('contracts.print', [
+            'contract' => $contract,
+            'template' => $template,
+            'coverHtml' => $sections['coverHtml'],
+            'bodyHtml' => $sections['bodyHtml'],
+            'signatureHtml' => $sections['signatureHtml'],
+            'logoUrl' => asset($logo),
+            'partyName' => $group ? $contract->group?->group_name : $contract->member?->full_name,
+            'partyPhoto' => $this->browserImageUrl($contract->farmer_photo ?: $contract->member?->member_photo),
+            'kinPhoto' => $this->browserImageUrl($contract->nok_photo ?: $nextOfKin?->photo ?: $nextOfKin?->nok_photo ?: $nextOfKin?->photo_path),
+            'nextOfKin' => $nextOfKin,
+            'group' => $group,
+        ]);
+    }
+
+    private function browserImageUrl(?string $source): ?string
+    {
+        $source = trim((string) $source);
+        if ($source === '') return null;
+        $parts = parse_url($source);
+        if ($parts === false || (isset($parts['host']) && strcasecmp($parts['host'], (string) parse_url(config('app.url'), PHP_URL_HOST)) !== 0)
+            || (isset($parts['scheme']) && ! in_array(strtolower($parts['scheme']), ['http', 'https'], true))) return null;
+        $path = ltrim(rawurldecode((string) ($parts['path'] ?? '')), '/');
+        if ($path === '' || str_contains($path, '..') || str_contains($path, "\0")) return null;
+        return asset($path);
     }
 }

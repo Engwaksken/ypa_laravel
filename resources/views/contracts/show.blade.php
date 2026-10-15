@@ -15,7 +15,7 @@
             <div class="dash-date">{{ ucfirst((string) $contract->contract_for) }} contract &middot; {{ $party ?: '-' }}</div>
         </div>
         <div class="d-flex gap-2 flex-wrap">
-            <a href="{{ route('contracts.pdf', $contract) }}" data-pdf-preview class="btn btn-outline-secondary"><i class="fas fa-file-pdf"></i> View PDF</a>
+            <a href="{{ route('contracts.print', $contract) }}" target="_blank" rel="noopener" class="btn btn-outline-primary"><i class="fas fa-print"></i> Print Contract</a>
             <a href="{{ route('contracts.pdf', ['contract' => $contract, 'download' => 1]) }}" download class="btn btn-outline-secondary">Download PDF</a>
             @if($perm->can('new_payments'))
                 <a href="{{ route('payments.create', ['contract_id' => $contract->id]) }}" class="btn btn-outline-success"><i class="fas fa-money-bill-wave"></i> Record Payment</a>
@@ -40,7 +40,7 @@
     <div class="dash-panel mb-4 contract-document" data-table-tools="off">
         <div class="dash-panel-head">
             <span><i class="fas fa-file-alt"></i> Contract Document{{ $template ? ' · ' . $template->template_name . ' (v' . $template->version . ')' : '' }}</span>
-            <a href="{{ route('contracts.pdf', $contract) }}" data-pdf-preview class="btn btn-sm btn-outline-secondary">View PDF</a>
+            <a href="{{ route('contracts.print', $contract) }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-primary"><i class="fas fa-print me-1"></i>Print</a>
         </div>
         <div class="dash-panel-body contract-preview-panel">
             @if($documentWarnings ?? [])

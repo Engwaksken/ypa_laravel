@@ -215,6 +215,9 @@ Route::middleware(['auth', 'user.status'])->group(function () {
     Route::get('/contracts/{contract}/pdf', [ContractPdfController::class, 'show'])
         ->name('contracts.pdf')
         ->middleware('permission:contracts_view');
+    Route::get('/contracts/{contract}/print', [ContractPdfController::class, 'print'])
+        ->name('contracts.print')
+        ->middleware('permission:contracts_view');
 
     Route::post('/contracts/{contract}/workflow/save-draft', [ContractWorkflowController::class, 'saveDraft'])
         ->name('contracts.workflow.save_draft')

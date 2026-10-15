@@ -10,6 +10,7 @@
         ? $contract?->group?->group_name
         : $contract?->member?->full_name;
     $pdfUrl = $contract ? route('contracts.pdf', ['contract' => $contract, 'template_id' => $template->id]) : null;
+    $printUrl = $contract ? route('contracts.print', ['contract' => $contract, 'template_id' => $template->id]) : null;
 @endphp
 <div class="dash-wrap">
 
@@ -26,8 +27,8 @@
             <span><i class="fas fa-file-contract"></i> {{ $contract ? 'Agreement preview' : 'Template preview' }}</span>
             @if($contract)
                 <div class="d-flex flex-wrap gap-2">
-                    <a class="btn btn-sm btn-outline-secondary" href="{{ $pdfUrl }}" target="_blank" rel="noopener"><i class="fas fa-up-right-from-square me-1"></i>Open PDF</a>
-                    <a class="btn btn-sm btn-primary" href="{{ $pdfUrl }}&download=1"><i class="fas fa-download me-1"></i>Download PDF</a>
+                    <a class="btn btn-sm btn-outline-primary" href="{{ $printUrl }}" target="_blank" rel="noopener"><i class="fas fa-print me-1"></i>Print Agreement</a>
+                    <a class="btn btn-sm btn-primary" href="{{ route('contracts.pdf', ['contract' => $contract, 'template_id' => $template->id, 'download' => 1]) }}"><i class="fas fa-download me-1"></i>Download PDF</a>
                 </div>
             @endif
         </div>
