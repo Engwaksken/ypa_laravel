@@ -34,89 +34,119 @@
             <span><i class="fas fa-calendar-plus"></i> Activity Details</span>
         </div>
         <div class="dash-panel-body">
-            <form method="POST" action="{{ route('activities.store') }}" class="row g-3">
+            <form method="POST" action="{{ route('activities.store') }}">
                 @csrf
+                @php
+                    $tabs = [
+                        ['id' => 'activity-tab-details', 'label' => 'Details', 'fields' => ['activity_name', 'activity_type_id', 'description']],
+                        ['id' => 'activity-tab-schedule', 'label' => 'Schedule & Budget', 'fields' => ['start_date', 'end_date', 'location', 'budget', 'is_promotion', 'status']],
+                    ];
+                    $activeTabId = $tabs[0]['id'];
+                    foreach ($tabs as $tab) {
+                        foreach ($tab['fields'] as $field) {
+                            if ($errors->has($field)) { $activeTabId = $tab['id']; break 2; }
+                        }
+                    }
+                @endphp
 
-                <div class="col-md-6">
-                    <label class="form-label">Activity Name <span class="text-danger">*</span></label>
-                    <input type="text" name="activity_name" value="{{ old('activity_name') }}" class="form-control @error('activity_name') is-invalid @enderror" required>
-                    @error('activity_name')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                    @enderror
+                <ul class="nav nav-tabs ypa-tabs mb-3" role="tablist">
+                    @foreach($tabs as $tab)
+                        <li class="nav-item" role="presentation">
+                            <button type="button" class="nav-link @if($tab['id'] === $activeTabId) active @endif" id="{{ $tab['id'] }}-tab" data-bs-toggle="tab" data-bs-target="#{{ $tab['id'] }}" role="tab" aria-controls="{{ $tab['id'] }}" aria-selected="{{ $tab['id'] === $activeTabId ? 'true' : 'false' }}">{{ $tab['label'] }}</button>
+                        </li>
+                    @endforeach
+                </ul>
+
+                <div class="tab-content">
+                    <div class="tab-pane fade @if($activeTabId === 'activity-tab-details') show active @endif" id="activity-tab-details" role="tabpanel" aria-labelledby="activity-tab-details-tab">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Activity Name <span class="text-danger">*</span></label>
+                                <input type="text" name="activity_name" value="{{ old('activity_name') }}" class="form-control @error('activity_name') is-invalid @enderror" required>
+                                @error('activity_name')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Activity Type <span class="text-danger">*</span></label>
+                                <select name="activity_type_id" class="form-select @error('activity_type_id') is-invalid @enderror" required>
+                                    <option value="">Select Type</option>
+                                    @foreach($types as $type)
+                                        <option value="{{ $type->id }}" @selected(old('activity_type_id') == $type->id)>{{ $type->type_name }}</option>
+                                    @endforeach
+                                </select>
+                                @error('activity_type_id')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="col-12">
+                                <label class="form-label">Description</label>
+                                <textarea name="description" rows="3" class="form-control @error('description') is-invalid @enderror">{{ old('description') }}</textarea>
+                                @error('description')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tab-pane fade @if($activeTabId === 'activity-tab-schedule') show active @endif" id="activity-tab-schedule" role="tabpanel" aria-labelledby="activity-tab-schedule-tab">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Start Date <span class="text-danger">*</span></label>
+                                <input type="date" name="start_date" value="{{ old('start_date') }}" class="form-control @error('start_date') is-invalid @enderror" required>
+                                @error('start_date')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">End Date</label>
+                                <input type="date" name="end_date" value="{{ old('end_date') }}" class="form-control @error('end_date') is-invalid @enderror">
+                                @error('end_date')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Location</label>
+                                <input type="text" name="location" value="{{ old('location') }}" class="form-control @error('location') is-invalid @enderror" placeholder="Venue / town">
+                                @error('location')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Budget (UGX)</label>
+                                <input type="text" name="budget" value="{{ old('budget') }}" class="form-control @error('budget') is-invalid @enderror" placeholder="e.g. 1,500,000">
+                                @error('budget')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Promotion Activity</label>
+                                <select name="is_promotion" class="form-select">
+                                    @foreach(\App\Services\ActivityService::IS_PROMOTION as $opt)
+                                        <option value="{{ $opt }}" @selected(old('is_promotion', 'No') === $opt)>{{ $opt }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Status</label>
+                                <select name="status" class="form-select">
+                                    @foreach(\App\Services\ActivityService::STATUSES as $st)
+                                        <option value="{{ $st }}" @selected(old('status', 'Planned') === $st)>{{ $st }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="col-md-6">
-                    <label class="form-label">Activity Type <span class="text-danger">*</span></label>
-                    <select name="activity_type_id" class="form-select @error('activity_type_id') is-invalid @enderror" required>
-                        <option value="">Select Type</option>
-                        @foreach($types as $type)
-                            <option value="{{ $type->id }}" @selected(old('activity_type_id') == $type->id)>{{ $type->type_name }}</option>
-                        @endforeach
-                    </select>
-                    @error('activity_type_id')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                    @enderror
-                </div>
-
-                <div class="col-12">
-                    <label class="form-label">Description</label>
-                    <textarea name="description" rows="3" class="form-control @error('description') is-invalid @enderror">{{ old('description') }}</textarea>
-                    @error('description')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                    @enderror
-                </div>
-
-                <div class="col-md-6">
-                    <label class="form-label">Start Date <span class="text-danger">*</span></label>
-                    <input type="date" name="start_date" value="{{ old('start_date') }}" class="form-control @error('start_date') is-invalid @enderror" required>
-                    @error('start_date')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                    @enderror
-                </div>
-
-                <div class="col-md-6">
-                    <label class="form-label">End Date</label>
-                    <input type="date" name="end_date" value="{{ old('end_date') }}" class="form-control @error('end_date') is-invalid @enderror">
-                    @error('end_date')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                    @enderror
-                </div>
-
-                <div class="col-md-6">
-                    <label class="form-label">Location</label>
-                    <input type="text" name="location" value="{{ old('location') }}" class="form-control @error('location') is-invalid @enderror" placeholder="Venue / town">
-                    @error('location')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                    @enderror
-                </div>
-
-                <div class="col-md-6">
-                    <label class="form-label">Budget (UGX)</label>
-                    <input type="text" name="budget" value="{{ old('budget') }}" class="form-control @error('budget') is-invalid @enderror" placeholder="e.g. 1,500,000">
-                    @error('budget')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                    @enderror
-                </div>
-
-                <div class="col-md-6">
-                    <label class="form-label">Promotion Activity</label>
-                    <select name="is_promotion" class="form-select">
-                        @foreach(\App\Services\ActivityService::IS_PROMOTION as $opt)
-                            <option value="{{ $opt }}" @selected(old('is_promotion', 'No') === $opt)>{{ $opt }}</option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <div class="col-md-6">
-                    <label class="form-label">Status</label>
-                    <select name="status" class="form-select">
-                        @foreach(\App\Services\ActivityService::STATUSES as $st)
-                            <option value="{{ $st }}" @selected(old('status', 'Planned') === $st)>{{ $st }}</option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <div class="col-12 d-flex gap-2">
+                <div class="d-flex gap-2 mt-4">
                     <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Save Activity</button>
                     <a href="{{ route('activities.index') }}" class="btn btn-outline-secondary">Cancel</a>
                 </div>

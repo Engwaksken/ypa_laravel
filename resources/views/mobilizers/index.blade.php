@@ -206,69 +206,92 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="modal-section-title">Personal Details</div>
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label" for="mobilizerFirstName">First Name <span class="text-danger">*</span></label>
-                            <input type="text" name="first_name" id="mobilizerFirstName" class="form-control" maxlength="255" required>
+                    @php
+                        $tabs = [
+                            ['id' => 'mobilizer-tab-personal', 'label' => 'Personal', 'fields' => ['first_name', 'last_name', 'contact_number', 'email']],
+                            ['id' => 'mobilizer-tab-assignment', 'label' => 'Assignment', 'fields' => ['department', 'position', 'branch_region', 'supervisor', 'status', 'remarks']],
+                        ];
+                        $activeTabId = $tabs[0]['id'];
+                        foreach ($tabs as $tab) {
+                            foreach ($tab['fields'] as $field) {
+                                if ($errors->has($field)) { $activeTabId = $tab['id']; break 2; }
+                            }
+                        }
+                    @endphp
+                    <ul class="nav nav-tabs ypa-tabs mb-3" role="tablist">
+                        @foreach($tabs as $tab)
+                            <li class="nav-item" role="presentation">
+                                <button type="button" class="nav-link @if($tab['id'] === $activeTabId) active @endif" id="{{ $tab['id'] }}-tab" data-bs-toggle="tab" data-bs-target="#{{ $tab['id'] }}" role="tab" aria-controls="{{ $tab['id'] }}" aria-selected="{{ $tab['id'] === $activeTabId ? 'true' : 'false' }}">{{ $tab['label'] }}</button>
+                            </li>
+                        @endforeach
+                    </ul>
+                    <div class="tab-content">
+                        <div class="tab-pane fade @if($activeTabId === 'mobilizer-tab-personal') show active @endif" id="mobilizer-tab-personal" role="tabpanel" aria-labelledby="mobilizer-tab-personal-tab">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label" for="mobilizerFirstName">First Name <span class="text-danger">*</span></label>
+                                    <input type="text" name="first_name" id="mobilizerFirstName" class="form-control" maxlength="255" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label" for="mobilizerLastName">Last Name <span class="text-danger">*</span></label>
+                                    <input type="text" name="last_name" id="mobilizerLastName" class="form-control" maxlength="255" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label" for="mobilizerContact">Contact Number <span class="text-danger">*</span></label>
+                                    <input type="text" name="contact_number" id="mobilizerContact" class="form-control" placeholder="+256..." required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label" for="mobilizerEmail">Email</label>
+                                    <input type="email" name="email" id="mobilizerEmail" class="form-control" maxlength="255">
+                                </div>
+                            </div>
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label" for="mobilizerLastName">Last Name <span class="text-danger">*</span></label>
-                            <input type="text" name="last_name" id="mobilizerLastName" class="form-control" maxlength="255" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label" for="mobilizerContact">Contact Number <span class="text-danger">*</span></label>
-                            <input type="text" name="contact_number" id="mobilizerContact" class="form-control" placeholder="+256..." required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label" for="mobilizerEmail">Email</label>
-                            <input type="email" name="email" id="mobilizerEmail" class="form-control" maxlength="255">
-                        </div>
-                    </div>
-                    <div class="modal-section-title mt-4">Assignment</div>
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label" for="mobilizerDepartment">Department <span class="text-danger">*</span></label>
-                            <input type="text" name="department" id="mobilizerDepartment" class="form-control" list="mobilizerDepartmentList" maxlength="255" required>
-                            <datalist id="mobilizerDepartmentList">
-                                @foreach($departmentArr as $dept)
-                                    <option value="{{ $dept }}"></option>
-                                @endforeach
-                            </datalist>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label" for="mobilizerPosition">Position <span class="text-danger">*</span></label>
-                            <input type="text" name="position" id="mobilizerPosition" class="form-control" list="mobilizerPositionList" maxlength="255" required>
-                            <datalist id="mobilizerPositionList">
-                                @foreach($positionArr as $pos)
-                                    <option value="{{ $pos }}"></option>
-                                @endforeach
-                            </datalist>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label" for="mobilizerBranch">Branch / Region</label>
-                            <select name="branch_region" id="mobilizerBranch" class="form-select">
-                                <option value="">Select Branch</option>
-                                @foreach($branches as $branch)
-                                    <option value="{{ $branch->name }}">{{ $branch->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label" for="mobilizerSupervisor">Supervisor</label>
-                            <input type="text" name="supervisor" id="mobilizerSupervisor" class="form-control" maxlength="255">
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label" for="mobilizerStatus">Status <span class="text-danger">*</span></label>
-                            <select name="status" id="mobilizerStatus" class="form-select" required>
-                                @foreach($mobilizerStatuses as $st)
-                                    <option value="{{ $st }}" @selected($st === 'Active')>{{ $st }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label" for="mobilizerRemarks">Remarks</label>
-                            <textarea name="remarks" id="mobilizerRemarks" rows="2" class="form-control"></textarea>
+                        <div class="tab-pane fade @if($activeTabId === 'mobilizer-tab-assignment') show active @endif" id="mobilizer-tab-assignment" role="tabpanel" aria-labelledby="mobilizer-tab-assignment-tab">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label" for="mobilizerDepartment">Department <span class="text-danger">*</span></label>
+                                    <input type="text" name="department" id="mobilizerDepartment" class="form-control" list="mobilizerDepartmentList" maxlength="255" required>
+                                    <datalist id="mobilizerDepartmentList">
+                                        @foreach($departmentArr as $dept)
+                                            <option value="{{ $dept }}"></option>
+                                        @endforeach
+                                    </datalist>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label" for="mobilizerPosition">Position <span class="text-danger">*</span></label>
+                                    <input type="text" name="position" id="mobilizerPosition" class="form-control" list="mobilizerPositionList" maxlength="255" required>
+                                    <datalist id="mobilizerPositionList">
+                                        @foreach($positionArr as $pos)
+                                            <option value="{{ $pos }}"></option>
+                                        @endforeach
+                                    </datalist>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label" for="mobilizerBranch">Branch / Region</label>
+                                    <select name="branch_region" id="mobilizerBranch" class="form-select">
+                                        <option value="">Select Branch</option>
+                                        @foreach($branches as $branch)
+                                            <option value="{{ $branch->name }}">{{ $branch->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label" for="mobilizerSupervisor">Supervisor</label>
+                                    <input type="text" name="supervisor" id="mobilizerSupervisor" class="form-control" maxlength="255">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label" for="mobilizerStatus">Status <span class="text-danger">*</span></label>
+                                    <select name="status" id="mobilizerStatus" class="form-select" required>
+                                        @foreach($mobilizerStatuses as $st)
+                                            <option value="{{ $st }}" @selected($st === 'Active')>{{ $st }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label" for="mobilizerRemarks">Remarks</label>
+                                    <textarea name="remarks" id="mobilizerRemarks" rows="2" class="form-control"></textarea>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -284,6 +307,7 @@
 @push('scripts')
 <script>
     function showMobilizerModal() {
+        YpaFormTabs.showErrorTab(document.getElementById('mobilizerForm'));
         if (window.bootstrap && bootstrap.Modal) {
             bootstrap.Modal.getOrCreateInstance(document.getElementById('mobilizerModal')).show();
         }

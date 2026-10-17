@@ -176,54 +176,77 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="modal-section-title">Meeting Details</div>
-                    <div class="row g-3">
-                        <div class="col-md-8">
-                            <label class="form-label" for="meetingTitle">Meeting Title <span class="text-danger">*</span></label>
-                            <input type="text" name="meeting_title" id="meetingTitle" class="form-control" maxlength="255" required>
+                    @php
+                        $tabs = [
+                            ['id' => 'meeting-tab-details', 'label' => 'Details', 'fields' => ['meeting_title', 'meeting_type', 'meeting_date', 'meeting_time', 'status', 'location', 'chaired_by']],
+                            ['id' => 'meeting-tab-agenda', 'label' => 'Agenda & Notes', 'fields' => ['agenda', 'notes']],
+                        ];
+                        $activeTabId = $tabs[0]['id'];
+                        foreach ($tabs as $tab) {
+                            foreach ($tab['fields'] as $field) {
+                                if ($errors->has($field)) { $activeTabId = $tab['id']; break 2; }
+                            }
+                        }
+                    @endphp
+                    <ul class="nav nav-tabs ypa-tabs mb-3" role="tablist">
+                        @foreach($tabs as $tab)
+                            <li class="nav-item" role="presentation">
+                                <button type="button" class="nav-link @if($tab['id'] === $activeTabId) active @endif" id="{{ $tab['id'] }}-tab" data-bs-toggle="tab" data-bs-target="#{{ $tab['id'] }}" role="tab" aria-controls="{{ $tab['id'] }}" aria-selected="{{ $tab['id'] === $activeTabId ? 'true' : 'false' }}">{{ $tab['label'] }}</button>
+                            </li>
+                        @endforeach
+                    </ul>
+                    <div class="tab-content">
+                        <div class="tab-pane fade @if($activeTabId === 'meeting-tab-details') show active @endif" id="meeting-tab-details" role="tabpanel" aria-labelledby="meeting-tab-details-tab">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label" for="meetingTitle">Meeting Title <span class="text-danger">*</span></label>
+                                    <input type="text" name="meeting_title" id="meetingTitle" class="form-control" maxlength="255" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label" for="meetingType">Meeting Type <span class="text-danger">*</span></label>
+                                    <select name="meeting_type" id="meetingType" class="form-select" required>
+                                        @foreach(\App\Services\MeetingService::MEETING_TYPES as $mt)
+                                            <option value="{{ $mt }}">{{ $mt }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label" for="meetingDate">Date <span class="text-danger">*</span></label>
+                                    <input type="date" name="meeting_date" id="meetingDate" class="form-control" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label" for="meetingTime">Time</label>
+                                    <input type="time" name="meeting_time" id="meetingTime" class="form-control">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label" for="meetingStatus">Status <span class="text-danger">*</span></label>
+                                    <select name="status" id="meetingStatus" class="form-select" required>
+                                        @foreach(\App\Services\MeetingService::STATUSES as $st)
+                                            <option value="{{ $st }}" @selected($st === 'Scheduled')>{{ $st }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label" for="meetingLocation">Location</label>
+                                    <input type="text" name="location" id="meetingLocation" class="form-control" maxlength="255" placeholder="Venue / town">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label" for="meetingChair">Chaired By</label>
+                                    <input type="text" name="chaired_by" id="meetingChair" class="form-control" maxlength="150" placeholder="Chairperson name">
+                                </div>
+                            </div>
                         </div>
-                        <div class="col-md-4">
-                            <label class="form-label" for="meetingType">Meeting Type <span class="text-danger">*</span></label>
-                            <select name="meeting_type" id="meetingType" class="form-select" required>
-                                @foreach(\App\Services\MeetingService::MEETING_TYPES as $mt)
-                                    <option value="{{ $mt }}">{{ $mt }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label" for="meetingDate">Date <span class="text-danger">*</span></label>
-                            <input type="date" name="meeting_date" id="meetingDate" class="form-control" required>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label" for="meetingTime">Time</label>
-                            <input type="time" name="meeting_time" id="meetingTime" class="form-control">
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label" for="meetingStatus">Status <span class="text-danger">*</span></label>
-                            <select name="status" id="meetingStatus" class="form-select" required>
-                                @foreach(\App\Services\MeetingService::STATUSES as $st)
-                                    <option value="{{ $st }}" @selected($st === 'Scheduled')>{{ $st }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label" for="meetingLocation">Location</label>
-                            <input type="text" name="location" id="meetingLocation" class="form-control" maxlength="255" placeholder="Venue / town">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label" for="meetingChair">Chaired By</label>
-                            <input type="text" name="chaired_by" id="meetingChair" class="form-control" maxlength="150" placeholder="Chairperson name">
-                        </div>
-                    </div>
-                    <div class="modal-section-title mt-4">Agenda &amp; Notes</div>
-                    <div class="row g-3">
-                        <div class="col-12">
-                            <label class="form-label" for="meetingAgenda">Agenda</label>
-                            <textarea name="agenda" id="meetingAgenda" rows="3" class="form-control"></textarea>
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label" for="meetingNotes">Notes</label>
-                            <textarea name="notes" id="meetingNotes" rows="2" class="form-control"></textarea>
+                        <div class="tab-pane fade @if($activeTabId === 'meeting-tab-agenda') show active @endif" id="meeting-tab-agenda" role="tabpanel" aria-labelledby="meeting-tab-agenda-tab">
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <label class="form-label" for="meetingAgenda">Agenda</label>
+                                    <textarea name="agenda" id="meetingAgenda" rows="3" class="form-control"></textarea>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label" for="meetingNotes">Notes</label>
+                                    <textarea name="notes" id="meetingNotes" rows="2" class="form-control"></textarea>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -239,6 +262,7 @@
 @push('scripts')
 <script>
     function showMeetingModal() {
+        YpaFormTabs.showErrorTab(document.getElementById('meetingForm'));
         if (window.bootstrap && bootstrap.Modal) {
             bootstrap.Modal.getOrCreateInstance(document.getElementById('meetingModal')).show();
         }

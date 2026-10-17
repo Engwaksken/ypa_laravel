@@ -68,6 +68,7 @@
 </script>
 <script src="{{ asset('vendor/bootstrap/bootstrap.bundle.min.js') }}"></script>
 @include('layouts.partials.modal-focus')
+@include('layouts.partials.form-tabs')
 @stack('scripts')
 @include('layouts.partials.modal-validation')
 <script src="{{ asset('js/table-tools.js') }}" defer></script>

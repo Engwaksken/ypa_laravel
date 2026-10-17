@@ -11,54 +11,77 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="modal-section-title">Account</div>
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label" for="userName">Full Name</label>
-                            <input type="text" name="name" id="userName" class="form-control" maxlength="150" required>
+                    @php
+                        $tabs = [
+                            ['id' => 'user-tab-account', 'label' => 'Account', 'fields' => ['name', 'email', 'password', 'password_confirmation']],
+                            ['id' => 'user-tab-access', 'label' => 'Access', 'fields' => ['role', 'status', 'branch_id']],
+                        ];
+                        $activeTabId = $tabs[0]['id'];
+                        foreach ($tabs as $tab) {
+                            foreach ($tab['fields'] as $field) {
+                                if ($errors->has($field)) { $activeTabId = $tab['id']; break 2; }
+                            }
+                        }
+                    @endphp
+                    <ul class="nav nav-tabs ypa-tabs mb-3" role="tablist">
+                        @foreach($tabs as $tab)
+                            <li class="nav-item" role="presentation">
+                                <button type="button" class="nav-link @if($tab['id'] === $activeTabId) active @endif" id="{{ $tab['id'] }}-tab" data-bs-toggle="tab" data-bs-target="#{{ $tab['id'] }}" role="tab" aria-controls="{{ $tab['id'] }}" aria-selected="{{ $tab['id'] === $activeTabId ? 'true' : 'false' }}">{{ $tab['label'] }}</button>
+                            </li>
+                        @endforeach
+                    </ul>
+                    <div class="tab-content">
+                        <div class="tab-pane fade @if($activeTabId === 'user-tab-account') show active @endif" id="user-tab-account" role="tabpanel" aria-labelledby="user-tab-account-tab">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label" for="userName">Full Name</label>
+                                    <input type="text" name="name" id="userName" class="form-control" maxlength="150" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label" for="userEmail">Email</label>
+                                    <input type="email" name="email" id="userEmail" class="form-control" maxlength="150" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label" for="userPassword">Password <span class="text-muted small" id="userPasswordHint"></span></label>
+                                    <input type="password" name="password" id="userPassword" class="form-control" minlength="8" autocomplete="new-password" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label" for="userPasswordConfirm">Confirm Password</label>
+                                    <input type="password" name="password_confirmation" id="userPasswordConfirm" class="form-control" minlength="8" autocomplete="new-password" required>
+                                </div>
+                            </div>
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label" for="userEmail">Email</label>
-                            <input type="email" name="email" id="userEmail" class="form-control" maxlength="150" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label" for="userPassword">Password <span class="text-muted small" id="userPasswordHint"></span></label>
-                            <input type="password" name="password" id="userPassword" class="form-control" minlength="8" autocomplete="new-password" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label" for="userPasswordConfirm">Confirm Password</label>
-                            <input type="password" name="password_confirmation" id="userPasswordConfirm" class="form-control" minlength="8" autocomplete="new-password" required>
-                        </div>
-                    </div>
 
-                    <div class="modal-section-title mt-4">Access</div>
-                    <div class="row g-3">
-                        <div class="col-md-4">
-                            <label class="form-label" for="userRole">Role</label>
-                            <select name="role" id="userRole" class="form-select" required>
-                                @if(old('role') && !in_array(old('role'), $assignableRoles, true))
-                                    <option value="{{ old('role') }}" data-extra="1">{{ $permissionService->roleLabel(old('role')) }}</option>
-                                @endif
-                                @foreach($assignableRoles as $role)
-                                    <option value="{{ $role }}">{{ $permissionService->roleLabel($role) }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label" for="userStatus">Status</label>
-                            <select name="status" id="userStatus" class="form-select" required>
-                                <option value="active">Active</option>
-                                <option value="inactive">Inactive</option>
-                            </select>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label" for="userBranch">Branch</label>
-                            <select name="branch_id" id="userBranch" class="form-select">
-                                <option value="">-- None --</option>
-                                @foreach($branches as $branch)
-                                    <option value="{{ $branch->id }}">{{ $branch->name }}</option>
-                                @endforeach
-                            </select>
+                        <div class="tab-pane fade @if($activeTabId === 'user-tab-access') show active @endif" id="user-tab-access" role="tabpanel" aria-labelledby="user-tab-access-tab">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label" for="userRole">Role</label>
+                                    <select name="role" id="userRole" class="form-select" required>
+                                        @if(old('role') && !in_array(old('role'), $assignableRoles, true))
+                                            <option value="{{ old('role') }}" data-extra="1">{{ $permissionService->roleLabel(old('role')) }}</option>
+                                        @endif
+                                        @foreach($assignableRoles as $role)
+                                            <option value="{{ $role }}">{{ $permissionService->roleLabel($role) }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label" for="userStatus">Status</label>
+                                    <select name="status" id="userStatus" class="form-select" required>
+                                        <option value="active">Active</option>
+                                        <option value="inactive">Inactive</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label" for="userBranch">Branch</label>
+                                    <select name="branch_id" id="userBranch" class="form-select">
+                                        <option value="">-- None --</option>
+                                        @foreach($branches as $branch)
+                                            <option value="{{ $branch->id }}">{{ $branch->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -74,6 +97,7 @@
 @push('scripts')
 <script>
     function userModalShow() {
+        YpaFormTabs.showErrorTab(document.getElementById('userForm'));
         if (window.bootstrap && bootstrap.Modal) {
             bootstrap.Modal.getOrCreateInstance(document.getElementById('userModal')).show();
         }

@@ -39,65 +39,95 @@
                 <span><i class="fas fa-user"></i> Mobilizer Information</span>
             </div>
             <div class="dash-panel-body">
-                <div class="row g-3">
-                    <div class="col-md-4">
-                        <label class="form-label">First Name <span class="text-danger">*</span></label>
-                        <input type="text" name="first_name" value="{{ $old['first_name'] ?? '' }}" class="form-control @error('first_name') is-invalid @enderror" required>
-                        @error('first_name')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                @php
+                    $tabs = [
+                        ['id' => 'mobilizer-tab-personal', 'label' => 'Personal', 'fields' => ['first_name', 'last_name', 'contact_number', 'email']],
+                        ['id' => 'mobilizer-tab-assignment', 'label' => 'Assignment', 'fields' => ['department', 'position', 'branch_region', 'supervisor', 'status', 'remarks']],
+                    ];
+                    $activeTabId = $tabs[0]['id'];
+                    foreach ($tabs as $tab) {
+                        foreach ($tab['fields'] as $field) {
+                            if ($errors->has($field)) { $activeTabId = $tab['id']; break 2; }
+                        }
+                    }
+                @endphp
+
+                <ul class="nav nav-tabs ypa-tabs mb-3" role="tablist">
+                    @foreach($tabs as $tab)
+                        <li class="nav-item" role="presentation">
+                            <button type="button" class="nav-link @if($tab['id'] === $activeTabId) active @endif" id="{{ $tab['id'] }}-tab" data-bs-toggle="tab" data-bs-target="#{{ $tab['id'] }}" role="tab" aria-controls="{{ $tab['id'] }}" aria-selected="{{ $tab['id'] === $activeTabId ? 'true' : 'false' }}">{{ $tab['label'] }}</button>
+                        </li>
+                    @endforeach
+                </ul>
+
+                <div class="tab-content">
+                    <div class="tab-pane fade @if($activeTabId === 'mobilizer-tab-personal') show active @endif" id="mobilizer-tab-personal" role="tabpanel" aria-labelledby="mobilizer-tab-personal-tab">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">First Name <span class="text-danger">*</span></label>
+                                <input type="text" name="first_name" value="{{ $old['first_name'] ?? '' }}" class="form-control @error('first_name') is-invalid @enderror" required>
+                                @error('first_name')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Last Name <span class="text-danger">*</span></label>
+                                <input type="text" name="last_name" value="{{ $old['last_name'] ?? '' }}" class="form-control @error('last_name') is-invalid @enderror" required>
+                                @error('last_name')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Contact Number <span class="text-danger">*</span></label>
+                                <input type="text" name="contact_number" value="{{ $old['contact_number'] ?? '' }}" class="form-control @error('contact_number') is-invalid @enderror" placeholder="+256..." required>
+                                @error('contact_number')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Email</label>
+                                <input type="email" name="email" value="{{ $old['email'] ?? '' }}" class="form-control @error('email') is-invalid @enderror">
+                                @error('email')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            </div>
+                        </div>
                     </div>
-                    <div class="col-md-4">
-                        <label class="form-label">Last Name <span class="text-danger">*</span></label>
-                        <input type="text" name="last_name" value="{{ $old['last_name'] ?? '' }}" class="form-control @error('last_name') is-invalid @enderror" required>
-                        @error('last_name')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label">Contact Number <span class="text-danger">*</span></label>
-                        <input type="text" name="contact_number" value="{{ $old['contact_number'] ?? '' }}" class="form-control @error('contact_number') is-invalid @enderror" placeholder="+256..." required>
-                        @error('contact_number')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label">Email</label>
-                        <input type="email" name="email" value="{{ $old['email'] ?? '' }}" class="form-control @error('email') is-invalid @enderror">
-                        @error('email')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label">Department <span class="text-danger">*</span></label>
-                        <input type="text" name="department" value="{{ $old['department'] ?? '' }}" class="form-control @error('department') is-invalid @enderror" required>
-                        @error('department')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label">Position <span class="text-danger">*</span></label>
-                        <input type="text" name="position" value="{{ $old['position'] ?? '' }}" class="form-control @error('position') is-invalid @enderror" required>
-                        @error('position')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label">Branch / Region <span class="text-danger">*</span></label>
-                        <select name="branch_region" class="form-select @error('branch_region') is-invalid @enderror">
-                            <option value="">Select Branch</option>
-                            @foreach($branches as $branch)
-                                <option value="{{ $branch->name }}" @selected(($old['branch_region'] ?? '') === $branch->name)>{{ $branch->name }}</option>
-                            @endforeach
-                        </select>
-                        @error('branch_region')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label">Supervisor</label>
-                        <input type="text" name="supervisor" value="{{ $old['supervisor'] ?? '' }}" class="form-control">
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label">Status <span class="text-danger">*</span></label>
-                        <select name="status" class="form-select @error('status') is-invalid @enderror" required>
-                            <option value="">Select Status</option>
-                            @foreach(['Active', 'Inactive', 'Suspended', 'Terminated'] as $st)
-                                <option value="{{ $st }}" @selected(($old['status'] ?? 'Active') === $st)>{{ $st }}</option>
-                            @endforeach
-                        </select>
-                        @error('status')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                    </div>
-                    <div class="col-12">
-                        <label class="form-label">Remarks</label>
-                        <textarea name="remarks" rows="3" class="form-control @error('remarks') is-invalid @enderror">{{ $old['remarks'] ?? '' }}</textarea>
-                        @error('remarks')<div class="invalid-feedback">{{ $message }}</div>@enderror
+
+                    <div class="tab-pane fade @if($activeTabId === 'mobilizer-tab-assignment') show active @endif" id="mobilizer-tab-assignment" role="tabpanel" aria-labelledby="mobilizer-tab-assignment-tab">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Department <span class="text-danger">*</span></label>
+                                <input type="text" name="department" value="{{ $old['department'] ?? '' }}" class="form-control @error('department') is-invalid @enderror" required>
+                                @error('department')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Position <span class="text-danger">*</span></label>
+                                <input type="text" name="position" value="{{ $old['position'] ?? '' }}" class="form-control @error('position') is-invalid @enderror" required>
+                                @error('position')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Branch / Region <span class="text-danger">*</span></label>
+                                <select name="branch_region" class="form-select @error('branch_region') is-invalid @enderror">
+                                    <option value="">Select Branch</option>
+                                    @foreach($branches as $branch)
+                                        <option value="{{ $branch->name }}" @selected(($old['branch_region'] ?? '') === $branch->name)>{{ $branch->name }}</option>
+                                    @endforeach
+                                </select>
+                                @error('branch_region')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Supervisor</label>
+                                <input type="text" name="supervisor" value="{{ $old['supervisor'] ?? '' }}" class="form-control">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Status <span class="text-danger">*</span></label>
+                                <select name="status" class="form-select @error('status') is-invalid @enderror" required>
+                                    <option value="">Select Status</option>
+                                    @foreach(['Active', 'Inactive', 'Suspended', 'Terminated'] as $st)
+                                        <option value="{{ $st }}" @selected(($old['status'] ?? 'Active') === $st)>{{ $st }}</option>
+                                    @endforeach
+                                </select>
+                                @error('status')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Remarks</label>
+                                <textarea name="remarks" rows="3" class="form-control @error('remarks') is-invalid @enderror">{{ $old['remarks'] ?? '' }}</textarea>
+                                @error('remarks')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

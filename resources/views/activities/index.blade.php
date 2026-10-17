@@ -209,59 +209,82 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="modal-section-title">Activity Details</div>
-                    <div class="row g-3">
-                        <div class="col-md-7">
-                            <label class="form-label" for="activityName">Activity Name <span class="text-danger">*</span></label>
-                            <input type="text" name="activity_name" id="activityName" class="form-control" maxlength="255" required>
+                    @php
+                        $tabs = [
+                            ['id' => 'activity-tab-details', 'label' => 'Details', 'fields' => ['activity_name', 'activity_type_id', 'description']],
+                            ['id' => 'activity-tab-schedule', 'label' => 'Schedule', 'fields' => ['start_date', 'end_date', 'budget', 'location', 'is_promotion', 'status']],
+                        ];
+                        $activeTabId = $tabs[0]['id'];
+                        foreach ($tabs as $tab) {
+                            foreach ($tab['fields'] as $field) {
+                                if ($errors->has($field)) { $activeTabId = $tab['id']; break 2; }
+                            }
+                        }
+                    @endphp
+                    <ul class="nav nav-tabs ypa-tabs mb-3" role="tablist">
+                        @foreach($tabs as $tab)
+                            <li class="nav-item" role="presentation">
+                                <button type="button" class="nav-link @if($tab['id'] === $activeTabId) active @endif" id="{{ $tab['id'] }}-tab" data-bs-toggle="tab" data-bs-target="#{{ $tab['id'] }}" role="tab" aria-controls="{{ $tab['id'] }}" aria-selected="{{ $tab['id'] === $activeTabId ? 'true' : 'false' }}">{{ $tab['label'] }}</button>
+                            </li>
+                        @endforeach
+                    </ul>
+                    <div class="tab-content">
+                        <div class="tab-pane fade @if($activeTabId === 'activity-tab-details') show active @endif" id="activity-tab-details" role="tabpanel" aria-labelledby="activity-tab-details-tab">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label" for="activityName">Activity Name <span class="text-danger">*</span></label>
+                                    <input type="text" name="activity_name" id="activityName" class="form-control" maxlength="255" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label" for="activityType">Activity Type <span class="text-danger">*</span></label>
+                                    <select name="activity_type_id" id="activityType" class="form-select" required>
+                                        <option value="">Select Type</option>
+                                        @foreach($types as $type)
+                                            <option value="{{ $type->id }}">{{ $type->type_name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label" for="activityDescription">Description</label>
+                                    <textarea name="description" id="activityDescription" rows="3" class="form-control"></textarea>
+                                </div>
+                            </div>
                         </div>
-                        <div class="col-md-5">
-                            <label class="form-label" for="activityType">Activity Type <span class="text-danger">*</span></label>
-                            <select name="activity_type_id" id="activityType" class="form-select" required>
-                                <option value="">Select Type</option>
-                                @foreach($types as $type)
-                                    <option value="{{ $type->id }}">{{ $type->type_name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label" for="activityDescription">Description</label>
-                            <textarea name="description" id="activityDescription" rows="3" class="form-control"></textarea>
-                        </div>
-                    </div>
-                    <div class="modal-section-title mt-4">Schedule &amp; Budget</div>
-                    <div class="row g-3">
-                        <div class="col-md-4">
-                            <label class="form-label" for="activityStart">Start Date <span class="text-danger">*</span></label>
-                            <input type="date" name="start_date" id="activityStart" class="form-control" required>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label" for="activityEnd">End Date</label>
-                            <input type="date" name="end_date" id="activityEnd" class="form-control">
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label" for="activityBudget">Budget (UGX)</label>
-                            <input type="number" name="budget" id="activityBudget" class="form-control" min="0" step="any" placeholder="e.g. 1500000">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label" for="activityLocation">Location</label>
-                            <input type="text" name="location" id="activityLocation" class="form-control" maxlength="255" placeholder="Venue / town">
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label" for="activityPromotion">Promotion</label>
-                            <select name="is_promotion" id="activityPromotion" class="form-select">
-                                @foreach(\App\Services\ActivityService::IS_PROMOTION as $opt)
-                                    <option value="{{ $opt }}" @selected($opt === 'No')>{{ $opt }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label" for="activityStatus">Status</label>
-                            <select name="status" id="activityStatus" class="form-select">
-                                @foreach(\App\Services\ActivityService::STATUSES as $st)
-                                    <option value="{{ $st }}" @selected($st === 'Planned')>{{ $st }}</option>
-                                @endforeach
-                            </select>
+                        <div class="tab-pane fade @if($activeTabId === 'activity-tab-schedule') show active @endif" id="activity-tab-schedule" role="tabpanel" aria-labelledby="activity-tab-schedule-tab">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label" for="activityStart">Start Date <span class="text-danger">*</span></label>
+                                    <input type="date" name="start_date" id="activityStart" class="form-control" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label" for="activityEnd">End Date</label>
+                                    <input type="date" name="end_date" id="activityEnd" class="form-control">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label" for="activityBudget">Budget (UGX)</label>
+                                    <input type="number" name="budget" id="activityBudget" class="form-control" min="0" step="any" placeholder="e.g. 1500000">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label" for="activityLocation">Location</label>
+                                    <input type="text" name="location" id="activityLocation" class="form-control" maxlength="255" placeholder="Venue / town">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label" for="activityPromotion">Promotion</label>
+                                    <select name="is_promotion" id="activityPromotion" class="form-select">
+                                        @foreach(\App\Services\ActivityService::IS_PROMOTION as $opt)
+                                            <option value="{{ $opt }}" @selected($opt === 'No')>{{ $opt }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label" for="activityStatus">Status</label>
+                                    <select name="status" id="activityStatus" class="form-select">
+                                        @foreach(\App\Services\ActivityService::STATUSES as $st)
+                                            <option value="{{ $st }}" @selected($st === 'Planned')>{{ $st }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -277,6 +300,7 @@
 @push('scripts')
 <script>
     function showActivityModal() {
+        YpaFormTabs.showErrorTab(document.getElementById('activityForm'));
         if (window.bootstrap && bootstrap.Modal) {
             bootstrap.Modal.getOrCreateInstance(document.getElementById('activityModal')).show();
         }

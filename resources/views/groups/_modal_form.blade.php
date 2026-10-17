@@ -4,7 +4,7 @@
     data-url (update route) and data-record (JSON of form values).
 --}}
 <div class="modal fade" id="groupModal" tabindex="-1" aria-labelledby="groupModalTitle" aria-hidden="true">
-    <div class="modal-dialog modal-xl">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
         <div class="modal-content">
             <form id="groupForm" method="POST" action="{{ route('groups.store') }}">
                 @csrf
@@ -34,6 +34,8 @@
     YpaGroupForm.bind(form);
     // Re-sync dependent fields whenever the modal opens (covers validation-error reopen).
     modalEl.addEventListener('show.bs.modal', function () { YpaGroupForm.sync(form); });
+    // Reset to the first tab, or the tab holding a validation error.
+    modalEl.addEventListener('shown.bs.modal', function () { YpaFormTabs.showErrorTab(form); });
 
     function show() {
         bootstrap.Modal.getOrCreateInstance(modalEl).show();
