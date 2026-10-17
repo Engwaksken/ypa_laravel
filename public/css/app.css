@@ -635,6 +635,11 @@ a.dash-card:hover {
     max-width: 800px;
 }
 
+/* Keep the member form modal compact (it has the most tabs and fields). */
+#memberModal .modal-dialog {
+    max-width: 640px;
+}
+
 .stock-list {
     display: flex;
     flex-direction: column;

@@ -1,5 +1,7 @@
 {{-- Add/Edit user modal. Requires $assignableRoles and $branches. --}}
-@php($permissionService = app(\App\Services\PermissionService::class))
+@php
+    $permissionService = app(\App\Services\PermissionService::class);
+@endphp
 <div class="modal fade" id="userModal" tabindex="-1" aria-labelledby="userModalTitle" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
