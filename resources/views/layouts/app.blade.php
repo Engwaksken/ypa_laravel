@@ -13,9 +13,10 @@
     <link rel="stylesheet" href="{{ asset('vendor/bootstrap/bootstrap.min.css') }}">
     <link rel="stylesheet" href="{{ asset('css/app.css') }}">
     <link rel="stylesheet" href="{{ asset('css/table-tools.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/ui-kit.css') }}">
     @stack('styles')
 </head>
-<body>
+<body class="@yield('body_class')">
 
 @include('layouts.partials.topnav')
 
@@ -24,6 +25,7 @@
 @include('layouts.partials.sidebar')
 
 <main class="main-content" data-stat-density="compact" data-table-pdf-url="{{ route('documents.table-pdf') }}" data-table-export="{{ app(\App\Services\TableExportService::class)->allowed(request()->route()?->getName()) ? 'true' : 'false' }}">
+    @include('layouts.partials.print-branding')
     @include('layouts.partials.flash')
     @yield('content')
 </main>
@@ -69,5 +71,6 @@
 @include('layouts.partials.modal-validation')
 <script src="{{ asset('js/table-tools.js') }}" defer></script>
 <script src="{{ asset('js/table-view-modal.js') }}" defer></script>
+<script src="{{ asset('js/ui-kit.js') }}" defer></script>
 </body>
 </html>

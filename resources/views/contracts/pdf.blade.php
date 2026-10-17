@@ -14,7 +14,10 @@
         p { margin: 0 0 12px; } ol, ul { padding-left: 26px; } li { margin-bottom: 6px; }
         table { width: 100%; border-collapse: collapse; } th, td { padding: 8px; vertical-align: top; }
         thead { display: table-header-group; } tr { page-break-inside: avoid; }
-        .watermark { position: fixed; top: 265px; left: 100px; width: 370px; opacity: .035; z-index: -1000; }
+        .watermark { position: fixed; top: 30%; left: 0; right: 0; text-align: center; z-index: -1000; }
+        .watermark img { width: 360px; opacity: .06; }
+        .pdf-footer { position: fixed; bottom: -11mm; left: 0; right: 0; height: 7mm; padding-top: 3px; border-top: 1px solid #dbe2ea; font-size: 7.5px; color: #64748b; }
+        .pdf-footer td { border: 0; padding: 0; } .pdf-footer .page { text-align: right; } .pdf-footer .page-number:after { content: counter(page); }
         .cover-page { text-align: center; page-break-after: always; padding: 0 20px; }
         .cover-page h2 { font-size: 18px; margin: 16px 0; }
         .cover-page .cover-logo { display: block; width: 285px; height: 340px; margin: 12px auto; }
@@ -59,7 +62,8 @@
     </style>
 </head>
 <body>
-    @if($document['logo'])<img class="watermark" src="{{ $document['logo'] }}" alt="">@endif
+    @if($document['logo'])<div class="watermark"><img src="{{ $document['logo'] }}" alt=""></div>@endif
+    <div class="pdf-footer"><table><tr><td>{{ $siteName ?? config('app.name') }} · {{ $contract->contract_number }}</td><td class="page">Page <span class="page-number"></span></td></tr></table></div>
     @if($document['coverHtml'] !== '')
         <div class="custom-cover">{!! $document['coverHtml'] !!}</div>
     @else

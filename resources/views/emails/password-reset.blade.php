@@ -1,53 +1,23 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <style>
-        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
-        .container { max-width: 600px; margin: 0 auto; padding: 0; }
-        .header { background: #005fa3; color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
-        .logo { display:block; max-width:180px; max-height:64px; margin:0 auto 14px; }
-        .header h1 { margin: 0 0 10px 0; font-size: 28px; }
-        .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
-        .content h2 { color: #333; margin-top: 0; }
-        .btn { display: inline-block; padding: 15px 40px; background: #005fa3; color: white !important; text-decoration: none; border-radius: 6px; margin: 20px 0; font-weight: bold; }
-        .warning { background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; border-radius: 4px; }
-        .warning strong { color: #856404; }
-        .footer { text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; color: #666; font-size: 12px; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <img class="logo" src="{{ asset('images/logo.png') }}" alt="{{ config('app.name') }}">
-            <h1>{{ config('app.name') }}</h1>
-            <p>Password Reset Request</p>
-        </div>
-        <div class="content">
-            <h2>Hello {{ $name }},</h2>
-            <p>We received a request to reset your password. Click the button below to set a new password:</p>
+@extends('emails.layouts.branded')
 
-            <div style="text-align: center;">
-                <a href="{{ $resetLink }}" class="btn">Reset Password</a>
-            </div>
+@section('subject', 'Password reset request')
+@section('preheader', 'Reset your password. The link expires in 1 hour.')
+@section('heading', 'Hello ' . $name . ',')
+@section('subheading', 'Password reset request')
 
-            <p style="color: #666; font-size: 14px;">
-                Or copy and paste this link into your browser:<br>
-                <a href="{{ $resetLink }}">{{ $resetLink }}</a>
-            </p>
+@section('content')
+    <p style="margin:0 0 22px;">We received a request to reset your password. Select the button below to choose a new one.</p>
 
-            <div class="warning">
-                <strong>Security Notice:</strong><br>
-                This link will expire in 1 hour. If you did not request a password reset, please ignore this email.
-            </div>
+    <table role="presentation" cellpadding="0" cellspacing="0" align="center" class="email-button" style="margin:0 auto 22px;">
+        <tr>
+            <td align="center" style="border-radius:10px;background:#005fa3;">
+                <a href="{{ $resetLink }}" style="display:inline-block;padding:13px 30px;font-size:15px;font-weight:600;color:#ffffff;text-decoration:none;border-radius:10px;">Reset password</a>
+            </td>
+        </tr>
+    </table>
 
-            <p style="margin-top: 30px;">Thank you,<br>
-            <strong>{{ config('app.name') }} Team</strong></p>
+    <p style="margin:0 0 6px;font-size:13px;color:#64748b;">If the button does not work, copy this link into your browser:</p>
+    <p style="margin:0;font-size:13px;word-break:break-all;"><a href="{{ $resetLink }}" style="color:#005fa3;">{{ $resetLink }}</a></p>
 
-            <div class="footer">
-                <p>This is an automated message, please do not reply to this email.</p>
-                <p>&copy; {{ date('Y') }} {{ config('app.name') }}. All rights reserved.</p>
-            </div>
-        </div>
-    </div>
-</body>
-</html>
+    @include('emails.partials.notice', ['tone' => 'warning', 'title' => 'Did not request this?', 'body' => 'The link expires in 1 hour. If you did not ask to reset your password, you can safely ignore this email.'])
+@endsection
