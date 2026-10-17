@@ -33,7 +33,7 @@
 
     <form method="POST" action="{{ route('termination.store') }}">
         @csrf
-        <div class="dash-panel">
+        <div class="dash-panel form-panel">
             <div class="dash-panel-head">
                 <span><i class="fas fa-ban"></i> Termination Details</span>
             </div>

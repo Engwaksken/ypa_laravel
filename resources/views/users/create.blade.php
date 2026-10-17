@@ -12,7 +12,7 @@
         </div>
     </div>
 
-    <div class="dash-panel">
+    <div class="dash-panel form-panel">
         <div class="dash-panel-body">
             <form method="POST" action="{{ route('users.store') }}">
                 @csrf

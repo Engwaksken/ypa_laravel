@@ -34,7 +34,7 @@
     <form method="POST" action="{{ route('mobilizers.store') }}">
         @csrf
 
-        <div class="dash-panel">
+        <div class="dash-panel form-panel">
             <div class="dash-panel-head">
                 <span><i class="fas fa-user"></i> Mobilizer Information</span>
             </div>

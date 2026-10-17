@@ -19,7 +19,7 @@
     <form method="POST" action="{{ route('groups.update', $group) }}" id="groupPageForm">
         @csrf
         @method('PUT')
-        <div class="dash-panel">
+        <div class="dash-panel form-panel">
             <div class="dash-panel-head">
                 <span><i class="fas fa-pen"></i> Group Details</span>
             </div>

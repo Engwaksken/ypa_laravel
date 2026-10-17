@@ -19,7 +19,7 @@
     <form method="POST" action="{{ route('members.update', $member) }}" id="memberPageForm">
         @csrf
         @method('PUT')
-        <div class="dash-panel">
+        <div class="dash-panel form-panel">
             <div class="dash-panel-head">
                 <span><i class="fas fa-user-pen"></i> Member Details</span>
             </div>

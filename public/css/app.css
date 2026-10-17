@@ -630,6 +630,11 @@ a.dash-card:hover {
     padding: 18px;
 }
 
+/* Constrain create/edit forms so fields don't stretch across the full page width. */
+.form-panel {
+    max-width: 800px;
+}
+
 .stock-list {
     display: flex;
     flex-direction: column;

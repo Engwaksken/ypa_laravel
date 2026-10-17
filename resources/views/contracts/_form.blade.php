@@ -15,7 +15,8 @@
 @endphp
 
 @csrf
-<ul class="nav nav-tabs ypa-tabs mb-3" role="tablist">
+<div class="form-panel">
+    <ul class="nav nav-tabs ypa-tabs mb-3" role="tablist">
     @foreach($tabs as $tab)
         <li class="nav-item" role="presentation">
             <button type="button" class="nav-link @if($tab['id'] === $activeTabId) active @endif" id="{{ $tab['id'] }}-tab" data-bs-toggle="tab" data-bs-target="#{{ $tab['id'] }}" role="tab" aria-controls="{{ $tab['id'] }}" aria-selected="{{ $tab['id'] === $activeTabId ? 'true' : 'false' }}">{{ $tab['label'] }}</button>
@@ -134,4 +135,5 @@
 </div>
 
 @include('contracts._project-calculation')
+</div>
 @include('contracts._items')

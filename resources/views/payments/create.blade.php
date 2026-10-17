@@ -33,7 +33,7 @@
 
     <form method="POST" action="{{ route('payments.store') }}">
         @csrf
-        <div class="dash-panel">
+        <div class="dash-panel form-panel">
             <div class="dash-panel-head">
                 <span><i class="fas fa-money-bill-wave"></i> Payment Details</span>
             </div>
