@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\LoginRequest;
 use App\Models\User;
+use App\Services\BrandingService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -208,14 +209,13 @@ class AuthController extends Controller
     protected function sendVerificationEmail(User $user, string $code): bool
     {
         try {
-            $html = view('emails.verification-code', [
+            // Mail::send exposes $message to the view so the logo is embedded inline.
+            Mail::send('emails.verification-code', [
                 'name' => $user->name ?? 'User',
                 'code' => $code,
-            ])->render();
-
-            Mail::html($html, function ($message) use ($user) {
+            ], function ($message) use ($user) {
                 $message->to($user->email, $user->name ?? 'User')
-                    ->subject('Your Verification Code - ' . config('app.name'));
+                    ->subject('Your Verification Code - ' . app(BrandingService::class)->name());
             });
 
             return true;
@@ -229,14 +229,12 @@ class AuthController extends Controller
     protected function sendPasswordResetEmail(User $user): void
     {
         try {
-            $html = view('emails.password-reset', [
+            Mail::send('emails.password-reset', [
                 'name' => $user->name ?? 'User',
                 'resetLink' => route('password.request'),
-            ])->render();
-
-            Mail::html($html, function ($message) use ($user) {
+            ], function ($message) use ($user) {
                 $message->to($user->email, $user->name ?? 'User')
-                    ->subject('Password Reset Request - ' . config('app.name'));
+                    ->subject('Password Reset Request - ' . app(BrandingService::class)->name());
             });
         } catch (\Throwable $e) {
             report($e);

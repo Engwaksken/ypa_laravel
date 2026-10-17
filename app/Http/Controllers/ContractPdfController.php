@@ -70,8 +70,6 @@ class ContractPdfController extends Controller
         $sections = app(ContractPdfDocumentService::class)->sections($html);
         $group = strtolower((string) $contract->contract_for) === 'group';
         $nextOfKin = $contract->member?->nextOfKin?->first();
-        try { $logo = \App\Models\Setting::asset('site_logo', 'images/logo.png'); }
-        catch (\Throwable) { $logo = 'images/logo.png'; }
 
         return view('contracts.print', [
             'contract' => $contract,
@@ -79,7 +77,7 @@ class ContractPdfController extends Controller
             'coverHtml' => $sections['coverHtml'],
             'bodyHtml' => $sections['bodyHtml'],
             'signatureHtml' => $sections['signatureHtml'],
-            'logoUrl' => asset($logo),
+            'logoUrl' => app(\App\Services\BrandingService::class)->logoUrl(),
             'partyName' => $group ? $contract->group?->group_name : $contract->member?->full_name,
             'partyPhoto' => $this->browserImageUrl($contract->farmer_photo ?: $contract->member?->member_photo),
             'kinPhoto' => $this->browserImageUrl($contract->nok_photo ?: $nextOfKin?->photo ?: $nextOfKin?->nok_photo ?: $nextOfKin?->photo_path),

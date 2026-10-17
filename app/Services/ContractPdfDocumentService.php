@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Models\Contract;
 use App\Models\ContractTemplate;
-use App\Models\Setting;
 
 class ContractPdfDocumentService
 {
@@ -25,18 +24,13 @@ class ContractPdfDocumentService
         $parts = $this->sections($html);
         if ($storedSignature !== '') $parts['signatureHtml'] .= $storedSignature;
         foreach ($parts as $key => $value) $parts[$key] = $assets->localizeImages($value);
-        try {
-            $logo = Setting::asset('site_logo', 'images/logo.png');
-        } catch (\Throwable) {
-            $logo = 'images/logo.png';
-        }
         $nextOfKin = $contract->member?->nextOfKin?->first();
         $group = strtolower((string) $contract->contract_for) === 'group';
         $stockSignature = app(ContractService::class)->sanitizeHtml(view('contracts.documents.organization-signatures', compact('contract'))->render());
         $standardSignatures = trim(preg_replace('/\s+/', ' ', $parts['signatureHtml'])) === trim(preg_replace('/\s+/', ' ', $stockSignature));
 
         return $parts + [
-            'logo' => $assets->localImageUri($logo),
+            'logo' => app(BrandingService::class)->pdfLogo(),
             'partyName' => $group ? $contract->group?->group_name : $contract->member?->full_name,
             'partyCode' => $group ? $contract->group?->group_code : $contract->member?->membership_id,
             'partyLabel' => $group ? 'GROUP REPRESENTATIVE' : 'FARMER',

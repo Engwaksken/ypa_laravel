@@ -1,4 +1,6 @@
 @extends('layouts.app')
+@section('title', 'Payment Receipt ' . $payment->receipt_number)
+@section('body_class', 'has-own-print-brand')
 
 @section('content')
 @php
@@ -23,9 +25,12 @@
     <div class="card receipt-card">
         <div class="card-body p-4">
             <div class="d-flex justify-content-between border-bottom pb-3 mb-3">
-                <div>
-                    <h5 class="mb-1">Youth Platform Africa</h5>
-                    <div class="text-muted">Official payment receipt</div>
+                <div class="d-flex align-items-center gap-3">
+                    <img src="{{ app(\App\Services\BrandingService::class)->logoUrl() }}" alt="{{ $siteName }} logo" style="max-width:110px;max-height:56px;object-fit:contain">
+                    <div>
+                        <h5 class="mb-1">{{ $siteName }}</h5>
+                        <div class="text-muted">Official payment receipt</div>
+                    </div>
                 </div>
                 <div class="text-end">
                     <div><strong>Receipt:</strong> {{ $payment->receipt_number }}</div>

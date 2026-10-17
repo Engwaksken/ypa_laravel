@@ -1,5 +1,6 @@
 @extends('layouts.app')
 @section('title', 'Invoice ' . $sale->invoice_no)
+@section('body_class', 'has-own-print-brand')
 @section('content')
 @php
     $money = fn ($value) => 'UGX ' . number_format((float) $value, 2);

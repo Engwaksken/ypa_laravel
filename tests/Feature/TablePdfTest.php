@@ -29,7 +29,7 @@ class TablePdfTest extends TestCase
         $html = view('documents.table-pdf', ['title' => '<script>title</script>', 'headers' => ['Name'],
             'rows' => [['<img src="file:///etc/passwd">']]])->render();
         $this->assertStringNotContainsString('<script>', $html);
-        $this->assertStringNotContainsString('<img', $html);
+        $this->assertStringNotContainsString('<img src="file:///etc/passwd"', $html);
         $this->assertStringContainsString('&lt;script&gt;', $html);
         $this->assertStringContainsString('&lt;img', $html);
     }
