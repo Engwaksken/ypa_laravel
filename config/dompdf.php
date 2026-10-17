@@ -4,7 +4,7 @@ return [
     'show_warnings' => false,
     'options' => [
         // Uploaded template markup must never fetch remote URLs or application secrets.
-        'chroot' => array_values(array_filter([realpath(public_path()), realpath(storage_path('app/public'))])),
+        'chroot' => array_values(array_filter([realpath(public_path()), realpath(storage_path('app/public')), env('LEGACY_UPLOADS_PATH') ? realpath(env('LEGACY_UPLOADS_PATH')) : false])),
         'enable_remote' => false,
         'enable_php' => false,
         'enable_javascript' => false,

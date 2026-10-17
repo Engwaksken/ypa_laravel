@@ -100,6 +100,9 @@ class ContractPdfDocumentTest extends TestCase
         $this->assertStringStartsWith('file://', $document['partyPhoto']);
         $contract->farmer_photo = 'https://external.test/private-photo.png';
         $document = (new ContractPdfDocumentService)->prepare($contract, null, '');
+        $this->assertStringStartsWith('file://', $document['partyPhoto']);
+        $contract->member->member_photo = null;
+        $document = (new ContractPdfDocumentService)->prepare($contract, null, '');
         $this->assertNull($document['partyPhoto']);
     }
 
@@ -112,6 +115,25 @@ class ContractPdfDocumentTest extends TestCase
         $this->assertStringContainsString('Agreement wording.', $document['bodyHtml']);
         $this->assertStringNotContainsString('Custom witness', $document['bodyHtml']);
         $this->assertStringContainsString('Custom witness: Jane Farmer', $document['signatureHtml']);
+    }
+
+    public function test_stale_contract_photos_fall_back_to_member_and_legacy_kin_images_in_print_and_pdf(): void
+    {
+        $contract = $this->contract();
+        $contract->farmer_photo = 'uploads/missing-photo.jpg';
+        $contract->nok_photo = 'uploads/missing-kin.jpg';
+        $contract->member->setRelation('nextOfKin', collect([new MemberNextOfKin(['image_url' => '/missing.png'])]));
+        $contract->member->setAttribute('next_of_kin_photo', '/images/logo.png');
+        $photos = app(\App\Services\ContractPhotoService::class);
+        foreach ($photos->resolve($contract) as $uri) $this->assertStringStartsWith('file://', $uri);
+        foreach ($photos->resolve($contract, true) as $uri) $this->assertStringStartsWith('data:image/png;base64,', $uri);
+
+        $service = \Mockery::mock(ContractService::class)->makePartial();
+        $service->shouldReceive('resolveTemplate')->andReturn(null);
+        $this->app->instance(ContractService::class, $service);
+        $response = (new ContractPdfController)->print(Request::create('/contracts/6/print'), $contract);
+        $this->assertStringStartsWith('data:image/png;base64,', $response->getData()['partyPhoto']);
+        $this->assertStringStartsWith('data:image/png;base64,', $response->getData()['kinPhoto']);
     }
 
     public function test_document_sections_match_reference_order_and_preserve_recorded_discrepant_amounts(): void

@@ -15,6 +15,7 @@
     <link rel="stylesheet" href="{{ asset('css/table-tools.css') }}">
     <link rel="stylesheet" href="{{ asset('css/ui-kit.css') }}">
     @stack('styles')
+    @include('layouts.partials.theme')
 </head>
 <body class="@yield('body_class')">
 

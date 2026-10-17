@@ -5,10 +5,11 @@
     <table class="receipt-heading">
         <tr>
             <td class="logo-cell">@if($document['logo'])<img src="{{ $document['logo'] }}" alt="YPA Logo">@endif</td>
-            <td class="receipt-title"><h2>{{ $receipt['rows']->isNotEmpty() && !($receipt['conflict'] ?? false) ? 'OFFICIAL PAYMENT RECEIPT' : 'PAYMENT SUMMARY' }}</h2><span class="muted">{{ ucfirst((string) $contract->contract_for) }} Contract</span></td>
+            <td class="receipt-title"><h2>{{ $receipt['rows']->isNotEmpty() && !($receipt['conflict'] ?? false) ? app(\App\Services\AppearanceService::class)->get('receipt_title') : 'PAYMENT SUMMARY' }}</h2><span class="muted">{{ ucfirst((string) $contract->contract_for) }} Contract</span></td>
             <td class="contract-number"><span class="muted">CONTRACT NO.</span><br><strong>{{ $contract->contract_number }}</strong></td>
         </tr>
     </table>
+    @include('documents.wording', ['kind' => 'receipt', 'position' => 'header'])
     <p><strong>{{ strtolower((string) $contract->contract_for) === 'group' ? 'Group Code' : 'Membership Number' }}:</strong> {{ $document['partyCode'] ?: '-' }}</p>
     <p><strong>Name:</strong> {{ $document['partyName'] ?: '-' }}</p>
     <p><strong>Total Scheduled:</strong> UGX {{ number_format($receipt['scheduled'], 2) }}</p>
@@ -29,4 +30,6 @@
         </tbody>
     </table>
     @endif
+    @include('documents.wording', ['kind' => 'receipt', 'position' => 'terms'])
+    @include('documents.wording', ['kind' => 'receipt', 'position' => 'footer'])
 </section>

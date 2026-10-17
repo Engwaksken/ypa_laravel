@@ -50,7 +50,7 @@ class ContractPdfController extends Controller
             'renderedHtml' => app(PdfAssetService::class)->localizeImages($renderedHtml),
             'totals' => $this->contractService->contractTotals($contract),
             'document' => app(ContractPdfDocumentService::class)->prepare($contract, $template, $renderedHtml),
-        ])->setPaper('a4');
+        ])->setPaper(app(\App\Services\AppearanceService::class)->get('contract_paper'));
         $pdf->render();
         $dompdf = $pdf->getDomPDF();
         $canvas = $dompdf->getCanvas();
@@ -68,10 +68,11 @@ class ContractPdfController extends Controller
         $template = $this->contractService->resolveTemplate($contract, isset($data['template_id']) ? (int) $data['template_id'] : null);
         $html = $template ? $this->contractService->renderTemplate($contract, $template) : '';
         $sections = app(ContractPdfDocumentService::class)->sections($html);
+        foreach ($sections as $key => $value) $sections[$key] = app(PdfAssetService::class)->browserImages($value);
         $group = strtolower((string) $contract->contract_for) === 'group';
         $nextOfKin = $contract->member?->nextOfKin?->first();
 
-        return view('contracts.print', [
+        return view('contracts.print', app(\App\Services\ContractPhotoService::class)->resolve($contract, true) + [
             'contract' => $contract,
             'template' => $template,
             'coverHtml' => $sections['coverHtml'],
@@ -79,22 +80,9 @@ class ContractPdfController extends Controller
             'signatureHtml' => $sections['signatureHtml'],
             'logoUrl' => app(\App\Services\BrandingService::class)->logoUrl(),
             'partyName' => $group ? $contract->group?->group_name : $contract->member?->full_name,
-            'partyPhoto' => $this->browserImageUrl($contract->farmer_photo ?: $contract->member?->member_photo),
-            'kinPhoto' => $this->browserImageUrl($contract->nok_photo ?: $nextOfKin?->photo ?: $nextOfKin?->nok_photo ?: $nextOfKin?->photo_path),
             'nextOfKin' => $nextOfKin,
             'group' => $group,
         ]);
     }
 
-    private function browserImageUrl(?string $source): ?string
-    {
-        $source = trim((string) $source);
-        if ($source === '') return null;
-        $parts = parse_url($source);
-        if ($parts === false || (isset($parts['host']) && strcasecmp($parts['host'], (string) parse_url(config('app.url'), PHP_URL_HOST)) !== 0)
-            || (isset($parts['scheme']) && ! in_array(strtolower($parts['scheme']), ['http', 'https'], true))) return null;
-        $path = ltrim(rawurldecode((string) ($parts['path'] ?? '')), '/');
-        if ($path === '' || str_contains($path, '..') || str_contains($path, "\0")) return null;
-        return asset($path);
-    }
 }

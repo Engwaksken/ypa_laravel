@@ -58,6 +58,12 @@
         .receipt-table th { color: white; background: #0b1f3a; text-align: left; }
         .receipt-table td { border-bottom: 1px solid #e2e8f0; } .receipt-table .reference { font-size: 7px; }
     </style>
+    @php($appearance = app(\App\Services\AppearanceService::class))
+    <style>
+        @page { margin: {{ $appearance->get('contract_margin') }}mm; }
+        body { font-family: {{ $appearance->font(true) }}; font-size: {{ $appearance->get('contract_font_size') }}pt; color: {{ $appearance->get('theme_text') }}; }
+        .finance th, .items th, .receipt-table th { background: {{ $appearance->get('theme_primary') }}; }
+    </style>
 </head>
 <body>
     @if($document['logo'])<div class="watermark"><img src="{{ $document['logo'] }}" alt=""></div>@endif

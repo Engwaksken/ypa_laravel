@@ -11,9 +11,9 @@
 @endphp
 
 <div class="container py-4">
-    <div class="d-flex justify-content-between align-items-start mb-3">
+    <div class="d-flex justify-content-between align-items-start mb-3 print-actions">
         <div>
-            <h4 class="mb-0">Payment Receipt</h4>
+            <h4 class="mb-0">{{ app(\App\Services\AppearanceService::class)->get('receipt_title') }}</h4>
             <small class="text-muted">{{ $payment->receipt_number }}</small>
         </div>
         <div class="d-flex gap-2">
@@ -29,7 +29,7 @@
                     <img src="{{ app(\App\Services\BrandingService::class)->logoUrl() }}" alt="{{ $siteName }} logo" style="max-width:110px;max-height:56px;object-fit:contain">
                     <div>
                         <h5 class="mb-1">{{ $siteName }}</h5>
-                        <div class="text-muted">Official payment receipt</div>
+                        <div class="text-muted">{{ app(\App\Services\AppearanceService::class)->get('receipt_title') }}</div>
                     </div>
                 </div>
                 <div class="text-end">
@@ -38,6 +38,7 @@
                 </div>
             </div>
 
+            @include('documents.wording', ['kind' => 'receipt', 'position' => 'header'])
             <div class="row g-3 mb-3">
                 <div class="col-md-6"><strong>Received From:</strong><br>{{ $party ?: '-' }}</div>
                 <div class="col-md-6"><strong>Contract:</strong><br>{{ optional($contract)->contract_number ?? '-' }}</div>
@@ -73,7 +74,12 @@
                 <div class="col-md-6"><strong>Received By:</strong> {{ $payment->creator->name ?? $payment->creator->full_name ?? '-' }}</div>
                 <div class="col-12"><strong>Notes:</strong> {{ $payment->notes ?: '-' }}</div>
             </div>
+            @include('documents.wording', ['kind' => 'receipt', 'position' => 'terms'])
+            @include('documents.wording', ['kind' => 'receipt', 'position' => 'footer'])
         </div>
     </div>
 </div>
 @endsection
+@push('styles')
+@include('documents.print-settings', ['kind' => 'receipt'])
+@endpush

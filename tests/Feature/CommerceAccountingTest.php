@@ -98,6 +98,22 @@ class CommerceAccountingTest extends TestCase
         $this->assertDatabaseCount('sales', 2);
     }
 
+    public function test_invoice_uses_configured_wording_and_print_layout(): void
+    {
+        Schema::create('settings', function (Blueprint $table) {
+            $table->increments('id'); $table->string('setting_key'); $table->text('setting_value');
+        });
+        foreach (['invoice_title' => 'Tax Invoice', 'invoice_header' => 'VAT registration: TEST-123',
+            'invoice_footer' => 'Thank you from our team', 'invoice_terms' => 'Keep this invoice.',
+            'invoice_paper' => '58mm', 'invoice_font_size' => '12'] as $key => $value) {
+            \App\Models\Setting::create(['setting_key' => $key, 'setting_value' => $value]);
+        }
+        $this->postJson(route('sales.store'), $this->payload())->assertOk();
+        $this->get(route('sales.show', Sale::first()))->assertOk()->assertSee('Tax Invoice')
+            ->assertSee('VAT registration: TEST-123')->assertSee('Thank you from our team')->assertSee('Keep this invoice.')
+            ->assertSee('size: 58mm 297mm', false)->assertSee('font-size: 12pt', false);
+    }
+
     public function test_expired_insufficient_and_unlinked_account_fail_atomically(): void
     {
         $this->postJson(route('sales.store'), $this->payload(['items' => [['id' => $this->product->id, 'quantity' => 11]]]))->assertUnprocessable();

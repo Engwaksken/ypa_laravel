@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Setting;
+use App\Services\AppearanceService;
+use App\Services\PermissionService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\Middleware;
@@ -29,18 +31,30 @@ class SettingsController extends Controller
             'addressDetails' => Setting::value('address_details', ''),
             'siteLogo' => Setting::asset('site_logo', ''),
             'siteFavicon' => Setting::asset('site_favicon', ''),
+            'canCustomize' => $this->canCustomize(),
+            'appearanceFields' => app(AppearanceService::class)->fields(),
+            'appearanceValues' => app(AppearanceService::class)->values(),
         ]);
     }
 
     public function update(Request $request): RedirectResponse
     {
+        $appearance = app(AppearanceService::class);
+        if (array_intersect(array_keys($request->all()), array_keys($appearance->fields()))) {
+            abort_unless($this->canCustomize(), 403);
+        }
         $data = $request->validate([
             'site_name' => ['required', 'string', 'max:191'],
             'backup_email' => ['nullable', 'email', 'max:191'],
             'address_details' => ['nullable', 'string', 'max:2000'],
             'site_logo' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp', 'mimetypes:image/jpeg,image/png,image/webp', 'max:2048'],
             'site_favicon' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp', 'mimetypes:image/jpeg,image/png,image/webp', 'max:1024'],
+            ...$appearance->rules(),
         ]);
+
+        foreach (array_intersect_key($data, $appearance->fields()) as $key => $value) {
+            Setting::updateOrCreate(['setting_key' => $key], ['setting_value' => $value ?? '']);
+        }
 
         Setting::updateOrCreate(
             ['setting_key' => 'site_name'],
@@ -80,5 +94,10 @@ class SettingsController extends Controller
         return redirect()
             ->route('settings.index')
             ->with('success', 'Settings updated successfully!');
+    }
+
+    private function canCustomize(): bool
+    {
+        return app(PermissionService::class)->normalizeRole(auth()->user()?->role) === 'supper_admin';
     }
 }

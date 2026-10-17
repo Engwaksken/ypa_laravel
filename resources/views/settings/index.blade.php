@@ -8,7 +8,7 @@
     <div class="dash-head">
         <div>
             <h1 class="dash-name">Settings</h1>
-            <div class="dash-date">Site identity and branding</div>
+            <div class="dash-date">Site identity, appearance and printed documents</div>
         </div>
     </div>
 
@@ -17,6 +17,9 @@
             <form method="POST" action="{{ route('settings.update') }}" enctype="multipart/form-data">
                 @csrf
                 @method('PUT')
+                @if($errors->any())
+                    <div class="alert alert-danger" role="alert"><ul class="mb-0">@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>
+                @endif
 
                 <ul class="nav nav-tabs ypa-tabs mb-4" role="tablist">
                     <li class="nav-item" role="presentation">
@@ -25,6 +28,11 @@
                     <li class="nav-item" role="presentation">
                         <button class="nav-link" data-bs-toggle="tab" data-bs-target="#settings-branding" type="button" role="tab">Branding</button>
                     </li>
+                    @if($canCustomize)
+                        @foreach(['Theme', 'Invoice', 'Receipt', 'Contract'] as $group)
+                            <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#settings-{{ strtolower($group) }}" type="button" role="tab">{{ $group }}</button></li>
+                        @endforeach
+                    @endif
                 </ul>
 
                 <div class="tab-content">
@@ -63,6 +71,30 @@
                             </div>
                         </div>
                     </div>
+                    @if($canCustomize)
+                        @foreach(['Theme', 'Invoice', 'Receipt', 'Contract'] as $group)
+                            <div class="tab-pane fade" id="settings-{{ strtolower($group) }}" role="tabpanel">
+                                <p class="text-muted">{{ $group === 'Theme' ? 'System-wide colors and typography. Choose readable foreground/background combinations.' : 'Plain-text wording and print layout. Paper selection must also match your printer driver. Thermal rolls use 297 mm page segments.' }}</p>
+                                <div class="row g-3">
+                                    @foreach($appearanceFields as $key => $field)
+                                        @if($field['group'] === $group)
+                                            <div class="{{ $field['type'] === 'textarea' ? 'col-md-6' : 'col-md-4' }}">
+                                                <label class="form-label" for="{{ $key }}">{{ $field['label'] }}</label>
+                                                @if($field['type'] === 'select')
+                                                    <select id="{{ $key }}" name="{{ $key }}" class="form-select">@foreach($field['options'] as $value => $label)<option value="{{ $value }}" @selected(old($key, $appearanceValues[$key]) === $value)>{{ $label }}</option>@endforeach</select>
+                                                @elseif($field['type'] === 'textarea')
+                                                    <textarea id="{{ $key }}" name="{{ $key }}" class="form-control" rows="3" maxlength="2000">{{ old($key, $appearanceValues[$key]) }}</textarea>
+                                                @else
+                                                    <input id="{{ $key }}" name="{{ $key }}" type="{{ $field['type'] }}" class="form-control" value="{{ old($key, $appearanceValues[$key]) }}" @if($field['type'] === 'number') min="{{ $field['min'] }}" max="{{ $field['max'] }}" @endif>
+                                                @endif
+                                                @error($key)<div class="text-danger">{{ $message }}</div>@enderror
+                                            </div>
+                                        @endif
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endforeach
+                    @endif
                 </div>
 
                 <div class="mt-4">

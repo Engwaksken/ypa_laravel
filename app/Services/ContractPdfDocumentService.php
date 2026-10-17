@@ -24,18 +24,15 @@ class ContractPdfDocumentService
         $parts = $this->sections($html);
         if ($storedSignature !== '') $parts['signatureHtml'] .= $storedSignature;
         foreach ($parts as $key => $value) $parts[$key] = $assets->localizeImages($value);
-        $nextOfKin = $contract->member?->nextOfKin?->first();
         $group = strtolower((string) $contract->contract_for) === 'group';
         $stockSignature = app(ContractService::class)->sanitizeHtml(view('contracts.documents.organization-signatures', compact('contract'))->render());
         $standardSignatures = trim(preg_replace('/\s+/', ' ', $parts['signatureHtml'])) === trim(preg_replace('/\s+/', ' ', $stockSignature));
 
-        return $parts + [
+        return $parts + app(ContractPhotoService::class)->resolve($contract) + [
             'logo' => app(BrandingService::class)->pdfLogo(),
             'partyName' => $group ? $contract->group?->group_name : $contract->member?->full_name,
             'partyCode' => $group ? $contract->group?->group_code : $contract->member?->membership_id,
             'partyLabel' => $group ? 'GROUP REPRESENTATIVE' : 'FARMER',
-            'partyPhoto' => $assets->localImageUri($contract->farmer_photo ?: $contract->member?->member_photo),
-            'kinPhoto' => $assets->localImageUri($contract->nok_photo ?: $nextOfKin?->photo ?: $nextOfKin?->nok_photo ?: $nextOfKin?->photo_path),
             'mode' => $contract->management_model ?: ($template?->template_sections['subtitle'] ?? ''),
             'standardSignatures' => $standardSignatures,
             'warnings' => $this->missingDetails($contract),

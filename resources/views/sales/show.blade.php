@@ -20,10 +20,11 @@
         <header class="sales-receipt-header">
             <div class="sales-receipt-brand">
                 <img src="{{ asset($receiptLogo) }}" alt="{{ $siteName }} logo" onerror="this.style.display='none'">
-                <div><span class="sales-receipt-eyebrow">{{ $siteName }}</span><h2>Sales receipt</h2><span class="text-muted">{{ $branch->name ?? 'Branch' }}</span></div>
+                <div><span class="sales-receipt-eyebrow">{{ $siteName }}</span><h2>{{ app(\App\Services\AppearanceService::class)->get('invoice_title') }}</h2><span class="text-muted">{{ $branch->name ?? 'Branch' }}</span></div>
             </div>
             <div class="sales-receipt-number"><span>INVOICE NUMBER</span><strong>{{ $sale->invoice_no }}</strong><span>{{ $sale->sale_date }}</span></div>
         </header>
+        @include('documents.wording', ['kind' => 'invoice', 'position' => 'header'])
 
         <section class="sales-receipt-details" aria-label="Invoice details">
             <div><span>Customer</span><strong>{{ $sale->customer_name ?: 'Walk-in customer' }}</strong>@if($sale->customer_phone)<small>{{ $sale->customer_phone }}</small>@endif</div>
@@ -40,7 +41,7 @@
             </table>
         </div>
         <div class="sales-receipt-bottom">
-            <div class="sales-receipt-thanks"><i class="fas fa-circle-check"></i><span>Thank you for your purchase.</span></div>
+            <div class="sales-receipt-thanks document-wording">{{ app(\App\Services\AppearanceService::class)->get('invoice_footer') }}</div>
             <dl class="sales-receipt-totals">
                 <dt>Subtotal</dt><dd>{{ $money($sale->total_amount + $sale->discount) }}</dd>
                 <dt>Discount</dt><dd>− {{ $money($sale->discount) }}</dd>
@@ -50,6 +51,7 @@
             </dl>
         </div>
         @if(!empty($receipt))<footer class="sales-receipt-footer"><span>Payment receipt reference</span><strong>{{ $receipt->receipt_number }}</strong></footer>@endif
+        @include('documents.wording', ['kind' => 'invoice', 'position' => 'terms'])
     </article>
 </div>
 @endsection
@@ -59,6 +61,7 @@
 @media(max-width:640px){.sales-receipt-header{flex-direction:column}.sales-receipt-number{text-align:left}.sales-receipt-details{grid-template-columns:1fr 1fr}.sales-receipt-bottom{flex-direction:column}.sales-receipt-totals{width:100%}.sales-receipt-brand{align-items:flex-start;flex-direction:column}}
 @media print{@page{size:A4;margin:14mm}.sidebar,.top-nav,.overlay,.d-print-none,.ypa-flash-stack{display:none!important}.main-content{margin:0!important;padding:0!important;background:white!important}.dash-wrap{margin:0!important;padding:0!important;max-width:none!important}.sales-receipt{max-width:none;margin:0;border:0;border-radius:0;box-shadow:none;padding:0}.sales-receipt-table-wrap{overflow:visible}.sales-receipt-table-wrap table{min-width:100%}.sales-receipt-details,.sales-receipt-bottom,.sales-receipt-header{break-inside:avoid}}
 </style>
+@include('documents.print-settings', ['kind' => 'invoice'])
 @endpush
 @push('scripts')
 <script>document.getElementById('printReceipt')?.addEventListener('click', () => window.print());</script>

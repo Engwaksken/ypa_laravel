@@ -31,4 +31,26 @@ class PdfAssetServiceTest extends TestCase
             unlink($file);
         }
     }
+
+    public function test_legacy_paths_and_hosts_map_only_to_trusted_local_uploads(): void
+    {
+        $directory = storage_path('framework/cache/legacy-photo-test-' . bin2hex(random_bytes(6)));
+        mkdir($directory);
+        copy(public_path('images/logo.png'), $directory . '/photo.png');
+        config(['contract_assets.legacy_uploads_path' => $directory, 'contract_assets.legacy_hosts' => ['old.example.test']]);
+        try {
+            $service = new PdfAssetService;
+            foreach (['../uploads/photo.png', './uploads/photo.png', 'uploads\\photo.png', 'https://old.example.test/uploads/photo.png'] as $source) {
+                $this->assertStringStartsWith('file://', $service->localImageUri($source));
+                $this->assertStringStartsWith('data:image/png;base64,', $service->browserImageUri($source));
+            }
+            $this->assertNull($service->localImageUri('https://untrusted.test/uploads/photo.png'));
+            $this->assertNull($service->localImageUri('uploads/../../.env'));
+            $this->assertNull($service->browserImageUri('file://' . $directory . '/photo.png'));
+            $this->assertStringContainsString('src="data:image/png;base64,', $service->browserImages('<img src="../uploads/photo.png">'));
+        } finally {
+            unlink($directory . '/photo.png');
+            rmdir($directory);
+        }
+    }
 }

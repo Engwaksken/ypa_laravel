@@ -9,6 +9,13 @@
         @media print{body{background:#fff;font-size:10pt}.print-watermark{opacity:.06;print-color-adjust:exact;-webkit-print-color-adjust:exact}.print-sheet{background:transparent}.print-toolbar{display:none!important}.print-sheet{width:auto;min-height:0;margin:0;padding:0;box-shadow:none}.print-brand{print-color-adjust:exact;-webkit-print-color-adjust:exact}.print-meta{print-color-adjust:exact;-webkit-print-color-adjust:exact}.contract-body a{color:inherit;text-decoration:none}}
         @media(max-width:600px){.print-sheet{padding:20px}.print-meta{grid-template-columns:1fr}.print-brand{align-items:flex-start;flex-direction:column}}
     </style>
+    @include('documents.print-settings', ['kind' => 'contract'])
+    @php($appearance = app(\App\Services\AppearanceService::class))
+    <style>
+        body { font-family: {!! $appearance->font() !!}; }
+        .print-brand strong { color: {{ $appearance->get('theme_primary') }}; }
+        .print-brand { border-color: {{ $appearance->get('theme_primary') }}; }
+    </style>
 </head>
 <body>
     <nav class="print-toolbar" aria-label="Print controls">
@@ -18,7 +25,7 @@
     </nav>
     <img class="print-watermark" src="{{ $logoUrl }}" alt="" aria-hidden="true" onerror="this.remove()">
     <main class="print-sheet">
-        <header class="print-brand"><img src="{{ $logoUrl }}" alt="{{ $siteName }} logo" onerror="this.style.display='none'"><div><strong>{{ $siteName }}</strong><span>Contract Agreement</span></div></header>
+        <header class="print-brand"><img src="{{ $logoUrl }}" alt="{{ $siteName }} logo" onerror="this.style.display='none'"><div><strong>{{ $siteName }}</strong><span>{{ $appearance->get('contract_title') }}</span></div></header>
         <dl class="print-meta">
             <div><dt>Contract number</dt><dd>{{ $contract->contract_number }}</dd></div>
             <div><dt>Project</dt><dd>{{ $contract->project?->project_name ?: '—' }}</dd></div>

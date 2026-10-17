@@ -18,6 +18,8 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(PermissionService::class);
+        $this->app->scoped('settings.values', fn () => new \ArrayObject());
+        $this->app->scoped(\App\Services\AppearanceService::class);
     }
 
     /**

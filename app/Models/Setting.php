@@ -16,22 +16,23 @@ class Setting extends Model
      */
     public $timestamps = false;
 
-    protected static array $cache = [];
+    protected static function booted(): void
+    {
+        static::saved(fn () => app('settings.values')->exchangeArray([]));
+        static::deleted(fn () => app('settings.values')->exchangeArray([]));
+    }
 
     /**
      * Read a setting value by key, cached per request.
      */
     public static function value(string $key, string $default = ''): string
     {
-        if (array_key_exists($key, static::$cache)) {
-            return static::$cache[$key];
+        $cache = app('settings.values');
+        if (!$cache->offsetExists('values')) {
+            $cache['values'] = static::query()->pluck('setting_value', 'setting_key')->all();
         }
 
-        $value = static::query()
-            ->where('setting_key', $key)
-            ->value('setting_value');
-
-        return static::$cache[$key] = trim((string) ($value ?? $default));
+        return trim((string) ($cache['values'][$key] ?? $default));
     }
 
     /**
