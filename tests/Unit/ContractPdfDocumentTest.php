@@ -164,6 +164,46 @@ class ContractPdfDocumentTest extends TestCase
         $this->assertStringNotContainsString('OFFICIAL PAYMENT RECEIPT', $html);
     }
 
+    public function test_nested_legacy_cover_is_extracted_once(): void
+    {
+        $legacyCover = '<div class="contract-cover-page"><div class="cover-page"><div class="cover-inner">Cover {{contract_number}}</div></div></div>';
+        $template = new ContractTemplate(['cover_page' => $legacyCover, 'template_body' => '<p>Agreement terms</p>']);
+        $parts = (new ContractPdfDocumentService)->sections((new ContractService)->renderTemplate($this->contract(), $template));
+
+        $this->assertSame(1, substr_count($parts['coverHtml'], 'Cover CT-DEMO'));
+        $this->assertStringNotContainsString('Cover', $parts['bodyHtml']);
+        $this->assertStringContainsString('Agreement terms', $parts['bodyHtml']);
+    }
+
+    public function test_cover_field_and_cover_left_in_body_produce_one_cover(): void
+    {
+        $template = new ContractTemplate(['cover_page' => '<h1>Field cover</h1>',
+            'template_body' => '<section class="cover-page"><h1>Body cover</h1></section><p>Agreement terms</p>']);
+        $parts = (new ContractPdfDocumentService)->sections((new ContractService)->renderTemplate($this->contract(), $template));
+
+        $this->assertStringContainsString('Field cover', $parts['coverHtml']);
+        $this->assertStringNotContainsString('Body cover', $parts['coverHtml'] . $parts['bodyHtml']);
+    }
+
+    public function test_hand_typed_placeholder_variants_are_filled(): void
+    {
+        $template = new ContractTemplate(['template_body' => '<p>{{ Member_Name }}|{{membership_id }}|{{<strong>nin</strong>}}|{{contract_expiration}}</p>']);
+        $contract = $this->contract();
+        $contract->end_date = '2027-08-23';
+
+        $this->assertSame('<p>Jane Farmer|MEM-DEMO|TEST-NIN|23rd August, 2027</p>', (new ContractService)->renderTemplate($contract, $template));
+    }
+
+    public function test_contract_fields_fill_placeholders_and_unknown_ones_are_blanked_and_reported(): void
+    {
+        $service = new ContractService;
+        $template = new ContractTemplate(['template_body' => '<p>{{expected_units}}|{{contract_amount_paid}}|{{no_such_field}}|{{password}}</p>']);
+        $html = $service->renderTemplate($this->contract(), $template);
+
+        $this->assertSame('<p>bags|12,000,000.00||</p>', $html);
+        $this->assertSame(['no_such_field', 'password'], array_values($service->lastUnresolvedPlaceholders));
+    }
+
     public function test_unit_count_placeholder_is_numeric_not_a_unit_label(): void
     {
         $contract = $this->contract();

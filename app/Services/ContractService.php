@@ -7,6 +7,9 @@ use App\Models\ContractTemplate;
 
 class ContractService
 {
+    /** Placeholder names the most recent renderTemplate() call could not fill. */
+    public array $lastUnresolvedPlaceholders = [];
+
     public function resolveTemplate(Contract $contract, ?int $requestedId = null): ?ContractTemplate
     {
         $contract->loadMissing(['project.category', 'projectData']);
@@ -119,7 +122,8 @@ class ContractService
     public function renderTemplate(Contract $contract, ?ContractTemplate $template = null): string
     {
         $template ??= $this->resolveTemplate($contract);
-        $templateBody = (string) ($template?->template_body ?? '');
+        $this->lastUnresolvedPlaceholders = [];
+        $templateBody = $this->normalizePlaceholders((string) ($template?->template_body ?? ''));
         if ($templateBody === '') {
             return '';
         }
@@ -223,7 +227,16 @@ class ContractService
             '{{contract_amount_outstanding}}' => number_format($totals['total_outstanding'], 2),
             '{{status}}' => (string) ($contract->status ?? ''),
             '{{workflow_status}}' => (string) ($contract->workflow_status ?? ''),
+            // Names supported by the legacy contract printer.
+            '{{contract_expiration}}' => $this->formatDate($contract->getAttribute('contract_expiration') ?? $contract->end_date),
+            '{{payment_date}}' => $this->formatDate($contract->getAttribute('payment_date')),
+            '{{finalised_at}}' => $this->formatDate($contract->getAttribute('finalised_at'), 'jS F, Y H:i'),
+            '{{workflow_step}}' => (string) ($contract->workflow_step ?? ''),
+            '{{project_category_id}}' => (string) (int) ($contract->project_category_id ?: $contract->project?->project_category_id),
         ];
+        $replacements['{{balance_quantity}}'] = (string) ($sidecar['expected_quantity'] ?? $contract->expected_quantity ?? '');
+        $replacements['{{purchase_fee_raw}}'] = (string) ($sidecar['purchase_fee'] ?? $contract->getAttribute('purchase_fee') ?? '');
+        $replacements['{{purchase_price_raw}}'] = (string) ($sidecar['purchase_price'] ?? $contract->getAttribute('purchase_price') ?? '');
         foreach (['management_model', 'investment_period', 'duration', 'duration_months', 'expected_quantity',
             'expected_units', 'goats_purchased', 'hives_purchased', 'total_goats', 'total_acreages', 'acreages_purchased',
             'units', 'units_1dp', 'units_2dp', 'unit_label', 'kg_per_bag', 'harvest_frequency', 'mobile_money',
@@ -235,8 +248,8 @@ class ContractService
         }
 
         // Legacy templates embed these structural blocks; newer ones store them separately.
-        $footer = (string) ($template->contract_footer ?? '');
-        $signature = (string) ($template->contract_signature ?? '');
+        $footer = $this->normalizePlaceholders((string) ($template->contract_footer ?? ''));
+        $signature = $this->normalizePlaceholders((string) ($template->contract_signature ?? ''));
         $body = strtr($templateBody, ['{{contract_footer}}' => $footer, '{{contract_signature}}' => $signature]);
         if ($footer !== '' && !str_contains($templateBody, '{{contract_footer}}') && !str_contains($templateBody, $footer)) {
             $body .= $footer;
@@ -244,7 +257,7 @@ class ContractService
         if ($signature !== '' && !str_contains($templateBody, '{{contract_signature}}') && !str_contains($templateBody, $signature)) {
             $body .= $signature;
         }
-        $cover = trim((string) ($template->cover_page ?? ''));
+        $cover = trim($this->normalizePlaceholders((string) ($template->cover_page ?? '')));
         if ($cover !== '') {
             $body = '<section class="contract-cover-custom" style="page-break-after:always;">' . $cover . '</section>' . $body;
         }
@@ -267,8 +280,60 @@ class ContractService
             $replacements['{{project.' . $key . '}}'] = (string) $value;
         }
         $rendered = strtr($body, array_map(fn ($value) => e($value), $replacements));
+        $rendered = $this->fillRemainingPlaceholders($rendered, $contract);
 
         return $this->sanitizeHtml($rendered);
+    }
+
+    /**
+     * Templates are typed by hand, so accept {{ Member_Name }}, {{member_name }} and
+     * placeholders split by inline formatting tags as the canonical {{member_name}}.
+     */
+    public function normalizePlaceholders(string $html): string
+    {
+        $gap = '(?:\s|&nbsp;|<\/?(?:span|strong|b|em|i|u|font)\b[^>]*>)*';
+
+        return preg_replace_callback('/\{\{' . $gap . '([A-Za-z][A-Za-z0-9_.]*)' . $gap . '\}\}/u', function (array $match): string {
+            $key = $match[1];
+
+            // Project calculation keys are case-sensitive; everything else is not.
+            return '{{' . (str_starts_with(strtolower($key), 'project.') ? 'project.' . substr($key, 8) : strtolower($key)) . '}}';
+        }, $html) ?? $html;
+    }
+
+    /**
+     * Fill placeholders that name a contract or party field directly, then blank
+     * anything still unknown (as the legacy printer did) and remember it for review.
+     */
+    protected function fillRemainingPlaceholders(string $html, Contract $contract): string
+    {
+        $party = strtolower((string) $contract->contract_for) === 'group' ? $contract->group : $contract->member;
+
+        return preg_replace_callback('/\{\{([a-z][a-z0-9_.]*)\}\}/i', function (array $match) use ($contract, $party): string {
+            $key = $match[1];
+            if (! preg_match('/password|token|secret|remember/i', $key)) {
+                foreach ([$contract, $party] as $model) {
+                    if ($model && array_key_exists($key, $model->getAttributes())) {
+                        $value = $model->getAttribute($key);
+                        if ($value instanceof \DateTimeInterface) return e($value->format('jS F, Y'));
+                        if (is_scalar($value) && (string) $value !== '') return e((string) $value);
+                    }
+                }
+            }
+            $this->lastUnresolvedPlaceholders[$key] = $key;
+
+            return '';
+        }, $html) ?? $html;
+    }
+
+    protected function formatDate(mixed $value, string $format = 'jS F, Y'): string
+    {
+        if ($value === null || $value === '') return '';
+        try {
+            return ($value instanceof \DateTimeInterface ? \Illuminate\Support\Carbon::instance($value) : \Illuminate\Support\Carbon::parse((string) $value))->format($format);
+        } catch (\Throwable) {
+            return (string) $value;
+        }
     }
 
     public function sanitizeHtml(string $html): string

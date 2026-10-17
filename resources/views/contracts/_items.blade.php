@@ -4,6 +4,7 @@
         $itemRows = isset($contract) && $contract?->relationLoaded('items')
             ? $contract->items->map(function ($item) {
                 return [
+                    'id' => $item->id,
                     'item_name' => $item->item_name,
                     'item_type' => $item->item_type,
                     'quantity' => $item->quantity,
@@ -39,15 +40,27 @@
                 </thead>
                 <tbody>
                     @foreach($itemRows as $index => $item)
+                        @php($itemId = (int) ($item['id'] ?? 0))
+                        @php($itemLocked = $itemId > 0 && in_array($itemId, $lockedItemIds ?? [], true))
                         <tr>
-                            <td><input type="text" class="form-control form-control-sm" name="items[{{ $index }}][item_name]" value="{{ old('items.' . $index . '.item_name', $item['item_name'] ?? '') }}"></td>
+                            <td>
+                                @if($itemId > 0)<input type="hidden" name="items[{{ $index }}][id]" value="{{ $itemId }}">@endif
+                                <input type="text" class="form-control form-control-sm" name="items[{{ $index }}][item_name]" value="{{ old('items.' . $index . '.item_name', $item['item_name'] ?? '') }}" aria-label="Item name">
+                                @if($itemLocked)<div class="form-text text-warning"><i class="fas fa-lock" aria-hidden="true"></i> Has recorded harvests</div>@endif
+                            </td>
                             <td><input type="text" class="form-control form-control-sm" name="items[{{ $index }}][item_type]" value="{{ old('items.' . $index . '.item_type', $item['item_type'] ?? '') }}"></td>
                             <td><input type="number" step="0.01" class="form-control form-control-sm" name="items[{{ $index }}][quantity]" value="{{ old('items.' . $index . '.quantity', $item['quantity'] ?? '') }}"></td>
                             <td><input type="text" class="form-control form-control-sm" name="items[{{ $index }}][unit_name]" value="{{ old('items.' . $index . '.unit_name', $item['unit_name'] ?? '') }}"></td>
                             <td><input type="number" step="0.01" class="form-control form-control-sm" name="items[{{ $index }}][unit_price]" value="{{ old('items.' . $index . '.unit_price', $item['unit_price'] ?? '') }}"></td>
                             <td><input type="number" step="0.01" class="form-control form-control-sm" name="items[{{ $index }}][monthly_return]" value="{{ old('items.' . $index . '.monthly_return', $item['monthly_return'] ?? '') }}"></td>
                             <td><input type="number" step="0.01" class="form-control form-control-sm" name="items[{{ $index }}][total_hives]" value="{{ old('items.' . $index . '.total_hives', $item['total_hives'] ?? '') }}"></td>
-                            <td class="text-end"><button type="button" class="btn btn-sm btn-outline-danger remove-contract-item" title="Remove">&times;</button></td>
+                            <td class="text-end">
+                                @if($itemLocked)
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" disabled title="Items with recorded harvests cannot be removed" aria-label="Item cannot be removed"><i class="fas fa-lock" aria-hidden="true"></i></button>
+                                @else
+                                    <button type="button" class="btn btn-sm btn-outline-danger remove-contract-item" title="Remove" aria-label="Remove item">&times;</button>
+                                @endif
+                            </td>
                         </tr>
                     @endforeach
                 </tbody>

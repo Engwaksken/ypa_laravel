@@ -6,6 +6,7 @@ use App\Http\Requests\StoreContractRequest;
 use App\Http\Requests\UpdateContractRequest;
 use App\Models\Branch;
 use App\Models\Contract;
+use App\Models\ContractAmendment;
 use App\Models\ContractItem;
 use App\Models\ContractItemHarvest;
 use App\Models\ContractTemplate;
@@ -139,18 +140,23 @@ class ContractController extends Controller
 
         $template = $this->contractService->resolveTemplate($contract);
         $renderedHtml = $template ? $this->contractService->renderTemplate($contract, $template) : '';
+        $unresolvedPlaceholders = array_values($this->contractService->lastUnresolvedPlaceholders);
         $documentWarnings = app(\App\Services\ContractPdfDocumentService::class)->missingDetails($contract);
         $integrityWarnings = app(\App\Services\ContractIntegrityService::class)->warnings($contract);
 
-        return view('contracts.show', compact('contract', 'template', 'renderedHtml', 'documentWarnings', 'integrityWarnings'));
+        return view('contracts.show', compact('contract', 'template', 'renderedHtml', 'documentWarnings', 'integrityWarnings', 'unresolvedPlaceholders'));
     }
 
     public function edit(Contract $contract): View
     {
-        app(\App\Services\ContractIntegrityService::class)->assertEditable($contract);
+        $integrity = app(\App\Services\ContractIntegrityService::class);
+        $integrity->assertEditable($contract);
         $contract->load(['items']);
+        $requiresAmendment = $integrity->requiresAmendment($contract);
+        $lockedItemIds = ContractItemHarvest::query()->where('contract_id', $contract->id)
+            ->whereNotNull('contract_item_id')->distinct()->pluck('contract_item_id')->map(fn ($id) => (int) $id)->all();
 
-        return view('contracts.edit', array_merge($this->formData(), compact('contract')));
+        return view('contracts.edit', array_merge($this->formData(), compact('contract', 'requiresAmendment', 'lockedItemIds')));
     }
 
     public function calculateProject(Request $request): JsonResponse
@@ -176,22 +182,47 @@ class ContractController extends Controller
         $data = $request->validated();
         $userId = auth()->id();
 
-        DB::transaction(function () use ($contract, $data, $userId): void {
+        $amended = false;
+
+        DB::transaction(function () use ($contract, $data, $userId, &$amended): void {
             $contract = Contract::query()->lockForUpdate()->findOrFail($contract->id);
-            app(\App\Services\ContractIntegrityService::class)->assertEditable($contract);
-            if ($contract->payments()->exists() || $contract->itemHarvests()->exists() || $contract->harvests()->exists()) {
-                throw ValidationException::withMessages(['contract' => 'Contracts with financial records cannot have their items replaced through the draft editor.']);
+            $integrity = app(\App\Services\ContractIntegrityService::class);
+            $integrity->assertEditable($contract);
+            $amended = $integrity->requiresAmendment($contract);
+            $reason = trim((string) ($data['amendment_reason'] ?? ''));
+            if ($amended && mb_strlen($reason) < 10) {
+                throw ValidationException::withMessages([
+                    'amendment_reason' => 'This contract has already been signed. Explain why it is being changed (at least 10 characters).',
+                ]);
             }
+
+            $before = $contract->getAttributes();
+            $itemsBefore = $this->itemSnapshot($contract);
             $payload = $this->contractPayload($data, $userId, false, $contract);
             $payload['updated_by'] = $userId;
 
+            // Workflow position and status are kept: an amendment does not restart signing.
             unset($payload['status']);
 
             $contract->update($payload);
             $this->syncContractItems($contract, $data['items'] ?? [], true);
+
+            if ($amended) {
+                ContractAmendment::query()->create([
+                    'contract_id' => $contract->id,
+                    'user_id' => $userId,
+                    'contract_status' => $contract->status,
+                    'workflow_status' => $contract->workflow_status,
+                    'reason' => $reason,
+                    'changes' => $this->amendmentChanges($before, $contract->fresh()->getAttributes(), array_keys($payload),
+                        $itemsBefore, $this->itemSnapshot($contract)),
+                    'ip_address' => substr((string) request()->ip(), 0, 45),
+                ]);
+            }
         });
 
-        return redirect()->route('contracts.show', $contract)->with('success', 'Contract updated successfully.');
+        return redirect()->route('contracts.show', $contract)
+            ->with('success', $amended ? 'Contract amended. The change and its reason were recorded.' : 'Contract updated successfully.');
     }
 
     public function destroy(Contract $contract): RedirectResponse
@@ -398,11 +429,15 @@ class ContractController extends Controller
             ->value('paid_total');
     }
 
+    /**
+     * Items are updated in place by id so harvest and payout records that point
+     * at them stay linked. With $replace, items left out of the form are removed
+     * unless harvests were recorded against them.
+     */
     protected function syncContractItems(Contract $contract, array $items, bool $replace = false): void
     {
-        if ($replace) {
-            $contract->items()->delete();
-        }
+        $existing = $replace ? $contract->items()->get()->keyBy('id') : collect();
+        $kept = [];
 
         $rows = [];
         foreach ($items as $item) {
@@ -427,13 +462,61 @@ class ContractController extends Controller
                 'monthly_payout_amount' => round($totalHives * $monthlyReturn, 2),
                 'total_hives' => $totalHives,
                 'project_id' => $contract->project_id,
-                'item_order' => count($rows) + 1,
+                'item_order' => count($rows) + count($kept) + 1,
             ];
+
+            $id = (int) ($item['id'] ?? 0);
+            if ($id > 0 && $existing->has($id) && ! in_array($id, $kept, true)) {
+                $existing[$id]->update(array_pop($rows));
+                $kept[] = $id;
+            }
+        }
+
+        if ($replace) {
+            $removed = $existing->keys()->diff($kept)->values();
+            if ($removed->isNotEmpty()) {
+                if (ContractItemHarvest::query()->whereIn('contract_item_id', $removed)->exists()) {
+                    throw ValidationException::withMessages([
+                        'items' => 'Items with recorded harvests cannot be removed. Edit their details instead.',
+                    ]);
+                }
+                ContractItem::query()->whereIn('id', $removed)->delete();
+            }
         }
 
         if ($rows !== []) {
             $contract->items()->createMany($rows);
         }
+    }
+
+    protected function itemSnapshot(Contract $contract): array
+    {
+        return $contract->items()->orderBy('item_order')->orderBy('id')->get()
+            ->map(fn (ContractItem $item) => collect(['item_name', 'item_type', 'quantity', 'unit_name', 'unit_price', 'monthly_return', 'total_hives'])
+                ->mapWithKeys(fn ($key) => [$key => is_numeric($item->{$key}) ? (float) $item->{$key} : $item->{$key}])->all())
+            ->all();
+    }
+
+    /** Field-level before/after values for the amendment audit trail. */
+    protected function amendmentChanges(array $before, array $after, array $fields, array $itemsBefore, array $itemsAfter): array
+    {
+        $normalize = fn ($value) => is_numeric($value) ? (float) $value : (is_string($value) ? trim($value) : $value);
+        $changes = [];
+        foreach (array_diff($fields, ['updated_by', 'updated_at', 'project_calculation']) as $field) {
+            $from = $before[$field] ?? null;
+            $to = $after[$field] ?? null;
+            if ($normalize($from) !== $normalize($to)) {
+                $changes[$field] = ['from' => $from, 'to' => $to];
+            }
+        }
+        if (($before['project_calculation'] ?? null) != ($after['project_calculation'] ?? null)) {
+            $changes['project_calculation'] = ['from' => 'previous calculation', 'to' => 'recalculated'];
+        }
+        if ($itemsBefore !== $itemsAfter) {
+            $changes['items'] = ['from' => $itemsBefore, 'to' => $itemsAfter];
+        }
+
+        return $changes;
     }
 
     protected function csvValue(mixed $value): string

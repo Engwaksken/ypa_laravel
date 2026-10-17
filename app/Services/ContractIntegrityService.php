@@ -6,15 +6,31 @@ use App\Models\Contract;
 
 class ContractIntegrityService
 {
+    public const CLOSED_STATUSES = ['TERMINATED', 'CANCELLED'];
+
+    /** Closed contracts are final; everything else can be edited (as an amendment once signed). */
     public function assertEditable(Contract $contract): void
     {
-        $workflow = strtolower((string) $contract->workflow_status);
-        if ((int) $contract->workflow_step > 0 || in_array($workflow, ['pending_accountant', 'pending_director', 'finalising', 'approved'], true)
-            || in_array(strtoupper((string) $contract->status), ['APPROVED', 'ACTIVE', 'COMPLETED', 'TERMINATED', 'CANCELLED'], true)) {
+        if ($this->isClosed($contract)) {
             throw \Illuminate\Validation\ValidationException::withMessages([
-                'contract' => 'Signed or active contracts cannot be rewritten through the draft editor. Use a reviewed amendment instead.',
+                'contract' => 'This contract is ' . strtolower((string) $contract->status) . ' and can no longer be edited.',
             ]);
         }
+    }
+
+    public function isClosed(Contract $contract): bool
+    {
+        return in_array(strtoupper((string) $contract->status), self::CLOSED_STATUSES, true);
+    }
+
+    /** Edits after signing has started are amendments: they need a reason and are audited. */
+    public function requiresAmendment(Contract $contract): bool
+    {
+        $workflow = strtolower((string) $contract->workflow_status);
+
+        return (int) $contract->workflow_step > 0
+            || in_array($workflow, ['pending_accountant', 'pending_director', 'finalising', 'approved'], true)
+            || in_array(strtoupper((string) $contract->status), ['APPROVED', 'ACTIVE', 'COMPLETED'], true);
     }
 
     /** Review stored figures only; never infer a rate from current project settings. */

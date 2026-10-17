@@ -192,6 +192,11 @@ class Contract extends Model
         return $this->hasMany(ContractApproval::class, 'contract_id');
     }
 
+    public function amendments(): HasMany
+    {
+        return $this->hasMany(ContractAmendment::class, 'contract_id')->latest('id');
+    }
+
     public function attachments(): HasMany
     {
         return $this->hasMany(ContractAttachment::class, 'contract_id');

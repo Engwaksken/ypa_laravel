@@ -114,7 +114,7 @@
                                 <td class="text-end text-nowrap">
                                     <a href="{{ route('contracts.show', $contract) }}" data-document-url="{{ route('contracts.pdf', $contract) }}" class="btn btn-sm btn-outline-primary" title="View" aria-label="View contract {{ $contract->contract_number }}"><i class="fas fa-eye" aria-hidden="true"></i></a>
                                     <a href="{{ route('contracts.print', $contract) }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-secondary" title="Print" aria-label="Print contract {{ $contract->contract_number }}"><i class="fas fa-print" aria-hidden="true"></i></a>
-                                    @if($perm->can('contracts_edit'))
+                                    @if($perm->can('contracts_edit') && ! in_array(strtoupper((string) $contract->status), \App\Services\ContractIntegrityService::CLOSED_STATUSES, true))
                                         <a href="{{ route('contracts.edit', $contract) }}" class="btn btn-sm btn-outline-secondary" title="Edit" aria-label="Edit contract {{ $contract->contract_number }}"><i class="fas fa-pen" aria-hidden="true"></i></a>
                                     @endif
                                 </td>

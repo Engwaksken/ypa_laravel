@@ -31,14 +31,26 @@ class ContractIntegrityTest extends TestCase
         $this->assertEquals(21600000, $item->projected_harvest_amount);
     }
 
-    public function test_draft_can_be_edited_but_signed_or_active_contracts_cannot(): void
+    public function test_open_contracts_are_editable_and_signed_ones_need_an_amendment(): void
     {
         $service = new ContractIntegrityService;
-        $service->assertEditable(new Contract(['status' => 'DRAFT', 'workflow_status' => 'draft', 'workflow_step' => 0]));
-        foreach ([['workflow_step' => 1], ['workflow_status' => 'approved'], ['status' => 'ACTIVE'], ['status' => 'TERMINATED']] as $attributes) {
+        $draft = new Contract(['status' => 'DRAFT', 'workflow_status' => 'draft', 'workflow_step' => 0]);
+        $service->assertEditable($draft);
+        $this->assertFalse($service->requiresAmendment($draft));
+
+        foreach ([['workflow_step' => 1], ['workflow_status' => 'approved'], ['status' => 'ACTIVE'], ['status' => 'COMPLETED']] as $attributes) {
+            $contract = new Contract($attributes);
+            $service->assertEditable($contract);
+            $this->assertTrue($service->requiresAmendment($contract), json_encode($attributes));
+        }
+    }
+
+    public function test_terminated_and_cancelled_contracts_stay_locked(): void
+    {
+        foreach (['TERMINATED', 'CANCELLED'] as $status) {
             try {
-                $service->assertEditable(new Contract($attributes));
-                $this->fail('Protected contract was editable.');
+                (new ContractIntegrityService)->assertEditable(new Contract(['status' => $status]));
+                $this->fail($status . ' contract was editable.');
             } catch (ValidationException $exception) {
                 $this->assertArrayHasKey('contract', $exception->errors());
             }

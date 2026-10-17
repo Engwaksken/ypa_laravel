@@ -64,9 +64,21 @@ class ContractPdfDocumentService
         $root = $dom->getElementById('pdf-document-root');
         $cover = '';
         $xpath = new \DOMXPath($dom);
-        $covers = $xpath->query('//*[contains(concat(" ", normalize-space(@class), " "), " contract-cover-custom ") or contains(concat(" ", normalize-space(@class), " "), " cover-page ")]');
+        $covers = $xpath->query('//*[' . implode(' or ', array_map(
+            fn ($class) => 'contains(concat(" ", normalize-space(@class), " "), " ' . $class . ' ")',
+            ['contract-cover-custom', 'contract-cover-page', 'cover-page'])) . ']');
+        $coverNodes = [];
         foreach (iterator_to_array($covers) as $node) {
-            if ($node->parentNode) { $cover .= $dom->saveHTML($node); $node->parentNode->removeChild($node); }
+            // Legacy covers nest .cover-page inside a wrapper; the inner block belongs to its outer cover.
+            for ($parent = $node->parentNode; $parent; $parent = $parent->parentNode) {
+                if (in_array($parent, $coverNodes, true)) continue 2;
+            }
+            $coverNodes[] = $node;
+        }
+        // A contract has one cover. A template cover field plus a cover left in the body would print twice.
+        foreach ($coverNodes as $index => $node) {
+            if ($index === 0) $cover = $dom->saveHTML($node);
+            $node->parentNode?->removeChild($node);
         }
         $bankHeadingSeen = false;
         foreach (iterator_to_array($xpath->query('//h2|//h3|//h4|//p')) as $node) {

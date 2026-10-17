@@ -7,6 +7,9 @@
     $perm = app(\App\Services\PermissionService::class);
     $party = strtolower((string) $contract->contract_for) === 'group' ? optional($contract->group)->group_name : optional($contract->member)->full_name;
     $outstanding = (float) ($contract->contract_outstanding ?? 0);
+    $integrity = app(\App\Services\ContractIntegrityService::class);
+    $amendable = $integrity->requiresAmendment($contract);
+    try { $amendments = $contract->amendments()->with('user')->get(); } catch (\Throwable) { $amendments = collect(); }
 @endphp
 <div class="dash-wrap">
     <div class="dash-head">
@@ -23,8 +26,8 @@
             @if($perm->can('termination'))
                 <a href="{{ route('termination.create', ['contract_id' => $contract->id]) }}" class="btn btn-outline-danger"><i class="fas fa-ban"></i> Terminate</a>
             @endif
-            @if($perm->can('contracts_edit'))
-                <a href="{{ route('contracts.edit', $contract) }}" class="btn btn-outline-secondary"><i class="fas fa-edit"></i> Edit</a>
+            @if($perm->can('contracts_edit') && ! $integrity->isClosed($contract))
+                <a href="{{ route('contracts.edit', $contract) }}" class="btn btn-outline-secondary"><i class="fas fa-edit"></i> {{ $amendable ? 'Amend' : 'Edit' }}</a>
             @endif
             @if($perm->can('contracts_delete'))
                 <form method="POST" action="{{ route('contracts.destroy', $contract) }}" class="d-inline ypa-confirm-delete" data-confirm-title="Delete contract?" data-confirm-message="Delete contract {{ $contract->contract_number }}? This cannot be undone.">
@@ -45,6 +48,13 @@
         <div class="dash-panel-body contract-preview-panel">
             @if($documentWarnings ?? [])
                 <div class="alert alert-warning">Missing recorded contract details: {{ implode(', ', $documentWarnings) }}. Update the member record before issuing the final agreement.</div>
+            @endif
+            @if($unresolvedPlaceholders ?? [])
+                @php
+                    $braces = [str_repeat(chr(123), 2), str_repeat(chr(125), 2)];
+                    $unresolvedList = implode(', ', array_map(fn ($key) => $braces[0] . $key . $braces[1], $unresolvedPlaceholders));
+                @endphp
+                <div class="alert alert-warning">The template uses placeholders that have no matching contract detail, so they were left blank: <code>{{ $unresolvedList }}</code>. Correct the names in the template or fill in the missing details.</div>
             @endif
             @foreach($integrityWarnings ?? [] as $warning)
                 <div class="alert alert-warning">{{ $warning }}</div>
@@ -136,6 +146,32 @@
         </div>
     </div>
 
+    @if($amendments->isNotEmpty())
+        <div class="dash-panel mt-4">
+            <div class="dash-panel-head">
+                <span><i class="fas fa-history"></i> Amendment History</span>
+                <span class="text-muted small">{{ $amendments->count() }} {{ \Illuminate\Support\Str::plural('amendment', $amendments->count()) }}</span>
+            </div>
+            <ul class="list-unstyled mb-0 contract-amendments">
+                @foreach($amendments as $amendment)
+                    <li>
+                        <div class="d-flex flex-wrap justify-content-between gap-2">
+                            <strong>{{ $amendment->user?->name ?? 'Unknown user' }}</strong>
+                            <span class="text-muted small">{{ $amendment->created_at?->format('j M Y, H:i') }} · while {{ str_replace('_', ' ', (string) ($amendment->workflow_status ?: $amendment->contract_status)) }}</span>
+                        </div>
+                        <p class="mb-1">{{ $amendment->reason }}</p>
+                        @php
+                            $changed = collect($amendment->changes ?? [])->except('items')->keys()->map(fn ($field) => str_replace('_', ' ', $field));
+                        @endphp
+                        <div class="small text-muted">
+                            Changed: {{ $changed->merge(isset(($amendment->changes ?? [])['items']) ? ['contract items'] : [])->implode(', ') ?: 'no field values (saved unchanged)' }}
+                        </div>
+                    </li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
     @if($perm->can('contracts_edit'))
         <div class="dash-panel mt-4">
             <div class="dash-panel-head">
@@ -156,7 +192,7 @@
 
 @push('styles')
 <style>
-.contract-preview-panel{background:#eef2f7}.contract-document-frame{display:block;width:100%;height:min(82vh,1200px);min-height:680px;border:1px solid #dbe3ec;border-radius:8px;background:#fff;box-shadow:0 8px 28px #0f172a1a}.contract-document .dash-panel-head{background:#fff}
+.contract-amendments li{padding:14px 18px;border-bottom:1px solid var(--ds-border);text-align:left}.contract-amendments li:last-child{border-bottom:0}.contract-preview-panel{background:#eef2f7}.contract-document-frame{display:block;width:100%;height:min(82vh,1200px);min-height:680px;border:1px solid #dbe3ec;border-radius:8px;background:#fff;box-shadow:0 8px 28px #0f172a1a}.contract-document .dash-panel-head{background:#fff}
 @media(max-width:640px){.contract-document-frame{height:70vh;min-height:480px}}
 @media print{.dash-head,.contract-document .dash-panel-head,.dash-panel:not(.contract-document){display:none!important}.contract-document{border:0!important;box-shadow:none!important}.contract-document-frame{height:100vh;border:0;box-shadow:none}}
 </style>
