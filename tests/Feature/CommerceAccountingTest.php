@@ -37,12 +37,14 @@ class CommerceAccountingTest extends TestCase
         Schema::create('payment_transaction_types', function (Blueprint $t) { $t->increments('id'); $t->string('type_name'); $t->boolean('is_active'); $t->timestamp('created_at'); });
         Schema::create('payment_transactions', function (Blueprint $t) {
             $t->increments('id'); $t->integer('branch_id'); $t->integer('customer_id')->nullable(); $t->integer('chart_account_id');
+            $t->enum('payer_type', ['member', 'group'])->default('member');
             $t->integer('transaction_type_id'); $t->string('transaction_number'); $t->string('receipt_number'); $t->string('reference');
             $t->decimal('amount', 15, 2); $t->decimal('net_amount', 15, 2); $t->decimal('total_amount', 15, 2);
             $t->decimal('total_amount_paid', 15, 2); $t->decimal('total_amount_outstanding', 15, 2);
             $t->integer('payment_method_id'); $t->string('status'); $t->dateTime('transaction_date');
             $t->string('reconciliation_status'); $t->integer('created_by'); $t->integer('approved_by'); $t->dateTime('approval_date'); $t->timestamps();
         });
+        (require database_path('migrations/2026_10_17_000003_allow_sales_payer_types_in_payment_transactions.php'))->up();
         Schema::create('chart_of_accounts', function (Blueprint $t) { $t->increments('id'); $t->string('account_code'); $t->string('account_name'); $t->string('account_type'); $t->boolean('is_active')->default(1); });
         Schema::create('journal_entries', function (Blueprint $t) { $t->increments('id'); $t->string('reference_no'); $t->string('description'); $t->date('transaction_date'); $t->integer('created_by'); $t->timestamp('created_at'); });
         Schema::create('ledger_entries', function (Blueprint $t) { $t->increments('id'); $t->integer('journal_id'); $t->integer('account_id'); $t->decimal('debit', 15, 2); $t->decimal('credit', 15, 2); $t->timestamp('created_at'); });
@@ -79,7 +81,7 @@ class CommerceAccountingTest extends TestCase
         $this->assertSame(7, (int) $this->stock->fresh()->quantity);
         $this->assertDatabaseCount('sales', 1); $this->assertDatabaseCount('sale_items', 1); $this->assertDatabaseCount('payment_transactions', 1);
         $this->assertDatabaseHas('sale_items', ['price' => 10.35, 'cost_price' => 5.10, 'total' => 31.05]);
-        $this->assertDatabaseHas('payment_transactions', ['status' => 'APPROVED', 'total_amount_paid' => 30.95, 'reference' => Sale::first()->invoice_no]);
+        $this->assertDatabaseHas('payment_transactions', ['payer_type' => 'walkin', 'customer_id' => null, 'status' => 'APPROVED', 'total_amount_paid' => 30.95, 'reference' => Sale::first()->invoice_no]);
         $this->get(route('sales.show', Sale::first()))->assertOk()->assertSee('30.95');
         $this->get(route('sales.index'))->assertOk()->assertSee('Honey');
     }
@@ -91,6 +93,7 @@ class CommerceAccountingTest extends TestCase
         $this->postJson(route('sales.store'), $this->payload(['payment_status' => 'partially paid', 'customer_id' => $customer->id, 'amount_paid' => '10.01']))->assertOk()->assertJsonPath('balance_amount', '20.94');
         $this->postJson(route('sales.store'), $this->payload(['payment_status' => 'oncredit', 'customer_id' => $customer->id]))->assertOk()->assertJsonPath('balance_amount', '30.95');
         $this->assertDatabaseCount('payment_transactions', 1);
+        $this->assertDatabaseHas('payment_transactions', ['payer_type' => 'customer', 'customer_id' => $customer->id, 'amount' => 10.01]);
         $this->postJson(route('sales.store'), $this->payload(['payment_status' => 'partially paid', 'customer_id' => $customer->id, 'amount_paid' => 50]))->assertUnprocessable()->assertJsonValidationErrors('amount_paid');
         $this->assertDatabaseCount('sales', 2);
     }
